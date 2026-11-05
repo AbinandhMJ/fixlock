@@ -1,0 +1,45 @@
+{
+  "name": "fixlock",
+  "version": "0.1.0",
+  "description": "Stop fixed bugs from coming back. A fix registry + CI check that blocks PRs (human or AI-written) that silently revert bug fixes.",
+  "bin": {
+    "fixlock": "bin/fixlock.js"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "bash test/e2e.sh",
+    "prepublishOnly": "bash test/e2e.sh"
+  },
+  "keywords": [
+    "regression",
+    "revert",
+    "bug-fix",
+    "ci",
+    "pull-request",
+    "code-review",
+    "ai-coding",
+    "claude-code",
+    "codex",
+    "git",
+    "git-blame"
+  ],
+  "author": "Abinandh <abinandhmurukesan@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AbinandhMJ/fixlock.git"
+  },
+  "homepage": "https://github.com/AbinandhMJ/fixlock#readme",
+  "bugs": {
+    "url": "https://github.com/AbinandhMJ/fixlock/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

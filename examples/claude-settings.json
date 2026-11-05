@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "deny": [
+      "Edit(.fixlock/**)", "Write(.fixlock/**)",
+      "Bash(npx fixlock remove:*)", "Bash(git push --no-verify:*)"
+    ]
+  }
+}

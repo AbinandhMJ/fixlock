@@ -1,0 +1,9 @@
+// Add inside your existing pipeline { stages { ... } } — runs on PR / feature branches
+stage('fixlock') {
+  when { not { branch 'main' } }
+  steps {
+    sh 'git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main'
+    sh 'npx --yes fixlock check --base origin/main --markdown fixlock-report.md'
+  }
+  post { always { archiveArtifacts artifacts: 'fixlock-report.md', allowEmptyArchive: true } }
+}
