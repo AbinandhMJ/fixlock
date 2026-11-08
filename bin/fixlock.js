@@ -10,33 +10,48 @@ function parse(argv) {
       const key = a.slice(2);
       const next = argv[i + 1];
       if (next === undefined || next.startsWith('-')) out[key] = true; else { out[key] = next; i++; }
-    } else if (a === '-m') { out.m = argv[++i]; }
+    } else if (a === '-m') out.m = argv[++i];
     else out._.push(a);
   }
   return out;
 }
 
-const HELP = `fixlock — stop fixed bugs from coming back
+const HELP = `fixlock — stop fixed bugs and finished features from coming back
 
-Usage:
-  fixlock init                                 Set up .fixlock/ (adds your git email as protected author)
-  fixlock mark <file> <start>[-<end>] -m "why" [--test <spec>] [--title "..."]
-                                                Register the lines that fix a bug
-  fixlock list                                 Show registered fixes
-  fixlock remove <FIX-id>                      Unregister a fix (owner only, deliberately)
-  fixlock check [--base origin/main] [--json] [--markdown report.md]
-                                                Fail if a registered fix or protected author's code was removed
-  fixlock sync                                 Write the "Known fixes" section into CLAUDE.md / AGENTS.md
-  fixlock install-hook                         Block pushes that revert fixes (pre-push hook)
+Setup (team lead, once):
+  fixlock init                         Interactive: team, roles, GitHub users, policies, tracker, hooks
+  fixlock team [list|add|remove]       Manage members: team add --name Abi --github abinandhmj --email a@x.com --role lead
+
+AI tools & docs:
+  fixlock tools                        Detect AI tools (repo, CLIs, VS Code/Cursor extensions) and show what is enabled
+  fixlock tools add|remove <id…>       claude-code codex cursor copilot windsurf gemini cline roo continue aider amazonq junie
+  fixlock sync                         Rewrite every enabled tool's rules file + CHANGELOG.md + PR template
+  fixlock changelog                    Refresh [Unreleased] from locks + Conventional Commits
+  fixlock release <version>            Freeze [Unreleased] as <version> in CHANGELOG.md
+
+Daily:
+  fixlock mark <file> <start>-<end> -m "why" [--type bug|feature] [--title ".."] [--issue linear:ENG-12] [--owner gh] [--test spec]
+  fixlock autolock [--since ref | --all] [--dry-run]
+                                       Lock lines from fix:/feat: commits (HEAD by default; --all backfills history)
+  fixlock why <file>[:line]            What is locked here, who owns it, can I change it?
+  fixlock list | remove <id>
+
+CI / hooks:
+  fixlock check [--base origin/main] [--pr N] [--notify] [--markdown out.md] [--json]
+  fixlock check --staged               Friendly warning before commit (never blocks)
+  fixlock install-hook                 git hooks on this machine: commit warning + auto-lock after fix/feat commits
+  fixlock install-claude-hook          Claude Code: warn / ask / block before AI edits locked or working code
+  fixlock codeowners                   Write lock owners into .github/CODEOWNERS
 `;
 
 const [, , sub, ...rest] = process.argv;
 const args = parse(rest);
-const map = { init: cmd.init, mark: cmd.mark, list: cmd.list, ls: cmd.list, remove: cmd.remove, rm: cmd.remove,
-  check: cmd.check, sync: cmd.sync, 'install-hook': cmd.installHook };
-
-if (!sub || sub === 'help' || sub === '--help' || !map[sub]) {
+const alias = { ls: 'list', rm: 'remove' };
+const name = alias[sub] || sub;
+if (!sub || ['help', '--help', '-h'].includes(sub) || !cmd[name]) {
   console.log(HELP);
-  process.exit(sub && !map[sub] && sub !== 'help' && sub !== '--help' ? 1 : 0);
+  process.exit(sub && !cmd[name] && !['help', '--help', '-h'].includes(sub) ? 1 : 0);
 }
-try { map[sub](args); } catch (e) { console.error(`\x1b[31mfixlock: ${e.message}\x1b[0m`); process.exit(2); }
+Promise.resolve()
+  .then(() => cmd[name](args))
+  .catch((e) => { console.error(`fixlock: ${e.message}`); process.exitCode = 2; });

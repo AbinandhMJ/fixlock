@@ -1,9 +1,14 @@
-// Add inside your existing pipeline { stages { ... } } — runs on PR / feature branches
+// Multibranch pipeline with a GitHub repo. Jenkins sets CHANGE_ID (PR number) and CHANGE_AUTHOR.
+// Credentials: 'github-token' (repo read) and 'linear-api-key' (or your tracker's token).
 stage('fixlock') {
-  when { not { branch 'main' } }
+  when { changeRequest() }
   steps {
     sh 'git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main'
-    sh 'npx --yes fixlock check --base origin/main --markdown fixlock-report.md'
+    withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN'),
+                     string(credentialsId: 'linear-api-key', variable: 'LINEAR_API_KEY')]) {
+      sh 'npx fixlock check --base origin/main --notify --markdown fixlock.md'
+    }
   }
-  post { always { archiveArtifacts artifacts: 'fixlock-report.md', allowEmptyArchive: true } }
+  post { always { archiveArtifacts artifacts: 'fixlock.md', allowEmptyArchive: true } }
 }
+// Re-run the job after the owner approves the PR to turn it green.

@@ -1,20 +1,21 @@
 {
-  "name": "fixlock",
-  "version": "0.1.0",
-  "description": "Stop fixed bugs from coming back. A fix registry + CI check that blocks PRs (human or AI-written) that silently revert bug fixes.",
+  "name": "@abinandhmj/fixlock",
+  "version": "0.4.0",
+  "description": "Stop fixed bugs and finished features from coming back. Team roles, owner approvals, AI edit warnings, rules files for every AI coding tool, auto CHANGELOG, Linear/ClickUp/Notion sync.",
   "bin": {
     "fixlock": "bin/fixlock.js"
   },
   "files": [
     "bin",
-    "src"
+    "src",
+    "docs"
   ],
   "engines": {
     "node": ">=18"
   },
   "scripts": {
-    "test": "bash test/e2e.sh",
-    "prepublishOnly": "bash test/e2e.sh"
+    "test": "node test/e2e.js && node test/trackers.js",
+    "prepublishOnly": "node test/e2e.js && node test/trackers.js"
   },
   "keywords": [
     "regression",
@@ -27,7 +28,20 @@
     "claude-code",
     "codex",
     "git",
-    "git-blame"
+    "git-blame",
+    "linear",
+    "clickup",
+    "notion",
+    "codeowners",
+    "team",
+    "cursor",
+    "copilot",
+    "windsurf",
+    "gemini",
+    "cline",
+    "aider",
+    "agents-md",
+    "changelog"
   ],
   "author": "Abinandh <abinandhmurukesan@gmail.com>",
   "license": "MIT",

@@ -79,3 +79,32 @@ function blame(ref, file) {
 }
 
 module.exports = { git, repoRoot, userEmail, fileAtRef, changedFiles, removedLines, blame };
+
+/**
+ * Full blame with per-line details. ref = null blames the working tree.
+ * Returns [{ line, sha, email, time (unix s), summary, text }]
+ */
+function blameFull(ref, file) {
+  const args = ['blame', '--line-porcelain'];
+  if (ref) args.push(ref);
+  args.push('--', file);
+  const out = git(args, { allowFail: true });
+  if (!out) return [];
+  const rows = [];
+  let cur = null;
+  for (const l of out.split('\n')) {
+    const h = l.match(/^([0-9a-f]{40}) \d+ (\d+)/);
+    if (h) { cur = { sha: h[1], line: parseInt(h[2], 10) }; continue; }
+    if (!cur) continue;
+    if (l.startsWith('author-mail ')) cur.email = l.slice(12).replace(/[<>]/g, '').trim().toLowerCase();
+    else if (l.startsWith('author-time ')) cur.time = parseInt(l.slice(12), 10);
+    else if (l.startsWith('summary ')) cur.summary = l.slice(8);
+    else if (l.startsWith('\t')) { cur.text = l.slice(1); rows.push(cur); cur = null; }
+  }
+  return rows;
+}
+
+const UNCOMMITTED = '0000000000000000000000000000000000000000';
+
+module.exports.blameFull = blameFull;
+module.exports.UNCOMMITTED = UNCOMMITTED;

@@ -1,17 +1,24 @@
-# .github/workflows/fixlock.yml — then make "fixlock" a required status check on main
+# .github/workflows/fixlock.yml — then make "fixlock" a required status check on main.
 name: fixlock
-on: pull_request
+on:
+  pull_request:
+  pull_request_review:        # re-run when the owner approves
+    types: [submitted, dismissed]
 permissions: { contents: read, pull-requests: write }
 jobs:
-  guard:
+  fixlock:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
-      - id: fg
-        run: npx --yes fixlock check --base origin/${{ github.base_ref }} --markdown report.md
+      - run: npm ci
+      - name: Check locked fixes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}      # reads PR approvals
+          LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}  # or CLICKUP_TOKEN / NOTION_TOKEN
+        run: npx fixlock check --base origin/${{ github.base_ref }} --notify --markdown fixlock.md
       - if: always()
         uses: marocchino/sticky-pull-request-comment@v2
-        with: { path: report.md, header: fixlock }
+        with: { path: fixlock.md, header: fixlock }
