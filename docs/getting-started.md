@@ -1,3 +1,7 @@
+---
+title: Getting started
+---
+
 # Getting started
 
 About 10 minutes. You need Node.js 18 or newer, git, and a git repository.

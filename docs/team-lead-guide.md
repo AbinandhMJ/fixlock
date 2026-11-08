@@ -1,3 +1,7 @@
+---
+title: Team lead guide
+---
+
 # Team lead guide
 
 For the team lead or project manager who sets fixlock up and decides the rules.

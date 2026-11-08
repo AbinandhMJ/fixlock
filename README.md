@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/AbinandhMJ/fixlock/main/assets/brand/fixlock-logo-dark.svg">
-    <img alt="fixlock" src="https://raw.githubusercontent.com/AbinandhMJ/fixlock/main/assets/brand/fixlock-logo.svg" height="72">
+    <source media="(prefers-color-scheme: dark)" srcset="https://abinandhmj.github.io/fixlock/fixlock-logo-dark.svg">
+    <img alt="fixlock" src="https://abinandhmj.github.io/fixlock/fixlock-logo.svg" height="72">
   </picture>
 </p>
 <p align="center"><b>fixed stays fixed.</b></p>
@@ -27,7 +27,7 @@ fixlock lets a team **lock** the lines that hold a bug fix or a feature, with an
 
 Zero dependencies. Node ≥ 18. Windows, macOS, Linux.
 
-📖 **User guides:** [Getting started](docs/getting-started.md) · [Team lead](docs/team-lead-guide.md) · [Developer](docs/developer-guide.md) · [AI tools](docs/ai-tools.md) · [CI](docs/ci-setup.md) · [Trackers](docs/trackers.md) · [Config](docs/configuration.md) · [Commands](docs/cli-reference.md) · [Troubleshooting](docs/troubleshooting.md)
+📖 **Docs: [abinandhmj.github.io/fixlock](https://abinandhmj.github.io/fixlock/)** ·  [Getting started](docs/getting-started.md) · [Team lead](docs/team-lead-guide.md) · [Developer](docs/developer-guide.md) · [AI tools](docs/ai-tools.md) · [CI](docs/ci-setup.md) · [Trackers](docs/trackers.md) · [Config](docs/configuration.md) · [Commands](docs/cli-reference.md) · [Troubleshooting](docs/troubleshooting.md)
 
 ## Setup (team lead, once)
 

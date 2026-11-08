@@ -1,3 +1,7 @@
+---
+title: AI tools
+---
+
 # AI tools
 
 Each developer can use a different AI assistant. fixlock writes the rules into each tool's own instructions file, so every assistant gets the same message: **don't rewrite fixed or working code without telling the developer.**

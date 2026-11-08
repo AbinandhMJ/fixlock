@@ -1,3 +1,7 @@
+---
+title: Command reference
+---
+
 # Command reference
 
 Run with `npx fixlock <command>` (or `npx @abinandhmj/fixlock <command>` if not installed in the project). `npx fixlock --help` prints a summary.

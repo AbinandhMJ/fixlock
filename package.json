@@ -15,7 +15,10 @@
   },
   "scripts": {
     "test": "node test/e2e.js && node test/trackers.js",
-    "prepublishOnly": "node test/e2e.js && node test/trackers.js"
+    "prepublishOnly": "node test/e2e.js && node test/trackers.js",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "keywords": [
     "regression",
@@ -49,11 +52,14 @@
     "type": "git",
     "url": "git+https://github.com/AbinandhMJ/fixlock.git"
   },
-  "homepage": "https://github.com/AbinandhMJ/fixlock#readme",
+  "homepage": "https://abinandhmj.github.io/fixlock/",
   "bugs": {
     "url": "https://github.com/AbinandhMJ/fixlock/issues"
   },
   "publishConfig": {
     "access": "public"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.3"
   }
 }

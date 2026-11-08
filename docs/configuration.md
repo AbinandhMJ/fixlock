@@ -1,3 +1,7 @@
+---
+title: Configuration
+---
+
 # Configuration reference
 
 All settings live in `.fixlock/config.json`. `init` writes it; you can edit it by hand. Locks live in `.fixlock/registry.json`. Don't edit that by hand; use the commands.

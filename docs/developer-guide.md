@@ -1,3 +1,7 @@
+---
+title: Developer guide
+---
+
 # Developer guide
 
 What fixlock does while you work, and what to do when it speaks up.

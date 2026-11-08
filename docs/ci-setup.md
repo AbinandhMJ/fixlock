@@ -1,3 +1,7 @@
+---
+title: CI setup
+---
+
 # CI setup
 
 The PR check is what actually enforces locks. Everything else only warns.

@@ -1,3 +1,7 @@
+---
+title: Home
+---
+
 # fixlock user guides
 
 fixlock stops fixed bugs and finished features from coming back, whether the change comes from a person or an AI assistant.
