@@ -6,6 +6,8 @@
 </p>
 <p align="center"><b>fixed stays fixed.</b></p>
 
+   [![npm](https://img.shields.io/npm/v/@abinandhmj/fixlock)](https://www.npmjs.com/package/@abinandhmj/fixlock) [![docs](https://img.shields.io/badge/docs-fixlock-B8F23A)](https://abinandhmj.github.io/fixlock/)
+
 **Stop fixed bugs and finished features from coming back.**
 
 You fix a bug. Weeks later a teammate's AI ports a feature from an old codebase, rewrites the file, and your fix disappears. Git merges it with **no conflict**, because to git it's just a normal edit.
