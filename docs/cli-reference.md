@@ -6,6 +6,13 @@ title: Command reference
 
 Run with `npx fixlock <command>` (or `npx @abinandhmj/fixlock <command>` if not installed in the project). `npx fixlock --help` prints a summary.
 
+## Try it
+
+### `demo`
+A 60-second walkthrough in a throwaway repo: a fix is auto-locked, an AI edit that would undo it gets `ask`, the commit warns, CI blocks the PR, the owner approves. Nothing in your projects is touched.
+- `--keep`: keep the demo repo afterwards and print its path.
+- `--fast`: no pauses.
+
 ## Setup
 
 ### `init`

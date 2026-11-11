@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="360" viewBox="0 0 1040 360" role="img" aria-label="How fixlock works: a fix is committed and locked; before an AI edits, it checks with fixlock; at commit time developers get a warning; on the pull request CI blocks the change until the owner approves; the issue tracker is reopened if a fix is reverted.">
+  <style>
+    .h{font:700 15px Inter,system-ui,sans-serif;fill:#F4F6F0}
+    .s{font:400 12.5px Inter,system-ui,sans-serif;fill:#A3ADB8}
+    .m{font:500 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;fill:#B8F23A}
+    .n{font:700 13px Inter,system-ui,sans-serif;fill:#0E1116}
+    .w{font:600 12px Inter,system-ui,sans-serif}
+  </style>
+  <rect width="1040" height="360" rx="16" fill="#0E1116"/>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#4B5563"/></marker></defs>
+
+  <!-- 1 lock -->
+  <g transform="translate(24 40)">
+    <rect width="180" height="200" rx="12" fill="#1A1F27" stroke="#2A313C"/>
+    <circle cx="24" cy="26" r="12" fill="#B8F23A"/><text class="n" x="24" y="31" text-anchor="middle">1</text>
+    <text class="h" x="46" y="31">Fix is locked</text>
+    <text class="s" x="16" y="62">A fix: or feat: commit</text>
+    <text class="s" x="16" y="80">locks its own lines,</text>
+    <text class="s" x="16" y="98">with an owner and</text>
+    <text class="s" x="16" y="116">the reason it exists.</text>
+    <text class="m" x="16" y="150">git commit -m "fix…"</text>
+    <text class="m" x="16" y="170">fixlock mark …</text>
+  </g>
+  <!-- 2 AI -->
+  <g transform="translate(228 40)">
+    <rect width="190" height="200" rx="12" fill="#1A1F27" stroke="#B8F23A" stroke-opacity=".55"/>
+    <circle cx="24" cy="26" r="12" fill="#B8F23A"/><text class="n" x="24" y="31" text-anchor="middle">2</text>
+    <text class="h" x="46" y="31">AI checks first</text>
+    <text class="s" x="16" y="62">Before changing existing</text>
+    <text class="s" x="16" y="80">lines, the assistant asks</text>
+    <text class="s" x="16" y="98">fixlock and gets a verdict.</text>
+    <text class="m" x="16" y="130">fixlock_check_edit</text>
+    <text class="w" x="16" y="156" fill="#7EE787">ok</text><text class="w" x="40" y="156" fill="#F2CC60">warn</text><text class="w" x="78" y="156" fill="#F2CC60">ask</text><text class="w" x="108" y="156" fill="#FF6B6B">block</text>
+    <text class="s" x="16" y="182">MCP · rules file · hook</text>
+  </g>
+  <!-- 3 commit -->
+  <g transform="translate(442 40)">
+    <rect width="180" height="200" rx="12" fill="#1A1F27" stroke="#2A313C"/>
+    <circle cx="24" cy="26" r="12" fill="#B8F23A"/><text class="n" x="24" y="31" text-anchor="middle">3</text>
+    <text class="h" x="46" y="31">Commit warns</text>
+    <text class="s" x="16" y="62">The pre-commit hook</text>
+    <text class="s" x="16" y="80">shows which locks and</text>
+    <text class="s" x="16" y="98">working code change.</text>
+    <text class="s" x="16" y="116">It never blocks.</text>
+    <text class="w" x="16" y="156" fill="#F2CC60">! Heads up: 1 locked</text>
+    <text class="w" x="16" y="174" fill="#F2CC60">  change</text>
+  </g>
+  <!-- 4 CI -->
+  <g transform="translate(646 40)">
+    <rect width="180" height="200" rx="12" fill="#1A1F27" stroke="#FF6B6B" stroke-opacity=".55"/>
+    <circle cx="24" cy="26" r="12" fill="#B8F23A"/><text class="n" x="24" y="31" text-anchor="middle">4</text>
+    <text class="h" x="46" y="31">CI enforces</text>
+    <text class="s" x="16" y="62">A PR that changes a</text>
+    <text class="s" x="16" y="80">locked line fails until</text>
+    <text class="s" x="16" y="98">the owner (or a lead)</text>
+    <text class="s" x="16" y="116">approves it.</text>
+    <text class="w" x="16" y="156" fill="#FF6B6B">✖ needs approval</text>
+    <text class="w" x="16" y="174" fill="#FF6B6B">   from @owner</text>
+  </g>
+  <!-- 5 decide -->
+  <g transform="translate(850 40)">
+    <rect width="166" height="200" rx="12" fill="#1A1F27" stroke="#2A313C"/>
+    <circle cx="24" cy="26" r="12" fill="#B8F23A"/><text class="n" x="24" y="31" text-anchor="middle">5</text>
+    <text class="h" x="46" y="31">Owner decides</text>
+    <text class="s" x="16" y="62">Approve on purpose,</text>
+    <text class="s" x="16" y="80">or restore the lines.</text>
+    <text class="s" x="16" y="98">Either way it's a</text>
+    <text class="s" x="16" y="116">decision, not an</text>
+    <text class="s" x="16" y="134">accident.</text>
+    <text class="w" x="16" y="174" fill="#7EE787">✔ merge allowed</text>
+  </g>
+
+  <path d="M206 140H224" stroke="#4B5563" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M420 140H438" stroke="#4B5563" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M624 140H642" stroke="#4B5563" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M828 140H846" stroke="#4B5563" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- tracker band -->
+  <rect x="24" y="268" width="992" height="64" rx="12" fill="#13171D" stroke="#2A313C"/>
+  <text class="h" x="44" y="296">Your tracker follows along</text>
+  <text class="s" x="44" y="316">Locking a fix moves its Linear / ClickUp / Notion issue to Done. A PR that reverts it reopens the issue with a comment naming the PR.</text>
+</svg>

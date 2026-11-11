@@ -1,4 +1,5 @@
-# .github/workflows/fixlock.yml — then make "fixlock" a required status check on main.
+# Copy to .github/workflows/fixlock.yml, then make "fixlock" a required status check on main.
+# Runs on every PR and again when someone approves, so an owner approval turns it green.
 name: fixlock
 on:
   pull_request:
@@ -18,7 +19,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}      # reads PR approvals
           LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}  # or CLICKUP_TOKEN / NOTION_TOKEN
-        run: npx fixlock check --base origin/${{ github.base_ref }} --notify --markdown fixlock.md
+        run: npx fixlock check --base origin/${{ github.event.pull_request.base.ref }} --notify --markdown fixlock.md
       - if: always()
         uses: marocchino/sticky-pull-request-comment@v2
         with: { path: fixlock.md, header: fixlock }

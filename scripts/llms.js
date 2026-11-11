@@ -10,9 +10,11 @@ const SITE = 'https://abinandhmj.github.io/fixlock';
 const pkg = require('../package.json');
 
 const sections = [
+  ['Start here', ['demo', 'how-it-works']],
   ['Guides', ['getting-started', 'team-lead-guide', 'developer-guide', 'ai-tools']],
   ['AI assistants', ['integrations/index', 'integrations/claude-code', 'integrations/cursor', 'integrations/copilot', 'integrations/codex', 'integrations/mcp']],
   ['Setup', ['ci-setup', 'trackers']],
+  ['Help', ['recipes', 'faq', 'examples']],
   ['Reference', ['configuration', 'cli-reference', 'troubleshooting', 'security']],
 ];
 

@@ -409,6 +409,7 @@ module.exports = {
   'install-hook': () => { init.installGitHook(); console.log(c.green('✔ pre-commit warning hook installed')); },
   'install-claude-hook': () => { init.installClaudeHook(); console.log(c.green('✔ Claude Code hook added to .claude/settings.json')); },
   setup: cmdSetup,
+  demo: (args) => { require('./demo').run({ keep: !!args.keep, fast: !!args.fast }); },
   mcp: () => require('./mcp').serve(),
   hook: (args) => { if (args._[0] !== 'claude') throw new Error('Usage: fixlock hook claude'); require('./hook').run(); },
 };
