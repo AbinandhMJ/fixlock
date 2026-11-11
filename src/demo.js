@@ -125,7 +125,7 @@ function run(opts = {}) {
     if (opts.keep) say(c.dim(`\nDemo repo kept at ${dir}. Explore it: cd "${dir}" && npx fixlock list`));
     return { dir, verdict: verdict && verdict.level, ciBlocked: ci.code === 1, ciApproved: ok.code === 0, autolocked: /auto-locked/.test(al.out), stagedWarned: /Heads up/.test(st.out) };
   } finally {
-    if (!opts.keep) fs.rmSync(dir, { recursive: true, force: true });
+    if (!opts.keep) try { fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch { /* temp dir */ }
   }
 }
 
