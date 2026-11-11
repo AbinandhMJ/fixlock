@@ -219,7 +219,7 @@ const server = http.createServer((req, res) => {
     failures++; console.log('FAIL unexpected error', e);
   } finally {
     server.close();
-    fs.rmSync(tmp, { recursive: true, force: true });
+    try { fs.rmSync(tmp, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch { /* temp dir; the OS cleans it */ }
   }
   console.log(failures ? `\nE2E FAIL (${failures})` : '\nE2E PASS');
   process.exit(failures ? 1 : 0);

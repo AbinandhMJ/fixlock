@@ -37,7 +37,8 @@ function client(env) {
       setTimeout(() => reject(new Error(`timeout: ${method}`)), 15000);
     }),
     notify: (method, params) => p.stdin.write(JSON.stringify({ jsonrpc: '2.0', method, params }) + '\n'),
-    close: () => p.stdin.end(),
+    // Resolve only once the server has exited: Windows can't delete a folder a running process is using.
+    close: () => new Promise((resolve) => { if (p.exitCode !== null) return resolve(); p.once('exit', resolve); p.stdin.end(); }),
   };
 }
 
@@ -112,13 +113,13 @@ function client(env) {
     ok(noRepo.result.isError && /git repository|not set up/.test(noRepo.result.content[0].text), 'outside a repo → friendly tool error', JSON.stringify(noRepo));
     const ping = await c.request('ping', {});
     ok(ping.result && !ping.error, 'ping');
-    c.close();
+    await c.close();
 
     const owner = client({ FIXLOCK_USER: 'abi@fluxo.dev' });
     await owner.request('initialize', { protocolVersion: '2025-06-18' });
     const own = await owner.request('tools/call', { name: 'fixlock_check_edit', arguments: { file: FILE, old_text: '  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;', new_text: '  return d.toISOString();' } });
     ok(own.result.structuredContent.verdict === 'ok', 'owner editing their own fix → ok');
-    owner.close();
+    await owner.close();
 
     // --- setup per assistant ---
     const out = run(['setup', 'cursor', 'copilot', 'codex', 'gemini']);
@@ -140,7 +141,7 @@ function client(env) {
   } catch (e) {
     failures++; console.log('FAIL unexpected error', e);
   } finally {
-    fs.rmSync(tmp, { recursive: true, force: true });
+    try { fs.rmSync(tmp, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch { /* temp dir; the OS cleans it */ }
   }
   console.log(failures ? `\nMCP FAIL (${failures})` : '\nMCP PASS');
   process.exit(failures ? 1 : 0);
