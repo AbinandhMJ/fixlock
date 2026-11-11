@@ -74,7 +74,7 @@ async function cmdMark(args) {
   const [file, range] = args._;
   if (!file || !range) throw new Error('Usage: fixlock mark <file> <start>[-<end>] -m "why" [--type bug|feature] [--title ".."] [--issue linear:ENG-12] [--owner github] [--test spec]');
   const [start, end = start] = range.split('-').map((n) => parseInt(n, 10));
-  const rel = L.toPosix(path.relative(s.root(), path.resolve(file)));
+  const rel = L.repoRel(s.root(), file);
   const abs = path.join(s.root(), rel);
   if (!fs.existsSync(abs)) throw new Error(`File not found: ${file}`);
   const lines = fs.readFileSync(abs, 'utf8').split('\n');
@@ -135,7 +135,7 @@ function cmdWhy(args) {
   const target = args._[0];
   if (!target) throw new Error('Usage: fixlock why <file>[:line[-line]]');
   const m = target.match(/^(.*?)(?::(\d+)(?:-(\d+))?)?$/);
-  const rel = L.toPosix(path.relative(s.root(), path.resolve(m[1])));
+  const rel = L.repoRel(s.root(), m[1]);
   const cfg = s.loadConfig();
   const reg = s.loadRegistry();
   const abs = path.join(s.root(), rel);

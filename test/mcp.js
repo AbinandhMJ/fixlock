@@ -80,6 +80,13 @@ function client(env) {
     const abs = await c.request('tools/call', { name: 'fixlock_check_edit', arguments: { file: path.join(app, FILE), new_content: 'export const x = 1;\n' } });
     ok(abs.result.structuredContent.verdict === 'ask' && abs.result.structuredContent.locks.length === 1, 'check_edit works with an absolute path and a whole-file rewrite');
 
+    // Repo reached through a symlink (macOS /var → /private/var, symlinked project folders) or a Windows junction
+    const link = path.join(tmp, 'linked-app');
+    let linked = true; try { fs.symlinkSync(app, link, 'junction'); } catch { linked = false; }
+    if (linked) {
+      const viaLink = await c.request('tools/call', { name: 'fixlock_check_edit', arguments: { file: path.join(link, FILE), new_content: 'export const x = 1;\n' } });
+      ok(viaLink.result.structuredContent && viaLink.result.structuredContent.verdict === 'ask' && viaLink.result.structuredContent.file === FILE, 'check_edit through a symlinked repo path still finds the lock', JSON.stringify(viaLink.result));
+    }
     const safe = await c.request('tools/call', { name: 'fixlock_check_edit', arguments: { file: FILE, old_text: '\n}\n', new_text: '\n}\n// end of file\n' } });
     ok(safe.result.structuredContent.verdict === 'ok' && /^OK/.test(safe.result.content[0].text), 'check_edit: harmless edit → ok', JSON.stringify(safe.result));
 

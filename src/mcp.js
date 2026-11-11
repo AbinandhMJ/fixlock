@@ -104,7 +104,7 @@ function enterRepo(args) {
 
 function relFile(root, file) {
   const abs = path.isAbsolute(file) ? file : path.join(root, file);
-  return { abs, rel: path.relative(root, abs).split(path.sep).join('/') };
+  return { abs, rel: require('./locks').repoRel(root, abs) };
 }
 
 /* ---------------- tools ---------------- */

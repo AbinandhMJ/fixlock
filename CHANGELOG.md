@@ -16,6 +16,9 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 - An edit whose text started with a line break was counted as touching the line above it.
 - The npm package no longer ships the docs folder.
 - The commit-time check (`check --staged`) no longer treats a PR author as an approval; there is no PR yet at commit time.
+- Repos reached through a symlink (macOS `/var` → `/private/var`) or a Windows short path (`RUNNER~1`) are now matched correctly; previously locks there were missed.
+- `autolock` never locks files that fixlock or AI tools generate (CODEOWNERS, `.cursor/`, `.claude/`, `.aider.conf.yml`, …).
+- Auto-locked fixes use the commit message body as "why it exists", when there is one.
 
 ## [0.4.0] - 2026-11-08
 

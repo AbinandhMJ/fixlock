@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const s = require('./store');
 const team = require('./team');
-const { affected, norm, spanLines } = require('./locks');
+const { affected, norm, spanLines, repoRel } = require('./locks');
 const stable = require('./stable');
 const g = require('./git');
 
@@ -86,7 +86,7 @@ function evaluate(change) {
   let stableSum = null; let stableLevel = null;
   const sc = cfg.stableCode || {};
   if (sc.enabled !== false && change.before) {
-    const rel = path.relative(s.root(), path.resolve(change.file));
+    const rel = repoRel(s.root(), change.file);
     const lockedText = new Set(hits.flatMap((h) => h.lock.snippet.map(norm)));
     const removed = stable.removedLines(change.before, change.after).filter((r) => !lockedText.has(norm(r.text)));
     if (removed.length >= (sc.minLines || 1)) {
@@ -96,7 +96,7 @@ function evaluate(change) {
   }
   if (!hits.length && !stableSum) return null;
   const level = [...hits.map((h) => h.level), stableLevel].filter(Boolean).reduce((m, l) => (RANK[l] > RANK[m] ? l : m), 'warn');
-  const file = path.relative(s.root(), path.resolve(change.file)).split(path.sep).join('/');
+  const file = repoRel(s.root(), change.file);
   return {
     level,
     reason: message(cfg, hits, person, stableSum, file),

@@ -139,6 +139,7 @@ const server = http.createServer((req, res) => {
     git('add', '.'); git('commit', '-qm', 'fixed rounding bug in GST totals');
     const dry = await cli(['autolock', '--all', '--dry-run']);
     ok(/src\/app\/tax\.ts/.test(dry.out) && !/date\.util|invoice/.test(dry.out), 'backfill dry-run finds the old fix and skips already-locked ones', dry.out);
+    ok(!/CODEOWNERS|\.cursor|\.aider|\.claude|copilot-instructions/.test(dry.out), 'backfill never locks files fixlock or AI tools generate', dry.out);
     await cli(['autolock', '--all', '--no-sync']);
     ok(JSON.parse(read('.fixlock/registry.json')).locks.some((l) => l.file === 'src/app/tax.ts'), 'backfill locks it');
 
