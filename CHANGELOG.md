@@ -15,6 +15,7 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 ### Fixed
 - An edit whose text started with a line break was counted as touching the line above it.
 - The npm package no longer ships the docs folder.
+- The commit-time check (`check --staged`) no longer treats a PR author as an approval; there is no PR yet at commit time.
 
 ## [0.4.0] - 2026-11-08
 

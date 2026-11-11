@@ -228,7 +228,7 @@ async function cmdCheck(args) {
   const needApproval = findings.filter((f) => f.kind === 'lock' && (cfg.policies[f.lock.type] || cfg.policies.bug).approval !== 'none');
   let appr = { approvers: new Set(), source: 'none' };
   if (!staged && needApproval.length) appr = await prApprovers(args.pr);
-  const author = (prAuthor() || '').toLowerCase();
+  const author = staged ? '' : (prAuthor() || '').toLowerCase(); // no PR exists yet at commit time
   for (const f of findings.filter((x) => x.kind === 'lock')) {
     const pol = cfg.policies[f.lock.type] || cfg.policies.bug;
     f.approvers = team.approvers(cfg, f.lock);

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Tests the MCP server over real stdio JSON-RPC, and `fixlock setup` for each assistant.
 'use strict';
+const cleanEnv = require('./env');
 const { spawn, execFileSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
@@ -14,11 +15,11 @@ const FILE = 'src/date.ts';
 let failures = 0;
 const ok = (cond, msg, extra = '') => { if (cond) console.log(`ok   ${msg}`); else { failures++; console.log(`FAIL ${msg}\n${extra}`); } };
 const git = (...a) => execFileSync('git', a, { cwd: app, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
-const run = (args, env = {}) => { try { return execFileSync(process.execPath, [CLI, ...args], { cwd: app, encoding: 'utf8', env: { ...process.env, NO_COLOR: '1', FIXLOCK_HOME: home, ...env } }); } catch (e) { return (e.stdout || '') + (e.stderr || ''); } };
+const run = (args, env = {}) => { try { return execFileSync(process.execPath, [CLI, ...args], { cwd: app, encoding: 'utf8', env: { ...cleanEnv(), NO_COLOR: '1', FIXLOCK_HOME: home, ...env } }); } catch (e) { return (e.stdout || '') + (e.stderr || ''); } };
 
 /** Minimal MCP client over stdio. */
 function client(env) {
-  const p = spawn(process.execPath, [CLI, 'mcp'], { cwd: app, env: { ...process.env, ...env } });
+  const p = spawn(process.execPath, [CLI, 'mcp'], { cwd: app, env: { ...cleanEnv(), ...env } });
   let buf = ''; const waiting = new Map(); let id = 0;
   p.stdout.on('data', (d) => {
     buf += d;

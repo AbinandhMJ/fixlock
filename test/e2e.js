@@ -4,6 +4,7 @@
 // rewrite it (Claude hook asks/blocks) → teammate's PR reverts it (CI blocks, Linear reopened)
 // → owner approves the PR (CI passes).
 'use strict';
+const cleanEnv = require('./env');
 const { spawn, execFileSync } = require('child_process');
 const http = require('http');
 const fs = require('fs');
@@ -27,7 +28,7 @@ const write = (rel, body) => { const f = path.join(app, rel); fs.mkdirSync(path.
 
 function cli(args, { env = {}, input } = {}) {
   return new Promise((resolve) => {
-    const p = spawn(process.execPath, [CLI, ...args], { cwd: app, env: { ...process.env, NO_COLOR: '1', ...env } });
+    const p = spawn(process.execPath, [CLI, ...args], { cwd: app, env: { ...cleanEnv(), NO_COLOR: '1', ...env } });
     let out = '';
     p.stdout.on('data', (d) => { out += d; });
     p.stderr.on('data', (d) => { out += d; });
