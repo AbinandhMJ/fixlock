@@ -1,0 +1,18 @@
+# Add to .gitlab-ci.yml. Runs on merge requests and fails when a locked fix is removed.
+# GitLab approvals aren't read yet: a locked change passes when the lock's owner opened the MR,
+# or once the lines are restored. Put each person's GitLab username in the team's "github" field.
+fixlock:
+  image: node:20
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  variables:
+    GIT_DEPTH: 0
+    CHANGE_AUTHOR: $GITLAB_USER_LOGIN
+    CHANGE_ID: $CI_MERGE_REQUEST_IID
+  script:
+    - git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+    - npm ci
+    - npx fixlock check --base "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" --markdown fixlock.md
+  artifacts:
+    when: always
+    paths: [fixlock.md]

@@ -4,6 +4,7 @@
 // rewrite it (Claude hook asks/blocks) → teammate's PR reverts it (CI blocks, Linear reopened)
 // → owner approves the PR (CI passes).
 'use strict';
+const cleanEnv = require('./env');
 const { spawn, execFileSync } = require('child_process');
 const http = require('http');
 const fs = require('fs');
@@ -27,7 +28,7 @@ const write = (rel, body) => { const f = path.join(app, rel); fs.mkdirSync(path.
 
 function cli(args, { env = {}, input } = {}) {
   return new Promise((resolve) => {
-    const p = spawn(process.execPath, [CLI, ...args], { cwd: app, env: { ...process.env, NO_COLOR: '1', ...env } });
+    const p = spawn(process.execPath, [CLI, ...args], { cwd: app, env: { ...cleanEnv(), NO_COLOR: '1', ...env } });
     let out = '';
     p.stdout.on('data', (d) => { out += d; });
     p.stderr.on('data', (d) => { out += d; });
@@ -138,6 +139,7 @@ const server = http.createServer((req, res) => {
     git('add', '.'); git('commit', '-qm', 'fixed rounding bug in GST totals');
     const dry = await cli(['autolock', '--all', '--dry-run']);
     ok(/src\/app\/tax\.ts/.test(dry.out) && !/date\.util|invoice/.test(dry.out), 'backfill dry-run finds the old fix and skips already-locked ones', dry.out);
+    ok(!/CODEOWNERS|\.cursor|\.aider|\.claude|copilot-instructions/.test(dry.out), 'backfill never locks files fixlock or AI tools generate', dry.out);
     await cli(['autolock', '--all', '--no-sync']);
     ok(JSON.parse(read('.fixlock/registry.json')).locks.some((l) => l.file === 'src/app/tax.ts'), 'backfill locks it');
 
@@ -217,7 +219,7 @@ const server = http.createServer((req, res) => {
     failures++; console.log('FAIL unexpected error', e);
   } finally {
     server.close();
-    fs.rmSync(tmp, { recursive: true, force: true });
+    try { fs.rmSync(tmp, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch { /* temp dir; the OS cleans it */ }
   }
   console.log(failures ? `\nE2E FAIL (${failures})` : '\nE2E PASS');
   process.exit(failures ? 1 : 0);

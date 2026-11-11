@@ -58,7 +58,17 @@ npm install
 npx fixlock install-hook
 ```
 
-## 5. Turn on the PR check
+## 5. Connect your AI assistants
+
+`init` already connects the project-level ones. Each developer using Codex or Windsurf also runs:
+
+```bash
+npx fixlock setup codex     # or windsurf
+```
+
+See [AI assistants](integrations/) for Claude Code, Cursor, Copilot and Codex.
+
+## 6. Turn on the PR check
 
 Add the CI step from [CI setup](ci-setup.md) and make it a required check on `main`.
 

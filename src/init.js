@@ -98,6 +98,7 @@ async function interactive(cfg) {
       claude: !cfg.aiTools.includes('claude-code') ? false : yes(await p.ask('\nInstall the Claude Code hook (warns/asks/blocks before AI edits)?', 'y')),
       git: yes(await p.ask('Install the git pre-commit warning hook on this machine?', 'y')),
       codeowners: yes(await p.ask('Generate .github/CODEOWNERS from locks (GitHub asks owners to review)?', 'y')),
+      mcp: yes(await p.ask('Connect your AI assistants to fixlock (MCP server config for Claude Code, Cursor, Copilot…)?', 'y')),
     };
     return hooks;
   } finally { p.close(); }
@@ -111,7 +112,7 @@ function defaults(cfg) {
   }
   cfg.project = cfg.project || path.basename(s.root());
   if (!cfg.aiTools) cfg.aiTools = [...new Set([...agents.detect().map((f) => f.id), 'claude-code', 'codex'])];
-  return { claude: true, git: false, codeowners: false };
+  return { claude: true, git: false, codeowners: false, mcp: true };
 }
 
 function installClaudeHook() {

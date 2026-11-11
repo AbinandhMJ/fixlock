@@ -49,7 +49,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}   # only if you use a tracker
-        run: npx fixlock check --base origin/${{ github.base_ref }} --notify --markdown fixlock.md
+        run: npx fixlock check --base origin/${{ github.event.pull_request.base.ref }} --notify --markdown fixlock.md
       - if: always()
         uses: marocchino/sticky-pull-request-comment@v2
         with: { path: fixlock.md, header: fixlock }
@@ -97,4 +97,4 @@ git fetch origin main
 GITHUB_TOKEN=… npx fixlock check --base origin/main --pr "$PR_NUMBER" --markdown fixlock.md
 ```
 
-GitLab and Bitbucket approvals aren't supported yet; the check still works there, but locks can only be cleared by the owner opening the PR or by restoring the lines.
+For GitLab, see the [GitLab example](https://github.com/AbinandhMJ/fixlock/blob/main/examples/ci/gitlab-ci.yml). GitLab and Bitbucket approvals aren't supported yet; the check still works there, but locks can only be cleared by the owner opening the PR or by restoring the lines.

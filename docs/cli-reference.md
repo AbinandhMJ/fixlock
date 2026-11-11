@@ -6,6 +6,13 @@ title: Command reference
 
 Run with `npx fixlock <command>` (or `npx @abinandhmj/fixlock <command>` if not installed in the project). `npx fixlock --help` prints a summary.
 
+## Try it
+
+### `demo`
+A 60-second walkthrough in a throwaway repo: a fix is auto-locked, an AI edit that would undo it gets `ask`, the commit warns, CI blocks the PR, the owner approves. Nothing in your projects is touched.
+- `--keep`: keep the demo repo afterwards and print its path.
+- `--fast`: no pauses.
+
 ## Setup
 
 ### `init`
@@ -22,6 +29,15 @@ fixlock team remove ravik
 
 ### `tools [list | add | remove] [ids…]`
 Detect AI tools and choose which get rules files. See [AI tools](ai-tools.md).
+
+### `setup [assistant…]`
+Connect AI assistants: `claude-code`, `cursor`, `copilot`, `codex`, `gemini`, `windsurf`, or `all` (project-level ones). Writes the MCP server config and the assistant's rules file. `codex` and `windsurf` write to your user config. See [AI assistants](integrations/).
+
+### `mcp`
+Runs the MCP server over stdio. Assistants start it themselves; see the [MCP server reference](integrations/mcp.md).
+
+### `--version`
+Prints the installed version.
 
 ### `install-hook`
 Installs git hooks on this machine: `pre-commit` (warning) and `post-commit` (auto-lock).

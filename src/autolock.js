@@ -13,7 +13,10 @@ const DEFAULTS = {
   featurePattern: '^feat(\\(.+\\))?!?:',
   lockFeatures: true,
   maxLines: 40, // groups bigger than this are skipped (lock them manually)
-  ignore: ['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', '.fixlock/', 'CHANGELOG.md', '.md', '.json', '.lock', '.svg', '.png', '.jpg'],
+  ignore: ['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', '.fixlock/', 'CHANGELOG.md', '.md', '.json', '.lock', '.svg', '.png', '.jpg',
+    // files fixlock or AI tools generate: never lock these
+    '.github/CODEOWNERS', '.github/pull_request_template.md', '.claude/', '.cursor/', '.vscode/', '.windsurf/', '.clinerules', '.roo/',
+    '.continue/', '.amazonq/', '.junie/', '.gemini/', '.codex/', '.aider.conf.yml', '.git/'],
 };
 
 function options(cfg) { return { ...DEFAULTS, ...(cfg.autoLock || {}) }; }
@@ -83,14 +86,16 @@ function candidates(commits, cfg, reg) {
 /** commits to scan: { commit: sha } | { since: ref } | { all: true } */
 function listCommits(sel, cfg) {
   const o = options(cfg);
-  const args = ['log', '--no-merges', '--pretty=format:%H%x1f%s%x1f%ae%x1e'];
+  const args = ['log', '--no-merges', '--pretty=format:%H%x1f%s%x1f%ae%x1f%b%x1e'];
   if (sel.commit) args.push('-1', sel.commit);
   else if (sel.since) args.push(`${sel.since}..HEAD`);
   else args.push(`-${sel.max || 300}`);
   const out = g.git(args, { allowFail: true }) || '';
   return out.split('\x1e').map((r) => r.trim()).filter(Boolean).map((r) => {
-    const [sha, subject, email] = r.split('\x1f');
-    return { sha, subject, email: (email || '').toLowerCase() };
+    const [sha, subject, email, body] = r.split('\x1f');
+    // First paragraph of the commit body, minus trailers (Co-Authored-By:, Signed-off-by:, …)
+    const why = (body || '').split(/\n\s*\n/)[0].split('\n').filter((l) => !/^[\w-]+:\s/.test(l)).join(' ').trim();
+    return { sha, subject, email: (email || '').toLowerCase(), why };
   }).filter((c) => kindOf(c.subject, o));
 }
 
@@ -99,7 +104,7 @@ function toLocks(cands, cfg, reg) {
     const owner = team.find(cfg, cd.commit.email);
     const lock = {
       id: s.nextId(reg, cd.type), type: cd.type, title: cleanTitle(cd.commit.subject),
-      reason: `Auto-locked from commit ${cd.commit.sha.slice(0, 7)}: ${cd.commit.subject}`,
+      reason: cd.commit.why || `Auto-locked from commit ${cd.commit.sha.slice(0, 7)}: ${cd.commit.subject}`,
       file: cd.file, snippet: cd.snippet, owner: owner ? owner.github || owner.name : cd.commit.email,
       issue: issueFrom(cd.commit.subject, cfg), test: null, date: new Date().toISOString().slice(0, 10),
       source: { commit: cd.commit.sha, auto: true },

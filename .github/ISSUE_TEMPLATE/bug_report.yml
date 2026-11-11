@@ -1,0 +1,32 @@
+name: Bug report
+description: Something fixlock did wrong (or didn't do)
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you ran, what you expected, what you got. Paste output (remove secrets).
+    validations: { required: true }
+  - type: input
+    id: version
+    attributes:
+      label: fixlock version
+      placeholder: "npx fixlock --version or the version in package.json"
+    validations: { required: true }
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where did it happen?
+      multiple: true
+      options: [CLI, git hook, Claude Code hook, MCP server, CI check, tracker sync, docs]
+  - type: input
+    id: assistant
+    attributes:
+      label: AI assistant (if any)
+      placeholder: Claude Code / Cursor / Copilot / Codex / …
+  - type: input
+    id: env
+    attributes:
+      label: OS and Node version
+      placeholder: "Windows 11, Node 20.11"

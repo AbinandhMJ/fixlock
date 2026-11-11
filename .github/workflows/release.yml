@@ -1,0 +1,32 @@
+# Publishes to npm with provenance when a version tag is pushed:
+#   npm version minor && git push --follow-tags
+# Needs the repo secret NPM_TOKEN (npm → Access Tokens → Granular, publish rights for @abinandhmj/fixlock),
+# or npm "trusted publishing" configured for this workflow (then NPM_TOKEN can be removed).
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write   # create the GitHub release
+  id-token: write   # npm provenance / trusted publishing
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - name: Tag matches package.json
+        run: test "v$(node -p "require('./package.json').version")" = "${GITHUB_REF_NAME}"
+      - run: npm test
+      - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          awk -v v="${GITHUB_REF_NAME#v}" '$0 ~ "^## \\[" v "\\]" {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md > notes.md
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md

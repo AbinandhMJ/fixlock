@@ -6,6 +6,19 @@ const norm = (l) => l.replace(/\s+/g, ' ').trim();
 const trivial = (l) => /^[\s{}()[\];,]*$/.test(l);
 const toPosix = (f) => f.split(path.sep).join('/');
 
+/** Real path, following symlinks and Windows 8.3 short names; works for files that don't exist yet. */
+function realish(p) {
+  const abs = path.resolve(p);
+  try { return fs.realpathSync.native(abs); } catch { /* not there yet */ }
+  const parent = path.dirname(abs);
+  return parent === abs ? abs : path.join(realish(parent), path.basename(abs));
+}
+
+/** Repo-relative POSIX path for a file given absolute or relative to the cwd. "../x" means outside the repo. */
+function repoRel(root, file) {
+  return toPosix(path.relative(realish(root), realish(file)));
+}
+
 /** Line numbers (1-based) where a lock's snippet lines currently sit in `lines`. */
 function locate(lock, lines) {
   const n = lines.map(norm);
@@ -25,7 +38,7 @@ function missingLines(lock, content) {
 }
 
 function locksForFile(reg, root, file) {
-  const rel = toPosix(path.isAbsolute(file) ? path.relative(root, file) : file);
+  const rel = path.isAbsolute(file) ? repoRel(root, file) : toPosix(file);
   return { rel, locks: reg.locks.filter((l) => l.file === rel) };
 }
 
@@ -55,4 +68,14 @@ function affected(reg, root, change) {
   return out;
 }
 
-module.exports = { norm, trivial, locate, missingLines, affected, toPosix };
+/** 1-based [first, last] line numbers that `needle` (found at index i of content) really covers, ignoring leading/trailing line breaks. */
+function spanLines(content, i, needle) {
+  let a = i; let b = i + needle.length;
+  while (a < b && content[a] === '\n') a++;
+  while (b > a && content[b - 1] === '\n') b--;
+  if (a >= b) return null;
+  const start = content.slice(0, a).split('\n').length;
+  return [start, start + content.slice(a, b).split('\n').length - 1];
+}
+
+module.exports = { repoRel, realish, spanLines, norm, trivial, locate, missingLines, affected, toPosix };
