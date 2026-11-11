@@ -61,7 +61,7 @@
     "access": "public"
   },
   "devDependencies": {
-    "vitepress": "^1.6.3"
+    "vitepress": "^1.6.4"
   },
   "mcpName": "io.github.abinandhmj/fixlock"
 }
