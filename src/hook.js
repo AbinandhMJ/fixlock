@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const s = require('./store');
 const team = require('./team');
-const { affected, norm } = require('./locks');
+const { affected, norm, spanLines } = require('./locks');
 const stable = require('./stable');
 const g = require('./git');
 
@@ -18,8 +18,7 @@ function readStdin() {
 function lineRange(content, needle) {
   const i = content.indexOf(needle);
   if (i < 0 || !needle) return null;
-  const start = content.slice(0, i).split('\n').length;
-  return [start, start + needle.split('\n').length - 1];
+  return spanLines(content, i, needle);
 }
 
 /** Build {file, before, after, touched} from a Claude tool call. */
@@ -66,46 +65,63 @@ function message(cfg, hits, person, stableSum, file) {
     'AI: do not rewrite working code silently. Tell the developer exactly which lines you want to change and why, and only continue if they agree. Otherwise leave these lines as they are and build around them.';
 }
 
+/**
+ * Decide what a proposed edit means. change: { file, before, after, touched? }
+ * Returns null (nothing to report) or { level: "warn"|"ask"|"block", reason, locks: [...], stable: summary|null }.
+ * Must be called with cwd inside the repo.
+ */
+function evaluate(change) {
+  if (!s.configExists()) return null;
+  const cfg = s.loadConfig();
+  const reg = s.loadRegistry();
+  const person = team.current(cfg);
+  const hits = affected(reg, s.root(), change)
+    .filter((h) => !team.exempt(cfg, h.lock, person))
+    .map((h) => {
+      const pol = (cfg.policies[h.lock.type] || cfg.policies.bug).onEdit;
+      return { ...h, level: h.removed.length ? pol : 'warn' };
+    });
+
+  // Working-code guard: committed lines (someone else's, or your own older ones) being deleted/rewritten.
+  let stableSum = null; let stableLevel = null;
+  const sc = cfg.stableCode || {};
+  if (sc.enabled !== false && change.before) {
+    const rel = path.relative(s.root(), path.resolve(change.file));
+    const lockedText = new Set(hits.flatMap((h) => h.lock.snippet.map(norm)));
+    const removed = stable.removedLines(change.before, change.after).filter((r) => !lockedText.has(norm(r.text)));
+    if (removed.length >= (sc.minLines || 1)) {
+      const found = stable.stableRemovals(removed, g.blameFull(null, rel), person, sc);
+      if (found.length >= (sc.minLines || 1)) { stableSum = stable.summarize(cfg, found, team); stableLevel = sc.onEdit || 'ask'; }
+    }
+  }
+  if (!hits.length && !stableSum) return null;
+  const level = [...hits.map((h) => h.level), stableLevel].filter(Boolean).reduce((m, l) => (RANK[l] > RANK[m] ? l : m), 'warn');
+  const file = path.relative(s.root(), path.resolve(change.file)).split(path.sep).join('/');
+  return {
+    level,
+    reason: message(cfg, hits, person, stableSum, file),
+    locks: hits.map((h) => ({ id: h.lock.id, title: h.lock.title, type: h.lock.type, owner: h.lock.owner, level: h.level,
+      lines: h.lines, removed: h.removed, approvers: team.approvers(cfg, h.lock).map(team.handle) })),
+    stable: stableSum,
+  };
+}
+
 function run() {
   try {
     const input = JSON.parse(readStdin() || '{}');
     if (!['Edit', 'MultiEdit', 'Write'].includes(input.tool_name)) return;
     if (input.cwd) process.chdir(input.cwd);
-    if (!s.configExists()) return;
-    const cfg = s.loadConfig();
-    const reg = s.loadRegistry();
     const change = changeFrom(input);
     if (!change) return;
-    const person = team.current(cfg);
-    const hits = affected(reg, s.root(), change)
-      .filter((h) => !team.exempt(cfg, h.lock, person))
-      .map((h) => {
-        const pol = (cfg.policies[h.lock.type] || cfg.policies.bug).onEdit;
-        return { ...h, level: h.removed.length ? pol : 'warn' };
-      });
-
-    // Working-code guard: committed lines (someone else's, or your own older ones) being deleted/rewritten.
-    let stableSum = null; let stableLevel = null;
-    const sc = cfg.stableCode || {};
-    if (sc.enabled !== false && change.before) {
-      const rel = path.relative(s.root(), path.resolve(change.file));
-      const lockedText = new Set(hits.flatMap((h) => h.lock.snippet.map(norm)));
-      const removed = stable.removedLines(change.before, change.after).filter((r) => !lockedText.has(norm(r.text)));
-      if (removed.length >= (sc.minLines || 1)) {
-        const found = stable.stableRemovals(removed, g.blameFull(null, rel), person, sc);
-        if (found.length >= (sc.minLines || 1)) { stableSum = stable.summarize(cfg, found, team); stableLevel = sc.onEdit || 'ask'; }
-      }
-    }
-    if (!hits.length && !stableSum) return;
-    const level = [...hits.map((h) => h.level), stableLevel].filter(Boolean).reduce((m, l) => (RANK[l] > RANK[m] ? l : m), 'warn');
-    const reason = message(cfg, hits, person, stableSum, path.relative(s.root(), path.resolve(change.file)).split(path.sep).join('/'));
-    const out = level === 'warn'
-      ? { systemMessage: reason }
-      : { hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: level === 'block' ? 'deny' : 'ask', permissionDecisionReason: reason } };
+    const r = evaluate(change);
+    if (!r) return;
+    const out = r.level === 'warn'
+      ? { systemMessage: r.reason }
+      : { hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: r.level === 'block' ? 'deny' : 'ask', permissionDecisionReason: r.reason } };
     process.stdout.write(JSON.stringify(out));
   } catch {
     // A broken hook must never stop someone from working.
   }
 }
 
-module.exports = { run, changeFrom, message };
+module.exports = { run, changeFrom, message, evaluate };

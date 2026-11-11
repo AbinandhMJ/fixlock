@@ -22,6 +22,10 @@ Setup (team lead, once):
   fixlock init                         Interactive: team, roles, GitHub users, policies, tracker, hooks
   fixlock team [list|add|remove]       Manage members: team add --name Abi --github abinandhmj --email a@x.com --role lead
 
+AI assistants:
+  fixlock setup [assistant…]           Connect claude-code, cursor, copilot, codex, gemini, windsurf (or "all")
+  fixlock mcp                          Run the MCP server (assistants start this themselves)
+
 AI tools & docs:
   fixlock tools                        Detect AI tools (repo, CLIs, VS Code/Cursor extensions) and show what is enabled
   fixlock tools add|remove <id…>       claude-code codex cursor copilot windsurf gemini cline roo continue aider amazonq junie
@@ -45,6 +49,7 @@ CI / hooks:
 `;
 
 const [, , sub, ...rest] = process.argv;
+if (sub === '--version' || sub === '-v' || sub === 'version') { console.log(require('../package.json').version); process.exit(0); }
 const args = parse(rest);
 const alias = { ls: 'list', rm: 'remove' };
 const name = alias[sub] || sub;

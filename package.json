@@ -1,50 +1,51 @@
 {
   "name": "@abinandhmj/fixlock",
-  "version": "0.4.0",
-  "description": "Stop fixed bugs and finished features from coming back. Team roles, owner approvals, AI edit warnings, rules files for every AI coding tool, auto CHANGELOG, Linear/ClickUp/Notion sync.",
+  "version": "0.5.0",
+  "description": "Stop AI coding assistants (and teammates) from silently undoing bug fixes. Lock fixed lines, check edits via MCP in Claude Code, Cursor, Copilot and Codex, and block reverting PRs until the owner approves.",
   "bin": {
     "fixlock": "bin/fixlock.js"
   },
   "files": [
     "bin",
-    "src",
-    "docs"
+    "src"
   ],
   "engines": {
     "node": ">=18"
   },
   "scripts": {
-    "test": "node test/e2e.js && node test/trackers.js",
-    "prepublishOnly": "node test/e2e.js && node test/trackers.js",
-    "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "test": "node test/e2e.js && node test/trackers.js && node test/mcp.js",
+    "prepublishOnly": "node test/e2e.js && node test/trackers.js && node test/mcp.js",
+    "docs:dev": "node scripts/llms.js && vitepress dev docs",
+    "docs:build": "node scripts/llms.js && vitepress build docs",
+    "docs:preview": "vitepress preview docs",
+    "version": "node -e \"const fs=require('fs');const v=require('./package.json').version;const s=JSON.parse(fs.readFileSync('server.json','utf8'));s.version=v;s.packages[0].version=v;fs.writeFileSync('server.json',JSON.stringify(s,null,2)+'\\n')\" && git add server.json"
   },
   "keywords": [
-    "regression",
-    "revert",
-    "bug-fix",
-    "ci",
-    "pull-request",
-    "code-review",
     "ai-coding",
+    "ai-agents",
+    "guardrails",
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
     "claude-code",
+    "cursor",
+    "github-copilot",
     "codex",
+    "agents-md",
+    "code-review",
+    "regression",
+    "bug-fix",
+    "revert",
+    "pull-request",
+    "ci",
     "git",
-    "git-blame",
+    "git-hooks",
+    "codeowners",
+    "changelog",
     "linear",
     "clickup",
     "notion",
-    "codeowners",
-    "team",
-    "cursor",
-    "copilot",
-    "windsurf",
-    "gemini",
-    "cline",
-    "aider",
-    "agents-md",
-    "changelog"
+    "zero-dependency"
   ],
   "author": "Abinandh <abinandhmurukesan@gmail.com>",
   "license": "MIT",
@@ -61,5 +62,6 @@
   },
   "devDependencies": {
     "vitepress": "^1.6.3"
-  }
+  },
+  "mcpName": "io.github.abinandhmj/fixlock"
 }

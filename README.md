@@ -4,171 +4,126 @@
     <img alt="fixlock" src="https://abinandhmj.github.io/fixlock/fixlock-logo.svg" height="72">
   </picture>
 </p>
-<p align="center"><b>fixed stays fixed.</b></p>
+<p align="center"><b>fixed stays fixed.</b><br>Stop AI coding assistants (and teammates) from silently undoing bug fixes.</p>
 
-   [![npm](https://img.shields.io/npm/v/@abinandhmj/fixlock)](https://www.npmjs.com/package/@abinandhmj/fixlock) [![docs](https://img.shields.io/badge/docs-fixlock-B8F23A)](https://abinandhmj.github.io/fixlock/)
+<p align="center">
+  <a href="https://www.npmjs.com/package/@abinandhmj/fixlock"><img alt="npm" src="https://img.shields.io/npm/v/@abinandhmj/fixlock?color=B8F23A&labelColor=0E1116"></a>
+  <a href="https://github.com/AbinandhMJ/fixlock/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/AbinandhMJ/fixlock/actions/workflows/ci.yml/badge.svg"></a>
+  <img alt="zero dependencies" src="https://img.shields.io/badge/dependencies-0-B8F23A?labelColor=0E1116">
+  <img alt="node" src="https://img.shields.io/node/v/@abinandhmj/fixlock?labelColor=0E1116">
+  <a href="LICENSE"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-B8F23A?labelColor=0E1116"></a>
+  <a href="https://abinandhmj.github.io/fixlock/"><img alt="docs" src="https://img.shields.io/badge/docs-abinandhmj.github.io%2Ffixlock-B8F23A?labelColor=0E1116"></a>
+</p>
 
-**Stop fixed bugs and finished features from coming back.**
+<p align="center"><b>Works with</b> Claude Code · Cursor · GitHub Copilot · OpenAI Codex · Gemini CLI · Windsurf · Cline · Aider · any MCP client</p>
 
-You fix a bug. Weeks later a teammate's AI ports a feature from an old codebase, rewrites the file, and your fix disappears. Git merges it with **no conflict**, because to git it's just a normal edit.
+---
 
-fixlock lets a team **lock** the lines that hold a bug fix or a feature, with an owner. Then:
+You fix a bug. Weeks later an AI assistant ports a feature from an old codebase, rewrites the file, and your fix is gone. Git merges it with **no conflict**, because to git it's just a normal edit.
 
-- **Before an AI edits them**, the teammate is told what they're about to break (Claude Code hook):
-  ```
-  🔒 fixlock: heads up Ravi — this change affects a locked bug fix, which may bring back old behaviour:
-  • FIX-001 "SAP date format" (bug fix by @abinandhmj) — src/date.ts lines 2-3
-    Why it exists: SAP B1 rejects ISO timestamps for DocDate
-    This edit removes/rewrites: return `${d.getFullYear()}-${p(d.getMonth() + 1)}`;
-    Policy: confirm with the developer; the PR will need approval from @abinandhmj.
-  Leave these lines unchanged, or build around them, unless the owner has agreed.
-  ```
-- **Before a commit**, the same warning shows in the terminal (it never blocks).
-- **On the PR**, CI fails until the lock's owner (or a lead, per policy) approves the PR.
-- **Your tracker updates itself**: locking a fix moves the Linear / ClickUp / Notion issue to *Done*; a PR that reverts it moves the issue back to *Reopened* with a comment.
+**fixlock** lets a team **lock** the lines that hold a bug fix or a finished feature, each with an owner. Then:
 
-Zero dependencies. Node ≥ 18. Windows, macOS, Linux.
+| When | What happens |
+|---|---|
+| **Before the AI edits** | The assistant checks with fixlock (MCP server, rules file, or Claude Code hook) and is told what it would break, why the code exists and who owns it. Depending on your policy it warns, asks the developer, or doesn't touch the lines. |
+| **Before a commit** | The same warning shows in the terminal (it never blocks). |
+| **On the pull request** | CI fails until the lock's owner (or a lead) approves. |
+| **In your tracker** | Locking a fix moves the Linear / ClickUp / Notion issue to *Done*; a PR that reverts it reopens it. |
 
-📖 **Docs: [abinandhmj.github.io/fixlock](https://abinandhmj.github.io/fixlock/)** ·  [Getting started](docs/getting-started.md) · [Team lead](docs/team-lead-guide.md) · [Developer](docs/developer-guide.md) · [AI tools](docs/ai-tools.md) · [CI](docs/ci-setup.md) · [Trackers](docs/trackers.md) · [Config](docs/configuration.md) · [Commands](docs/cli-reference.md) · [Troubleshooting](docs/troubleshooting.md)
+Locks are created automatically from `fix:` / `feat:` commits, and a **working-code guard** also covers code nobody locked: an AI rewrite of committed, working code asks the developer first.
 
-## Setup (team lead, once)
+## Quick start
 
 ```bash
 npm i -D @abinandhmj/fixlock
-npx fixlock init
+npx fixlock init                         # team, rules, AI assistants, hooks
+npx fixlock autolock --all --dry-run     # see which past fixes it would lock
 ```
 
-`init` asks for:
-1. **Team members**: name, GitHub username, git email, role (`lead` / `developer` / `reviewer`)
-2. **Policies** for bug fixes and features:
-   - on edit: `warn` (show warning), `ask` (AI must ask the developer), `block` (AI must not touch the lines)
-   - PR approval from: `owner`, `lead`, `owner-or-lead`, `none`
-3. **Tracker**: Linear, ClickUp, Notion, or a webhook (Bugasura, Jira, … via Zapier/Make/n8n), plus the status names to use
-4. **AI tools** the team uses (detected automatically; see below)
-5. **Hooks**: Claude Code hook, git pre-commit warning, `.github/CODEOWNERS`
-
-Commit `.fixlock/` and every generated file (rules files, `CHANGELOG.md`, `.claude/settings.json`, `.github/`). Every developer then runs `npm install` (and `npx fixlock install-hook` for the commit warning).
-
-Add people later: `npx fixlock team add --name Ravi --github ravi --email ravi@co.com --role developer`
-
-## No AI rewrites working code without telling you
-
-Two layers protect code, so nobody has to remember to lock everything:
-
-**1. Auto-lock.** Every `fix:` / `feat:` commit (and commits saying "fixed … bug", "hotfix", …) locks its own lines through a post-commit hook. The locks go in a follow-up `chore(fixlock)` commit. Issue keys in the message (`fix(ENG-15): …`, `CU-86abc`) are linked automatically. For fixes that are already in your history:
+Then connect your assistant:
 
 ```bash
-npx fixlock autolock --all --dry-run   # see what would be locked
-npx fixlock autolock --all             # lock past fixes that are still in the code
+npx fixlock setup claude-code   # or: cursor · copilot · codex · gemini · windsurf · all
 ```
 
-**2. Working-code guard.** Code that isn't locked is still protected. If an AI edit would delete or rewrite committed lines written by someone else, or by you more than 7 days ago, the developer is asked first:
+📖 **[Full docs](https://abinandhmj.github.io/fixlock/)**: [Getting started](https://abinandhmj.github.io/fixlock/getting-started) · [Team lead](https://abinandhmj.github.io/fixlock/team-lead-guide) · [Developer](https://abinandhmj.github.io/fixlock/developer-guide) · [AI assistants](https://abinandhmj.github.io/fixlock/integrations/) · [CI](https://abinandhmj.github.io/fixlock/ci-setup) · [Commands](https://abinandhmj.github.io/fixlock/cli-reference)
+
+## AI assistants
+
+| Assistant | MCP check before edit | Rules file | Pre-edit hook | Guide |
+|---|:-:|---|:-:|---|
+| Claude Code | ✅ `.mcp.json` | `CLAUDE.md` | ✅ | [→](https://abinandhmj.github.io/fixlock/integrations/claude-code) |
+| Cursor | ✅ `.cursor/mcp.json` | `.cursor/rules/fixlock.mdc` | | [→](https://abinandhmj.github.io/fixlock/integrations/cursor) |
+| GitHub Copilot | ✅ `.vscode/mcp.json` | `.github/copilot-instructions.md` | | [→](https://abinandhmj.github.io/fixlock/integrations/copilot) |
+| OpenAI Codex | ✅ `~/.codex/config.toml` | `AGENTS.md` | | [→](https://abinandhmj.github.io/fixlock/integrations/codex) |
+| Gemini CLI | ✅ `.gemini/settings.json` | `GEMINI.md` | | |
+| Windsurf | ✅ user config | `.windsurf/rules/fixlock.md` | | |
+| Cline, Roo, Continue, Aider, Amazon Q, Junie | any MCP client | their native rules file | | [→](https://abinandhmj.github.io/fixlock/ai-tools) |
+
+The **MCP server** (`npx fixlock mcp`) gives every assistant four read-only tools:
+
+| Tool | Use |
+|---|---|
+| `fixlock_check_edit` | Before changing existing lines: returns `ok` / `warn` / `ask` / `block`, with the lock, its reason and owner |
+| `fixlock_why` | What's locked in a file or on given lines, and whether you may change it |
+| `fixlock_list` | All locks in the repo, e.g. before a big refactor |
+| `fixlock_check_staged` | Check staged changes before committing |
+
+```json
+{ "mcpServers": { "fixlock": { "command": "npx", "args": ["--no-install", "fixlock", "mcp"] } } }
+```
+
+What the developer sees when an assistant tries to undo a fix:
 
 ```
-🔒 fixlock: heads up Ravi — this change affects code that already works and may change how it behaves:
-• 4 existing line(s) in src/totals.ts would be deleted or rewritten — code that already works.
-  Written by @abinandhmj; last changed today ("chore: totals").
-AI: do not rewrite working code silently. Tell the developer exactly which lines you want to change and why…
+🔒 fixlock: heads up Ravi — this change affects a locked bug fix, which may bring back old behaviour:
+• FIX-001 "SAP date format" (bug fix by @abinandhmj) — src/date.ts lines 2-3
+  Why it exists: SAP B1 rejects ISO timestamps for DocDate
+  This edit removes/rewrites: return `${d.getFullYear()}-${p(d.getMonth() + 1)}`;
+  Policy: confirm with the developer; the PR will need approval from @abinandhmj.
 ```
 
-Your own uncommitted or fresh work is never interrupted. The same check runs at commit time and on the PR (as a warning in the PR comment). Every AI tool's rules file starts with: *never rewrite, delete or replace code that already works without telling the developer first.* The Claude Code settings also stop the AI from editing the hook config or git hooks to switch this off.
-
-Config (`.fixlock/config.json`): `"stableCode": { "onEdit": "ask", "olderThanDays": 7, "minLines": 3 }`, `"autoLock": { "lockFeatures": true, "maxLines": 40 }`.
-
-## Daily use
+## Locking fixes
 
 ```bash
-# Lock a fix right after fixing it
+# automatic: commit with fix: / feat: and the lines are locked (post-commit hook)
+git commit -m "fix(ENG-15): handle null customer in invoice total"
+
+# by hand
 npx fixlock mark src/app/core/utils/date.util.ts 3-4 \
-  -m "SAP B1 rejects ISO timestamps for DocDate" --title "SAP date format" \
-  --issue linear:ENG-12
+  -m "SAP B1 rejects ISO timestamps for DocDate" --title "SAP date format" --issue linear:ENG-12
 
-# Lock a finished feature
-npx fixlock mark src/app/orders/approval.service.ts 40-58 --type feature \
-  --title "Two-step order approval" --issue clickup:86abc12
-
-# Can I change this line?
+# can I change this line?
 npx fixlock why src/app/core/utils/date.util.ts:3
 ```
 
-Issue refs: `linear:ENG-12`, `clickup:<task id>`, `notion:<page id>`, `bugasura:<id>` / `webhook:<id>` (sent to your webhook).
-
 ## CI
 
-- GitHub Actions: `examples/github-action.yml` (reads PR approvals with `GITHUB_TOKEN`, posts a PR comment, re-runs on approval)
-- Jenkins multibranch: `examples/Jenkinsfile.stage` (uses `CHANGE_ID`, `CHANGE_AUTHOR`)
+Add the check to your pipeline and make it required on `main`. A PR that changes a locked line passes only once the right person approves it.
+Examples: [GitHub Actions](examples/github-action.yml) · [Jenkins](examples/Jenkinsfile.stage) · [CI guide](https://abinandhmj.github.io/fixlock/ci-setup)
 
-Make the check required on `main`. A PR passes when every reverted lock has an approval from the right person, or when the PR author is that person.
+## Why trust it
 
-## Environment variables
+- **Zero runtime dependencies.** The whole tool is readable in [`src/`](src/).
+- **No telemetry.** The network is used only for GitHub approvals and your tracker, when you configure them.
+- **Read-only MCP server.** stdio only; it never edits files.
+- **Never blocks local work.** Hooks warn; only CI enforces.
+- **Tested on Linux, Windows and macOS** with Node 18, 20 and 22; releases are published with [npm provenance](https://docs.npmjs.com/generating-provenance-statements).
 
-| Var | Used for |
-|---|---|
-| `GITHUB_TOKEN` | Read PR approvals in CI |
-| `LINEAR_API_KEY` / `CLICKUP_TOKEN` / `NOTION_TOKEN` | Tracker sync |
-| `FIXLOCK_WEBHOOK_URL`, `FIXLOCK_WEBHOOK_SECRET` | Webhook tracker |
-| `FIXLOCK_USER` | Override who you are (GitHub username or email) |
+See [SECURITY.md](SECURITY.md) for exactly what fixlock reads and writes.
 
-Tokens are never written to the repo.
+## Also included
 
-## Works with whatever AI your team uses
+Team roles and owner/lead approval policies · generated `CODEOWNERS` · `CHANGELOG.md` from locks and Conventional Commits · Linear, ClickUp, Notion and webhook (Bugasura, Jira…) sync · AI tool detection (`npx fixlock tools`).
 
-Each developer may use a different AI. `fixlock tools` detects them from the repo, installed CLIs, and VS Code / Cursor / Windsurf extensions:
+## Limitations
 
-```
-● on     claude-code  Claude Code (CLI / VS Code / JetBrains)    CLAUDE.md
-                       detected: repo: .claude; command: claude
-● on     codex        OpenAI Codex (CLI / IDE extension)         AGENTS.md
-                       detected: extension: openai.chatgpt
-○ found  cursor       Cursor                                     .cursor/rules/fixlock.mdc
-Found on this machine/repo but not enabled: cursor
-→ npx fixlock tools add cursor
-```
+- Matching is text-based: renaming a variable inside a locked line counts as a change. Re-lock after intentional edits.
+- Only Claude Code can intercept an edit before it happens. Other assistants check through MCP or their rules file, so a model that ignores both is caught at commit time and in CI.
+- Approvals are read from GitHub; GitLab and Bitbucket are on the roadmap.
 
-For every enabled tool, fixlock writes that tool's own rules file with the team rules and the current locks, and keeps it updated on every `mark` / `remove`:
+## Contributing
 
-| Tool | File |
-|---|---|
-| Claude Code | `CLAUDE.md` + pre-edit hook in `.claude/settings.json` |
-| OpenAI Codex (CLI / extension) | `AGENTS.md` |
-| Cursor | `.cursor/rules/fixlock.mdc` (always applied) |
-| GitHub Copilot | `.github/copilot-instructions.md` |
-| Windsurf | `.windsurf/rules/fixlock.md` |
-| Gemini CLI / Code Assist | `GEMINI.md` |
-| Cline | `.clinerules/fixlock.md` |
-| Roo Code | `.roo/rules/fixlock.md` |
-| Continue | `.continue/rules/fixlock.md` |
-| Aider | `CONVENTIONS.md` (+ `read:` in `.aider.conf.yml`) |
-| Amazon Q Developer | `.amazonq/rules/fixlock.md` |
-| JetBrains Junie | `.junie/guidelines.md` |
-
-In shared files (CLAUDE.md, AGENTS.md…) fixlock only touches its own marked section; your own content is kept. Only Claude Code has a pre-edit hook. The other tools follow the written rules, and the commit warning and CI gate apply to everyone.
-
-## CHANGELOG.md
-
-fixlock keeps `CHANGELOG.md` ([Keep a Changelog](https://keepachangelog.com) format) up to date from locks and Conventional Commits (`feat:`, `fix:`, `perf:`…). The generated AI rules tell every assistant to write commits that way.
-
-```
-## [Unreleased]
-
-### Added
-- **orders:** two-step approval (11d691c)
-
-### Fixed
-- SAP date format (FIX-001, @abinandhmj, linear:ENG-12)
-- **sap:** send DocDate as yyyy-MM-dd (078076a)
-```
-
-`npx fixlock release 1.4.0` freezes that section as `## [1.4.0] - <date>`. A PR template with a fixlock checklist is also added.
-
-## Limitations (v0.2)
-
-- Matching is text-based: renaming a variable inside a locked line counts as a change. Re-`mark` after intentional edits.
-- Tracker sync runs on every CI run with `--notify`, so repeated pushes add repeated comments.
-- Approvals are read from GitHub. GitLab/Bitbucket approvals are on the roadmap.
-
-## Roadmap
-
-VS Code extension (inline lock markers while typing), MCP server, GitLab approvals, AST-aware matching.
+Issues and PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). Please report security issues privately ([SECURITY.md](SECURITY.md)).
 
 MIT licensed.

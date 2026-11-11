@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   title: 'fixlock',
-  description: 'Stop fixed bugs and finished features from coming back.',
+  description: 'Stop AI coding assistants and teammates from silently undoing bug fixes. Works with Claude Code, Cursor, GitHub Copilot and Codex via MCP.',
   base: '/fixlock/',
   cleanUrls: true,
   lastUpdated: false,
@@ -18,6 +18,7 @@ export default defineConfig({
     logo: { light: '/fixlock-mark.svg', dark: '/fixlock-mark-dark.svg', alt: 'fixlock' },
     nav: [
       { text: 'Get started', link: '/getting-started' },
+      { text: 'AI assistants', link: '/integrations/' },
       { text: 'Commands', link: '/cli-reference' },
     ],
     sidebar: [
@@ -28,6 +29,14 @@ export default defineConfig({
         { text: 'Developer guide', link: '/developer-guide' },
         { text: 'AI tools', link: '/ai-tools' },
       ] },
+      { text: 'AI assistants', items: [
+        { text: 'Overview', link: '/integrations/' },
+        { text: 'Claude Code', link: '/integrations/claude-code' },
+        { text: 'Cursor', link: '/integrations/cursor' },
+        { text: 'GitHub Copilot', link: '/integrations/copilot' },
+        { text: 'OpenAI Codex', link: '/integrations/codex' },
+        { text: 'MCP server reference', link: '/integrations/mcp' },
+      ] },
       { text: 'Setup', items: [
         { text: 'CI setup', link: '/ci-setup' },
         { text: 'Issue trackers', link: '/trackers' },
@@ -36,6 +45,7 @@ export default defineConfig({
         { text: 'Configuration', link: '/configuration' },
         { text: 'Command reference', link: '/cli-reference' },
         { text: 'Troubleshooting', link: '/troubleshooting' },
+        { text: 'Security & privacy', link: '/security' },
       ] },
     ],
     socialLinks: [

@@ -1,0 +1,35 @@
+# Changelog
+
+All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelog.com), versions follow [SemVer](https://semver.org).
+
+## [0.5.0] - 2026-11-11
+
+### Added
+- **MCP server** (`fixlock mcp`): any MCP-capable assistant (Claude Code, Cursor, GitHub Copilot in VS Code, Codex, Gemini CLI, Windsurf) can check an edit before making it. Tools: `fixlock_check_edit`, `fixlock_why`, `fixlock_list`, `fixlock_check_staged`.
+- **`fixlock setup <assistant>`**: one command to connect Claude Code, Cursor, Copilot, Codex, Gemini CLI or Windsurf. `init` offers it too.
+- AI rules files now tell assistants to call `fixlock_check_edit` before changing existing lines.
+- `fixlock --version`.
+- CI on Linux, Windows and macOS (Node 18/20/22); releases published with npm provenance.
+- Docs: integration guides per assistant, security & privacy page, `llms.txt` for AI assistants.
+
+### Fixed
+- An edit whose text started with a line break was counted as touching the line above it.
+- The npm package no longer ships the docs folder.
+
+## [0.4.0] - 2026-11-08
+
+### Added
+- Auto-lock lines from `fix:` / `feat:` commits (post-commit hook) and `autolock --all` to lock fixes already in history.
+- Working-code guard: AI edits that rewrite committed, working code ask the developer first.
+- Rules files for 12 AI tools, AI tool detection (`fixlock tools`), generated `CHANGELOG.md`, `release` command.
+- Team roles, owner/lead approval policies, Claude Code pre-edit hook, Linear / ClickUp / Notion / webhook sync, CODEOWNERS.
+- User guides and docs site.
+
+## [0.1.0] - 2026-11-05
+
+### Added
+- First release: fix registry (`mark`), CI revert check (`check`), protected authors, CLAUDE.md / AGENTS.md sync.
+
+[0.5.0]: https://github.com/AbinandhMJ/fixlock/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/AbinandhMJ/fixlock/compare/v0.1.0...v0.4.0
+[0.1.0]: https://github.com/AbinandhMJ/fixlock/releases/tag/v0.1.0

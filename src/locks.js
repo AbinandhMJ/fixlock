@@ -55,4 +55,14 @@ function affected(reg, root, change) {
   return out;
 }
 
-module.exports = { norm, trivial, locate, missingLines, affected, toPosix };
+/** 1-based [first, last] line numbers that `needle` (found at index i of content) really covers, ignoring leading/trailing line breaks. */
+function spanLines(content, i, needle) {
+  let a = i; let b = i + needle.length;
+  while (a < b && content[a] === '\n') a++;
+  while (b > a && content[b - 1] === '\n') b--;
+  if (a >= b) return null;
+  const start = content.slice(0, a).split('\n').length;
+  return [start, start + content.slice(a, b).split('\n').length - 1];
+}
+
+module.exports = { spanLines, norm, trivial, locate, missingLines, affected, toPosix };

@@ -27,11 +27,19 @@ async function cmdInit(args) {
   if (hooks.claude) init.installClaudeHook();
   if (hooks.git) init.installGitHook();
   if (hooks.codeowners) writeCodeowners(true);
+  let mcpDone = [];
+  if (hooks.mcp) {
+    const project = ['claude-code', 'cursor', 'copilot', 'gemini'].filter((id) => agents.enabled(cfg).includes(id));
+    if (project.length) mcpDone = require('./setup').setup(project).results;
+  }
   syncAgentFiles(true);
   console.log(c.green('\n✔ fixlock is set up.'));
   console.log(`  team: ${cfg.team.map((m) => `${m.name} (${m.role})`).join(', ') || '(none)'}`);
   console.log(`  AI tools: ${agents.enabled(cfg).join(', ') || '(none)'}`);
   if (hooks.claude) console.log('  Claude Code hook: .claude/settings.json');
+  if (mcpDone.length) console.log(`  MCP server connected for: ${mcpDone.map((r) => r.label).join(', ')}`);
+  const userLevel = ['codex', 'windsurf'].filter((id) => agents.enabled(cfg).includes(id));
+  if (hooks.mcp && userLevel.length) console.log(`  ${userLevel.join(' / ')} users: run  npx fixlock setup ${userLevel.join(' ')}  on your own machine`);
   console.log('\nCommit .fixlock/ and the generated files above so the whole team gets them.');
   console.log('Every developer runs once:  npm i -D @abinandhmj/fixlock' + (hooks.git ? '  &&  npx fixlock install-hook' : ''));
   console.log('Lock a fix:  npx fixlock mark <file> <start>-<end> -m "why" --issue linear:ENG-12');
@@ -282,6 +290,28 @@ function toMarkdown(cfg, findings, base) {
   return md;
 }
 
+/* ---------------- setup (AI assistants) ---------------- */
+function cmdSetup(args) {
+  const names = args._.length ? args._ : null;
+  if (!names) {
+    const T = require('./setup').TARGETS;
+    console.log(c.bold('Connect an AI assistant to fixlock:\n'));
+    for (const [id, t] of Object.entries(T)) console.log(`  npx fixlock setup ${id.padEnd(12)} ${t.label}${t.scope === 'user' ? c.dim('  (writes your user config)') : ''}`);
+    console.log(`  npx fixlock setup all          every project-level one above`);
+    return;
+  }
+  if (!s.configExists()) throw new Error('fixlock is not set up in this repo yet. Run: npx fixlock init');
+  const { results, cmd } = require('./setup').setup(names, { includeUser: !!args.user });
+  for (const r of results) {
+    console.log(c.green(`✔ ${r.label}`));
+    for (const f of r.files) console.log(c.dim(`    ${f.status.padEnd(9)} ${path.relative(process.cwd(), f.file) || f.file}${f.note ? '  — ' + f.note : ''}`));
+  }
+  syncAgentFiles(true);
+  console.log(`\nServer command: ${cmd.command} ${cmd.args.join(' ')}`);
+  console.log('Restart the assistant (or reload its MCP servers), then ask it: "use fixlock_why on <file>".');
+  if (results.some((r) => r.scope === 'project')) console.log('Commit the generated config files so the whole team gets them.');
+}
+
 /* ---------------- autolock ---------------- */
 async function cmdAutolock(args) {
   const cfg = s.loadConfig();
@@ -378,5 +408,7 @@ module.exports = {
   codeowners: () => writeCodeowners(false),
   'install-hook': () => { init.installGitHook(); console.log(c.green('✔ pre-commit warning hook installed')); },
   'install-claude-hook': () => { init.installClaudeHook(); console.log(c.green('✔ Claude Code hook added to .claude/settings.json')); },
+  setup: cmdSetup,
+  mcp: () => require('./mcp').serve(),
   hook: (args) => { if (args._[0] !== 'claude') throw new Error('Usage: fixlock hook claude'); require('./hook').run(); },
 };

@@ -11,12 +11,14 @@ fixlock stops fixed bugs and finished features from coming back, whether the cha
 | [Getting started](getting-started.md) | want fixlock running in 10 minutes |
 | [Team lead guide](team-lead-guide.md) | set up the project, the team and the rules |
 | [Developer guide](developer-guide.md) | write code day to day and want to know what the warnings mean |
+| [AI assistants](integrations/index.md) | connect Claude Code, Cursor, Copilot or Codex (MCP server) |
 | [AI tools](ai-tools.md) | use Claude Code, Codex, Cursor, Copilot or another assistant |
 | [CI setup](ci-setup.md) | wire the PR check into GitHub Actions or Jenkins |
 | [Issue trackers](trackers.md) | want Linear, ClickUp, Notion or Bugasura to update themselves |
 | [Configuration reference](configuration.md) | need every setting in `.fixlock/config.json` |
 | [Command reference](cli-reference.md) | need every command and flag |
 | [Troubleshooting](troubleshooting.md) | hit an error |
+| [Security & privacy](security.md) | need to know what fixlock can access |
 
 ## The idea in one minute
 

@@ -6,6 +6,10 @@ title: AI tools
 
 Each developer can use a different AI assistant. fixlock writes the rules into each tool's own instructions file, so every assistant gets the same message: **don't rewrite fixed or working code without telling the developer.**
 
+::: tip Check before editing, in any assistant
+Besides the rules files below, fixlock includes an **MCP server**. Assistants can call `fixlock_check_edit` before changing a line and get a verdict with the owner and reason. Set it up with `npx fixlock setup <assistant>`; see [AI assistants](integrations/).
+:::
+
 ## Which tools are used?
 
 ```bash

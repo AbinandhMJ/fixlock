@@ -23,6 +23,15 @@ fixlock team remove ravik
 ### `tools [list | add | remove] [ids…]`
 Detect AI tools and choose which get rules files. See [AI tools](ai-tools.md).
 
+### `setup [assistant…]`
+Connect AI assistants: `claude-code`, `cursor`, `copilot`, `codex`, `gemini`, `windsurf`, or `all` (project-level ones). Writes the MCP server config and the assistant's rules file. `codex` and `windsurf` write to your user config. See [AI assistants](integrations/).
+
+### `mcp`
+Runs the MCP server over stdio. Assistants start it themselves; see the [MCP server reference](integrations/mcp.md).
+
+### `--version`
+Prints the installed version.
+
 ### `install-hook`
 Installs git hooks on this machine: `pre-commit` (warning) and `post-commit` (auto-lock).
 
