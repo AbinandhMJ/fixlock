@@ -18,6 +18,9 @@ function parse(argv) {
 
 const HELP = `fixlock — stop fixed bugs and finished features from coming back
 
+See it first:
+  fixlock demo [--keep] [--fast]       60-second walkthrough in a throwaway repo (nothing in your projects is touched)
+
 Setup (team lead, once):
   fixlock init                         Interactive: team, roles, GitHub users, policies, tracker, hooks
   fixlock team [list|add|remove]       Manage members: team add --name Abi --github abinandhmj --email a@x.com --role lead

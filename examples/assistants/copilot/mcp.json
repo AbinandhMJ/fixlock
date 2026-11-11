@@ -1,0 +1,13 @@
+{
+  "servers": {
+    "fixlock": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "--no-install",
+        "fixlock",
+        "mcp"
+      ]
+    }
+  }
+}

@@ -19,6 +19,10 @@
 
 ---
 
+<p align="center"><img src="https://abinandhmj.github.io/fixlock/demo.svg" alt="fixlock demo: a bug fix is locked, an AI edit that would undo it is stopped, and the pull request is blocked until the owner approves" width="860"></p>
+
+<p align="center"><b>See it yourself in 60 seconds</b> (throwaway repo, nothing to set up):<br><code>npx @abinandhmj/fixlock demo</code></p>
+
 You fix a bug. Weeks later an AI assistant ports a feature from an old codebase, rewrites the file, and your fix is gone. Git merges it with **no conflict**, because to git it's just a normal edit.
 
 **fixlock** lets a team **lock** the lines that hold a bug fix or a finished feature, each with an owner. Then:
@@ -46,7 +50,7 @@ Then connect your assistant:
 npx fixlock setup claude-code   # or: cursor · copilot · codex · gemini · windsurf · all
 ```
 
-📖 **[Full docs](https://abinandhmj.github.io/fixlock/)**: [Getting started](https://abinandhmj.github.io/fixlock/getting-started) · [Team lead](https://abinandhmj.github.io/fixlock/team-lead-guide) · [Developer](https://abinandhmj.github.io/fixlock/developer-guide) · [AI assistants](https://abinandhmj.github.io/fixlock/integrations/) · [CI](https://abinandhmj.github.io/fixlock/ci-setup) · [Commands](https://abinandhmj.github.io/fixlock/cli-reference)
+📖 **[Full docs](https://abinandhmj.github.io/fixlock/)**: [How it works](https://abinandhmj.github.io/fixlock/how-it-works) · [Getting started](https://abinandhmj.github.io/fixlock/getting-started) · [Team lead](https://abinandhmj.github.io/fixlock/team-lead-guide) · [Developer](https://abinandhmj.github.io/fixlock/developer-guide) · [AI assistants](https://abinandhmj.github.io/fixlock/integrations/) · [CI](https://abinandhmj.github.io/fixlock/ci-setup) · [Recipes](https://abinandhmj.github.io/fixlock/recipes) · [FAQ](https://abinandhmj.github.io/fixlock/faq) · [Commands](https://abinandhmj.github.io/fixlock/cli-reference)
 
 ## AI assistants
 
@@ -100,7 +104,7 @@ npx fixlock why src/app/core/utils/date.util.ts:3
 ## CI
 
 Add the check to your pipeline and make it required on `main`. A PR that changes a locked line passes only once the right person approves it.
-Examples: [GitHub Actions](examples/github-action.yml) · [Jenkins](examples/Jenkinsfile.stage) · [CI guide](https://abinandhmj.github.io/fixlock/ci-setup)
+Examples: [GitHub Actions](examples/ci/github-actions.yml) · [Jenkins](examples/ci/Jenkinsfile) · [GitLab](examples/ci/gitlab-ci.yml) · [CI guide](https://abinandhmj.github.io/fixlock/ci-setup) · [all examples](examples/)
 
 ## Why trust it
 

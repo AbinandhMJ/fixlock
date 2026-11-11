@@ -13,8 +13,8 @@
     "node": ">=18"
   },
   "scripts": {
-    "test": "node test/e2e.js && node test/trackers.js && node test/mcp.js",
-    "prepublishOnly": "node test/e2e.js && node test/trackers.js && node test/mcp.js",
+    "test": "node test/e2e.js && node test/trackers.js && node test/mcp.js && node test/demo.js",
+    "prepublishOnly": "node test/e2e.js && node test/trackers.js && node test/mcp.js && node test/demo.js",
     "docs:dev": "node scripts/llms.js && vitepress dev docs",
     "docs:build": "node scripts/llms.js && vitepress build docs",
     "docs:preview": "vitepress preview docs",
