@@ -16,7 +16,7 @@ function parse(argv) {
   return out;
 }
 
-const HELP = `fixlock — stop fixed bugs and finished features from coming back
+const HELP = `fixlock — stop fixed bugs and finished features from coming back · by Algotricz
 
 See it first:
   fixlock demo [--keep] [--fast]       60-second walkthrough in a throwaway repo (nothing in your projects is touched)

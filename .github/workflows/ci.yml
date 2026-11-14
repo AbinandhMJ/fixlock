@@ -21,6 +21,9 @@ jobs:
           node-version: ${{ matrix.node }}
       # fixlock has zero runtime dependencies, so tests run without npm install.
       - run: npm test
+      - name: VS Code extension tests
+        run: npm test
+        working-directory: extensions/vscode
       - name: Package contents
         shell: bash
         run: npm pack --dry-run 2>&1 | tee pack.txt && ! grep -E "docs/|test/|\.vitepress" pack.txt

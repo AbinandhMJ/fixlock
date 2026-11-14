@@ -5,7 +5,7 @@ layout: home
 hero:
   name: fixlock
   text: Fixed stays fixed.
-  tagline: Stop AI coding assistants (and teammates) from silently undoing bug fixes. Works with Claude Code, Cursor, GitHub Copilot and Codex.
+  tagline: Stop AI coding assistants (and teammates) from silently undoing bug fixes. Works with Claude Code, Cursor, GitHub Copilot and Codex. A product of Algotricz.
   image:
     light: /fixlock-mark.svg
     dark: /fixlock-mark-dark.svg

@@ -1,0 +1,74 @@
+{
+  "name": "fixlock",
+  "displayName": "fixlock by Algotricz — stop AI from undoing your bug fixes",
+  "description": "See locked bug fixes and features right in the editor, get warned the moment an edit changes one, lock a selection in two clicks, and give Copilot agent mode fixlock's MCP tools so it checks before editing. A product of Algotricz.",
+  "version": "0.6.0",
+  "publisher": "algotricz",
+  "author": { "name": "Algotricz", "url": "https://www.linkedin.com/company/algotricz" },
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "galleryBanner": { "color": "#0E1116", "theme": "dark" },
+  "homepage": "https://abinandhmj.github.io/fixlock/",
+  "repository": { "type": "git", "url": "https://github.com/AbinandhMJ/fixlock.git", "directory": "extensions/vscode" },
+  "bugs": { "url": "https://github.com/AbinandhMJ/fixlock/issues" },
+  "engines": { "vscode": "^1.90.0" },
+  "categories": ["Linters", "SCM Providers", "AI", "Other"],
+  "keywords": ["ai", "copilot", "cursor", "claude", "mcp", "regression", "bug fix", "code review", "guardrails", "lock", "codeowners"],
+  "main": "./extension.js",
+  "activationEvents": ["onStartupFinished", "workspaceContains:.fixlock/config.json"],
+  "capabilities": {
+    "untrustedWorkspaces": { "supported": "limited", "description": "Locks are shown in untrusted workspaces, but fixlock commands and the MCP server only run in trusted ones.", "restrictedConfigurations": ["fixlock.cliPath"] }
+  },
+  "contributes": {
+    "commands": [
+      { "command": "fixlock.markSelection", "title": "Lock selected lines", "category": "fixlock", "icon": "$(lock)" },
+      { "command": "fixlock.why", "title": "Why is this line locked?", "category": "fixlock" },
+      { "command": "fixlock.listLocks", "title": "Show all locks", "category": "fixlock" },
+      { "command": "fixlock.check", "title": "Check branch against main (like CI)", "category": "fixlock" },
+      { "command": "fixlock.checkStaged", "title": "Check staged changes", "category": "fixlock" },
+      { "command": "fixlock.init", "title": "Set up fixlock in this repository", "category": "fixlock" },
+      { "command": "fixlock.setupAssistants", "title": "Connect AI assistants (Claude Code, Cursor, Copilot, Codex…)", "category": "fixlock" },
+      { "command": "fixlock.demo", "title": "Run the 60-second demo", "category": "fixlock" },
+      { "command": "fixlock.refresh", "title": "Reload locks", "category": "fixlock" }
+    ],
+    "menus": {
+      "editor/context": [
+        { "command": "fixlock.markSelection", "when": "editorHasSelection && resourceScheme == file", "group": "9_fixlock@1" },
+        { "command": "fixlock.why", "when": "resourceScheme == file", "group": "9_fixlock@2" }
+      ],
+      "commandPalette": [
+        { "command": "fixlock.markSelection", "when": "editorIsOpen" },
+        { "command": "fixlock.why", "when": "editorIsOpen" }
+      ]
+    },
+    "keybindings": [
+      { "command": "fixlock.markSelection", "key": "ctrl+alt+l", "mac": "cmd+alt+l", "when": "editorHasSelection" }
+    ],
+    "configuration": {
+      "title": "fixlock",
+      "properties": {
+        "fixlock.highlightLockedLines": { "type": "boolean", "default": true, "description": "Mark locked lines with a gutter icon and a subtle background." },
+        "fixlock.codeLens": { "type": "boolean", "default": true, "description": "Show the lock's id, title and owner above locked code." },
+        "fixlock.mcp.enabled": { "type": "boolean", "default": true, "description": "Offer fixlock's MCP tools (check_edit, why, list, check_staged) to Copilot agent mode and other MCP clients in VS Code. Turn off if you configured .vscode/mcp.json yourself." },
+        "fixlock.baseBranch": { "type": "string", "default": "origin/main", "description": "Base branch for \"fixlock: Check branch\"." },
+        "fixlock.cliPath": { "type": "string", "default": "", "description": "Path to a fixlock bin/fixlock.js to use instead of the project's installed one (node_modules/@abinandhmj/fixlock) or the bundled one." }
+      }
+    },
+    "colors": [
+      { "id": "fixlock.lockedLineBackground", "description": "Background of locked lines.", "defaults": { "dark": "#8BC34A0D", "light": "#558B2F0D", "highContrast": null } },
+      { "id": "fixlock.lockedLineRuler", "description": "Overview ruler mark for locked lines.", "defaults": { "dark": "#8BC34A99", "light": "#558B2F99", "highContrast": "#8BC34A" } },
+      { "id": "fixlock.changedLineBackground", "description": "Background of locked lines your edits change.", "defaults": { "dark": "#F0A03022", "light": "#F0A03026", "highContrast": null } }
+    ],
+    "mcpServerDefinitionProviders": [
+      { "id": "fixlock.mcp", "label": "fixlock" }
+    ]
+  },
+  "scripts": {
+    "bundle": "node scripts/bundle.js",
+    "vscode:prepublish": "node scripts/bundle.js",
+    "test": "node scripts/bundle.js && node test/model.js",
+    "package": "npx --yes @vscode/vsce@3 package --no-dependencies",
+    "publish:vsce": "npx --yes @vscode/vsce@3 publish --no-dependencies",
+    "publish:ovsx": "npx --yes ovsx@0 publish --no-dependencies"
+  }
+}
