@@ -24,6 +24,7 @@
       { "command": "fixlock.markSelection", "title": "Lock selected lines", "category": "fixlock", "icon": "$(lock)" },
       { "command": "fixlock.why", "title": "Why is this line locked?", "category": "fixlock" },
       { "command": "fixlock.listLocks", "title": "Show all locks", "category": "fixlock" },
+      { "command": "fixlock.discover", "title": "Find past fixes to lock (from git history)", "category": "fixlock" },
       { "command": "fixlock.check", "title": "Check branch against main (like CI)", "category": "fixlock" },
       { "command": "fixlock.checkStaged", "title": "Check staged changes", "category": "fixlock" },
       { "command": "fixlock.init", "title": "Set up fixlock in this repository", "category": "fixlock" },

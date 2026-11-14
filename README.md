@@ -44,6 +44,8 @@ npx fixlock init                         # team, rules, AI assistants, hooks
 npx fixlock autolock --all --dry-run     # see which past fixes it would lock
 ```
 
+Already have fixes in your history? `npx fixlock discover` finds and ranks them so you're protected from day one.
+
 Then connect your assistant:
 
 ```bash

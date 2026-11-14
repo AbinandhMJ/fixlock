@@ -31,6 +31,7 @@ Want to see it first? Run **fixlock: Run the 60-second demo**.
 | fixlock: Lock selected lines | Lock the selection as a bug fix or feature, with a reason and optional issue |
 | fixlock: Why is this line locked? | Show the lock under the cursor |
 | fixlock: Show all locks | Search every lock in the repo and jump to it |
+| fixlock: Find past fixes to lock | Rank the bug fixes already in your git history and pick which to lock |
 | fixlock: Check branch against main | Run the same check as CI |
 | fixlock: Check staged changes | Check what you're about to commit |
 | fixlock: Set up fixlock in this repository | Interactive `fixlock init` |

@@ -114,4 +114,4 @@ function toLocks(cands, cfg, reg) {
   });
 }
 
-module.exports = { DEFAULTS, options, kindOf, issueFrom, candidates, listCommits, toLocks };
+module.exports = { DEFAULTS, options, kindOf, issueFrom, cleanTitle, candidates, listCommits, toLocks };

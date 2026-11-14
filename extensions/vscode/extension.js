@@ -221,7 +221,10 @@ async function cmdList() {
   const root = needRepo();
   if (!root) return;
   const state = stateFor(root);
-  if (!state.locks.length) return vscode.window.showInformationMessage('Nothing is locked yet. Select the lines of a fix and run "fixlock: Lock selected lines".');
+  if (!state.locks.length) {
+    return vscode.window.showInformationMessage('Nothing is locked yet. Find the fixes already in your git history, or select a fix and run "fixlock: Lock selected lines".', 'Find past fixes')
+      .then((a) => { if (a) cmdDiscover(); });
+  }
   const pick = await vscode.window.showQuickPick(model.pickItems(state), { title: `fixlock — ${state.locks.length} lock(s)`, matchOnDescription: true, matchOnDetail: true });
   if (!pick) return;
   const doc = await vscode.workspace.openTextDocument(path.join(root, pick.lock.file));
@@ -241,6 +244,7 @@ function cmdInit() {
   if (!dir) return vscode.window.showWarningMessage('Open a folder (a git repository) first.');
   terminal(dir, ['init'], 'fixlock init');
 }
+function cmdDiscover() { const root = needRepo(); if (root) terminal(root, ['discover'], 'fixlock discover'); }
 function cmdSetup() { const root = needRepo(); if (root) terminal(root, ['setup'], 'fixlock setup'); }
 function cmdDemo() { terminal(folderForInit() || require('os').tmpdir(), ['demo'], 'fixlock demo'); }
 
@@ -308,6 +312,7 @@ function activate(context) {
     vscode.commands.registerCommand('fixlock.markSelection', cmdMark),
     vscode.commands.registerCommand('fixlock.why', cmdWhy),
     vscode.commands.registerCommand('fixlock.listLocks', cmdList),
+    vscode.commands.registerCommand('fixlock.discover', cmdDiscover),
     vscode.commands.registerCommand('fixlock.check', cmdCheck),
     vscode.commands.registerCommand('fixlock.checkStaged', cmdCheckStaged),
     vscode.commands.registerCommand('fixlock.init', cmdInit),
