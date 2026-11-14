@@ -15,6 +15,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write   # trusted publishing (OIDC) to the Marketplace and Open VSX; no stored tokens
     defaults:
       run:
         working-directory: extensions/vscode
@@ -29,16 +32,18 @@ jobs:
         with:
           name: fixlock-vsix
           path: extensions/vscode/*.vsix
-      # Publishing needs two repository secrets:
-      #   VSCE_PAT – Azure DevOps token with Marketplace "Manage" scope for the "algotricz" publisher
-      #   OVSX_PAT – Open VSX token for the "algotricz" namespace (used by Cursor, Windsurf, VSCodium)
+      # Publishing uses trusted publishing (OIDC), so no tokens are stored:
+      #   VS Code Marketplace: publisher "algotricz" → Trusted Publishing → policy for
+      #     owner AbinandhMJ, repo fixlock, workflow vscode-extension.yml (no environment)
+      #   Open VSX: namespace "algotricz" → trusted publisher for the same repo and workflow.
+      #     Until that's set up, an OVSX_PAT secret works instead (a token always takes precedence).
       - name: Publish to VS Code Marketplace
         if: startsWith(github.ref, 'refs/tags/vscode-v') || inputs.publish
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: npx --yes @vscode/vsce@3 publish --no-dependencies --packagePath *.vsix
+        run: npx --yes @vscode/vsce@latest publish --oidc --no-dependencies --packagePath *.vsix
       - name: Publish to Open VSX
         if: startsWith(github.ref, 'refs/tags/vscode-v') || inputs.publish
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
-        run: npx --yes ovsx@0 publish *.vsix -p "$OVSX_PAT"
+        run: |
+          if [ -z "$OVSX_PAT" ]; then unset OVSX_PAT; npx --yes ovsx@latest publish *.vsix --trusted-publishing
+          else npx --yes ovsx@latest publish *.vsix; fi
