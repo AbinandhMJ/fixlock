@@ -2,6 +2,7 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   title: 'fixlock',
+  titleTemplate: ':title · fixlock by Algotricz',
   description: 'Stop AI coding assistants and teammates from silently undoing bug fixes. Works with Claude Code, Cursor, GitHub Copilot and Codex via MCP.',
   base: '/fixlock/',
   cleanUrls: true,
@@ -13,8 +14,14 @@ export default defineConfig({
     ['meta', { property: 'og:description', content: 'Stop fixed bugs and finished features from coming back.' }],
     ['meta', { property: 'og:image', content: 'https://abinandhmj.github.io/fixlock/social-preview.png' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+    ['meta', { name: 'author', content: 'Algotricz' }],
+    ['meta', { property: 'og:site_name', content: 'fixlock by Algotricz' }],
   ],
   themeConfig: {
+    footer: {
+      message: 'MIT licensed · A product of <a href="https://www.linkedin.com/company/algotricz">Algotricz</a>',
+      copyright: '© 2026 Algotricz',
+    },
     logo: { light: '/fixlock-mark.svg', dark: '/fixlock-mark-dark.svg', alt: 'fixlock' },
     nav: [
       { text: 'Demo', link: '/demo' },

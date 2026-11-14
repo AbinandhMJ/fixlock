@@ -30,8 +30,8 @@ jobs:
           name: fixlock-vsix
           path: extensions/vscode/*.vsix
       # Publishing needs two repository secrets:
-      #   VSCE_PAT – Azure DevOps token with Marketplace "Manage" scope for the "abinandhmj" publisher
-      #   OVSX_PAT – Open VSX token (used by Cursor, Windsurf, VSCodium)
+      #   VSCE_PAT – Azure DevOps token with Marketplace "Manage" scope for the "algotricz" publisher
+      #   OVSX_PAT – Open VSX token for the "algotricz" namespace (used by Cursor, Windsurf, VSCodium)
       - name: Publish to VS Code Marketplace
         if: startsWith(github.ref, 'refs/tags/vscode-v') || inputs.publish
         env:

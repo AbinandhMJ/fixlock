@@ -6,7 +6,7 @@ title: VS Code extension
 
 The fixlock extension shows locks right in the editor and warns you the moment an edit changes one. It works in VS Code, Cursor, Windsurf, VSCodium and other VS Code-based editors.
 
-Install it from the **VS Code Marketplace** (VS Code) or **Open VSX** (Cursor, Windsurf, VSCodium): search for **fixlock**.
+Install it from the **VS Code Marketplace** (VS Code) or **Open VSX** (Cursor, Windsurf, VSCodium): search for **fixlock** (publisher: Algotricz).
 
 ## What you get
 

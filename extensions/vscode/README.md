@@ -1,6 +1,6 @@
 # fixlock for VS Code
 
-**Stop AI coding assistants (and teammates) from silently undoing your bug fixes.**
+**Stop AI coding assistants (and teammates) from silently undoing your bug fixes.** A product of [Algotricz](https://www.linkedin.com/company/algotricz).
 
 [fixlock](https://abinandhmj.github.io/fixlock/) locks the lines that hold a bug fix or a finished feature, each with an owner and a reason. This extension brings those locks into your editor:
 
@@ -54,3 +54,5 @@ The extension reads `.fixlock/` in your repository and runs fixlock locally. It 
 ## Links
 
 [Docs](https://abinandhmj.github.io/fixlock/) · [GitHub](https://github.com/AbinandhMJ/fixlock) · [Issues](https://github.com/AbinandhMJ/fixlock/issues) · MIT licensed
+
+Built and maintained by **[Algotricz](https://www.linkedin.com/company/algotricz)**.

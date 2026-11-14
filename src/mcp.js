@@ -196,7 +196,7 @@ function handle(msg) {
   const isRequest = id !== undefined && id !== null;
   if (method === 'initialize') {
     const v = PROTOCOLS.includes(params.protocolVersion) ? params.protocolVersion : PROTOCOLS[0];
-    return send({ id, result: { protocolVersion: v, capabilities: { tools: { listChanged: false } }, serverInfo: { name: 'fixlock', title: 'fixlock', version: VERSION }, instructions: INSTRUCTIONS } });
+    return send({ id, result: { protocolVersion: v, capabilities: { tools: { listChanged: false } }, serverInfo: { name: 'fixlock', title: 'fixlock by Algotricz', version: VERSION }, instructions: INSTRUCTIONS } });
   }
   if (method === 'ping') return isRequest && send({ id, result: {} });
   if (method === 'tools/list') return send({ id, result: { tools: TOOLS } });

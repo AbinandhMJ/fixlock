@@ -1,7 +1,7 @@
 {
   "name": "@abinandhmj/fixlock",
   "version": "0.5.0",
-  "description": "Stop AI coding assistants (and teammates) from silently undoing bug fixes. Lock fixed lines, check edits via MCP in Claude Code, Cursor, Copilot and Codex, and block reverting PRs until the owner approves.",
+  "description": "Stop AI coding assistants (and teammates) from silently undoing bug fixes. Lock fixed lines, check edits via MCP in Claude Code, Cursor, Copilot and Codex, and block reverting PRs until the owner approves. A product of Algotricz.",
   "bin": {
     "fixlock": "bin/fixlock.js"
   },
@@ -45,9 +45,13 @@
     "linear",
     "clickup",
     "notion",
-    "zero-dependency"
+    "zero-dependency",
+    "algotricz"
   ],
-  "author": "Abinandh <abinandhmurukesan@gmail.com>",
+  "author": "Algotricz (https://www.linkedin.com/company/algotricz)",
+  "contributors": [
+    "Abinandh <abinandhmurukesan@gmail.com>"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

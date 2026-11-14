@@ -1,9 +1,10 @@
 {
   "name": "fixlock",
-  "displayName": "fixlock — stop AI from undoing your bug fixes",
-  "description": "See locked bug fixes and features right in the editor, get warned the moment an edit changes one, lock a selection in two clicks, and give Copilot agent mode fixlock's MCP tools so it checks before editing.",
+  "displayName": "fixlock by Algotricz — stop AI from undoing your bug fixes",
+  "description": "See locked bug fixes and features right in the editor, get warned the moment an edit changes one, lock a selection in two clicks, and give Copilot agent mode fixlock's MCP tools so it checks before editing. A product of Algotricz.",
   "version": "0.6.0",
-  "publisher": "abinandhmj",
+  "publisher": "algotricz",
+  "author": { "name": "Algotricz", "url": "https://www.linkedin.com/company/algotricz" },
   "license": "MIT",
   "icon": "media/icon.png",
   "galleryBanner": { "color": "#0E1116", "theme": "dark" },

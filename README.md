@@ -4,7 +4,7 @@
     <img alt="fixlock" src="https://abinandhmj.github.io/fixlock/fixlock-logo.svg" height="72">
   </picture>
 </p>
-<p align="center"><b>fixed stays fixed.</b><br>Stop AI coding assistants (and teammates) from silently undoing bug fixes.</p>
+<p align="center"><b>fixed stays fixed.</b><br>Stop AI coding assistants (and teammates) from silently undoing bug fixes.<br><sub>A product of <a href="https://www.linkedin.com/company/algotricz"><b>Algotricz</b></a></sub></p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@abinandhmj/fixlock"><img alt="npm" src="https://img.shields.io/npm/v/@abinandhmj/fixlock?color=B8F23A&labelColor=0E1116"></a>
@@ -131,5 +131,9 @@ Team roles and owner/lead approval policies · generated `CODEOWNERS` · `CHANGE
 ## Contributing
 
 Issues and PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). Please report security issues privately ([SECURITY.md](SECURITY.md)).
+
+## About
+
+fixlock is built and maintained by **[Algotricz](https://www.linkedin.com/company/algotricz)**. Follow along on [LinkedIn](https://www.linkedin.com/company/algotricz), [X](https://x.com/wealgotricz) and [Instagram](https://www.instagram.com/the.algotricz/).
 
 MIT licensed.
