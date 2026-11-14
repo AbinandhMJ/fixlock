@@ -27,7 +27,31 @@ The check needs the full history. Fetch with `fetch-depth: 0` or fetch `main` ex
 
 ## GitHub Actions
 
-`.github/workflows/fixlock.yml`:
+The simplest setup works in any repository (Python, Go, Java, .NET, PHP, Ruby, JS…), with no install step:
+
+```yaml
+# .github/workflows/fixlock.yml
+name: fixlock
+on:
+  pull_request:
+  pull_request_review:        # re-run when the owner approves
+    types: [submitted, dismissed]
+permissions: { contents: read, pull-requests: write }
+jobs:
+  fixlock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: AbinandhMJ/fixlock@v0.7.0
+        # with:
+        #   notify: true            # update linked tracker issues (set LINEAR_API_KEY etc. as env)
+        #   args: --json            # extra `fixlock check` flags
+```
+
+The action posts and updates a PR comment and fails until the right people approve. See [all inputs](any-language.md#github-actions).
+
+Prefer running your project's own installed fixlock (JavaScript projects)? `.github/workflows/fixlock.yml`:
 
 ```yaml
 name: fixlock

@@ -44,6 +44,8 @@ npx fixlock init                         # team, rules, AI assistants, hooks
 npx fixlock autolock --all --dry-run     # see which past fixes it would lock
 ```
 
+**Any language.** Structural matching reads [63 languages and formats](https://abinandhmj.github.io/fixlock/languages): TypeScript, Python, Java, Kotlin, Go, Rust, C#, Swift, PHP, Ruby, SQL, Terraform, YAML, Angular/Vue/Svelte templates and more. Not a JavaScript project? Run `npx @abinandhmj/fixlock init` with nothing to install, and use the [GitHub Action or pre-commit hook](https://abinandhmj.github.io/fixlock/any-language).
+
 Already have fixes in your history? `npx fixlock discover` finds and ranks them so you're protected from day one.
 
 Then connect your assistant:
@@ -127,7 +129,7 @@ Team roles and owner/lead approval policies · generated `CODEOWNERS` · `CHANGE
 
 ## Limitations
 
-- Structural matching covers JS/TS, Python, Java, Go, C#, Kotlin, Rust, C/C++, Swift, PHP and similar languages. Other files (Markdown, JSON, …) are matched as text. A consistent rename of variables inside a lock is reported as a warning, not ignored; field and key renames count as changes. In very short locks, or when the old name is still used nearby, a rename counts as a change.
+- Structural matching covers [63 languages and formats](https://abinandhmj.github.io/fixlock/languages); other files (Markdown, plain text…) are matched as text. A consistent rename of variables inside a lock is reported as a warning, not ignored; field and key renames count as changes. In very short locks, or when the old name is still used nearby, a rename counts as a change.
 - Only Claude Code can intercept an edit before it happens. Other assistants check through MCP or their rules file, so a model that ignores both is caught at commit time and in CI.
 - Approvals are read from GitHub; GitLab and Bitbucket are on the roadmap.
 

@@ -4,6 +4,7 @@
 'use strict';
 const M = require('../bench/mutations');
 const L = require('../src/locks');
+const S = require('../src/structural');
 
 let failures = 0;
 const ok = (cond, msg, extra = '') => {
@@ -12,19 +13,19 @@ const ok = (cond, msg, extra = '') => {
 };
 
 const FIXTURES = [
-  { file: 'guard.ts', fam: 'c', range: [1, 2], text: [
+  { file: 'guard.ts', range: [1, 2], text: [
     'export function guard(user, res) {',
     '  if (!user || user.role !== "admin") {',
     '    return res.status(403).json({ error: "forbidden" });',
     '  }',
     '}'] },
-  { file: 'pay.py', fam: 'hash', range: [2, 3], text: [
+  { file: 'pay.py', range: [2, 3], text: [
     'def pay(order, amount):',
     '    """Charge once."""',
     '    if order is not None and amount <= 0:',
     '        raise ValueError("amount must be positive")',
     '    return gateway.charge(order.id, amount)'] },
-  { file: 'flags.go', fam: 'c', range: [1, 2], text: [
+  { file: 'flags.go', range: [1, 2], text: [
     'func check(flags []string) error {',
     '\tif len(flags) > 0 && flags[0] != "" {',
     '\t\treturn fmt.Errorf("unexpected flag %q", flags[0])',
@@ -34,6 +35,7 @@ const FIXTURES = [
 ];
 
 for (const fx of FIXTURES) {
+  fx.fam = S.family(fx.file);
   const content = fx.text.join('\n');
   const snippet = fx.text.slice(fx.range[0], fx.range[1] + 1);
   const lock = { file: fx.file, snippet };
@@ -55,11 +57,11 @@ for (const fx of FIXTURES) {
 
 // edits never land in comments or doc strings
 const DOC = ['def f(x):', '    """', '    Docs say x == 1 and "quoted".', '    """', '    return x == 1'];
-const flipped = M.apply(M.harmful['flip comparison'], DOC, [1, 4], 'hash', 'f.py');
+const flipped = M.apply(M.harmful['flip comparison'], DOC, [1, 4], 'python', 'f.py');
 ok(flipped && flipped.includes('Docs say x == 1') && flipped.includes('return x != 1'), 'harmful edits skip doc strings and hit code', flipped);
-ok(M.apply(M.benign['swap quote style'], FIXTURES[2].text, [1, 2], 'c', 'flags.go') === null, 'quote swap is JS/TS only (in Go \' is a rune)');
+ok(M.apply(M.benign['swap quote style'], FIXTURES[2].text, [1, 2], 'go', 'flags.go') === null, 'quote swap is JS/TS only (in Go \' is a rune)');
 const RE = ['const m = /;\\s*charset=(?:"([^"]+)")/i.exec(t);', 'use(m);'];
-ok(M.apply(M.benign['swap quote style'], RE, [0, 1], 'c', 'a.ts') === null, 'quote swap never edits inside a regex literal');
+ok(M.apply(M.benign['swap quote style'], RE, [0, 1], 'ts', 'a.ts') === null, 'quote swap never edits inside a regex literal');
 
 console.log(failures ? `\n${failures} failure(s)` : '\nBENCH MUTATIONS PASS');
 process.exit(failures ? 1 : 0);

@@ -43,6 +43,7 @@ Daily:
   fixlock discover [--max 1000 | --since ref] [--min 4] [--apply] [--json]
                                        Find past fixes worth locking, from any commit style: reverted-and-reapplied
                                        fixes, fix/regression messages, linked issues, tests, guard code. Ranked, pick which
+  fixlock languages [file]             Languages structural matching understands (and which one a file is)
   fixlock why <file>[:line]            What is locked here, who owns it, can I change it?
   fixlock list | remove <id>
 

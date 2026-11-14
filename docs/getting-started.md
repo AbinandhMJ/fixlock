@@ -16,6 +16,8 @@ npm i -D @abinandhmj/fixlock
 
 Installing it as a dev dependency gives everyone the short `npx fixlock …` command. Without installing, use `npx @abinandhmj/fixlock …`.
 
+Not a JavaScript project? Skip this step: see [Python, Go, Java, .NET and other projects](any-language.md). fixlock reads [63 languages and formats](languages.md).
+
 ## 2. Set up (team lead, once)
 
 ```bash

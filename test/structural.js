@@ -92,6 +92,18 @@ const oneLeft = L.verifyLock(dupLock, DUP.replace('  if (!user) return fn(null, 
 ok(oneLeft.status === 'changed' && oneLeft.copies && oneLeft.copies.found === 1, 'one copy changed: caught, with the copy count', JSON.stringify(oneLeft));
 ok(L.withCopies({ file: 'a.js', snippet: ['  if (!user) return fn(null, null)'] }, 'if (!user) return fn(null, null)').copies === undefined, 'single copy: no copies field');
 
+// 4. look-alike siblings (copy-pasted code with other names) are not "the lock, renamed"
+const SIB = 'object FindField(Type t) {\n  FieldInfo field = t.Get(member);\n  if (field == null || !Visible(field, flags))\n  {\n    return null;\n  }\n  return field;\n}\n' +
+  '\n'.repeat(60) + 'object FindProp(Type t) {\n  PropertyInfo property = t.Get(member);\n  if (property == null || !Visible(property, flags))\n  {\n    return null;\n  }\n  return property;\n}\n';
+const sibLock = L.withCopies({ file: 'T.cs', snippet: ['  if (field == null || !Visible(field, flags))', '    return null;'] }, SIB);
+ok(sibLock.siblings === 1 && !sibLock.copies, 'withCopies records a look-alike sibling', JSON.stringify(sibLock));
+ok(L.verifyLock(sibLock, SIB.replace('field == null ||', 'field != null ||')).status === 'changed', 'breaking the lock is not excused by its look-alike sibling');
+ok(L.verifyLock(sibLock, SIB.replace(/\bfield\b/g, 'info')).status === 'renamed', 'a real rename of the locked code is still a rename');
+const legacy = { file: 'T.cs', snippet: sibLock.snippet };
+ok(L.verifyLock(legacy, SIB.replace('field == null ||', 'field != null ||'), { before: SIB }).status === 'changed', 'older locks: siblings are counted in the good version of the file');
+// 5. Ruby regex literals: "#" inside a regex isn't a comment
+ok(S.verify(['if ct.scan(/#{TOKEN}boundary/i).size > 1'], 'x = 1\nif ct.scan(/#{TOKEN}boundary/i).size > 2\n', 'p.rb').status === 'changed', 'ruby: a change after a # inside a regex literal is caught');
+
 /* ---------------- CLI: fixlock check in a real repo ---------------- */
 const CLI = path.join(__dirname, '..', 'bin', 'fixlock.js');
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'fixlock-structural-'));

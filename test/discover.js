@@ -24,6 +24,14 @@ ok(threw, 'parseSelection: rejects nonsense');
 ok(D.guardsIn(['if (!items || items.length === 0) return 0;']).includes('null/empty check'), 'guardsIn: null/empty check');
 ok(D.guardsIn(['try {', '} catch (e) {']).includes('error handling'), 'guardsIn: error handling');
 ok(D.guardsIn(['const x = a + b;']).length === 0, 'guardsIn: plain code has no guards');
+const GUARD_CASES = { 'if err != nil {': 'error handling', 'if let Some(x) = opt {': 'null/empty check', 'guard let u = user else { return }': 'null/empty check',
+  'WHERE deleted_at IS NULL': 'null/empty check', '<div *ngIf="user">': 'template condition', 'synchronized (lock) {': 'ordering/concurrency',
+  '@PreAuthorize("hasRole(ADMIN)")': 'access/security check', 'if len(items) == 0 {': 'bounds check', 'return Err(Error::Empty);': 'rejects bad input' };
+for (const [line, label] of Object.entries(GUARD_CASES)) ok(D.guardsIn([line]).includes(label), `guardsIn (any language): ${line} → ${label}`, D.guardsIn([line]).join(', '));
+for (const f of ['src/test/java/OrderTest.java', 'MyApp.Tests/CartTests.cs', 'spec/models/user_spec.rb', 'Tests/LoginTests.swift', 'test/widget_test.dart', 'pkg/x_test.go', 'tests/test_api.py', 'cypress/e2e/login.cy.ts'])
+  ok(D.TEST_FILE.test(f), `test file: ${f}`);
+for (const f of ['app/Http/Controllers/TestimonialController.php', 'src/attestation.go', 'src/contest.py', 'src/main/java/Order.java'])
+  ok(!D.TEST_FILE.test(f), `not a test file: ${f}`);
 ok(D.confidence(8) === 'high' && D.confidence(5) === 'medium' && D.confidence(2) === 'low', 'confidence bands');
 
 /* ---------- a repo with a realistic history ---------- */

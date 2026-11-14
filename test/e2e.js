@@ -82,7 +82,8 @@ const server = http.createServer((req, res) => {
     ok(cfg.team.length === 2 && cfg.team[1].role === 'developer' && cfg.team[0].github === 'abinandhmj', 'team + roles + GitHub saved');
     ok(cfg.policies.bug.onEdit === 'ask' && cfg.tracker.type === 'linear', 'policies + tracker saved');
     const settings = JSON.parse(fs.readFileSync(path.join(app, '.claude/settings.json'), 'utf8'));
-    ok(JSON.stringify(settings).includes('fixlock hook claude'), 'Claude Code hook installed');
+    const hookCmd = settings.hooks.PreToolUse.flatMap((h) => h.hooks).map((x) => x.command).find((c) => / hook claude$/.test(c)) || '';
+    ok(/^npx -y @abinandhmj\/fixlock@\d+(\.\d+)? hook claude$/.test(hookCmd), 'Claude Code hook installed (scoped npx: this repo has no package.json)', hookCmd);
 
     // 2. Abi fixes the bug and locks it, linked to Linear
     write(FILE, [

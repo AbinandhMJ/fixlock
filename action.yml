@@ -1,0 +1,93 @@
+# fixlock as a GitHub Action: works in any repository (Python, Go, Java, Rust, .NET, PHP, Ruby, JS…),
+# with no package.json and no npm install. It runs the fixlock in this action's own checkout (zero
+# dependencies), so the version is exactly the tag you reference.
+#
+#   on: { pull_request: {}, pull_request_review: { types: [submitted, dismissed] } }
+#   permissions: { contents: read, pull-requests: write }
+#   jobs:
+#     fixlock:
+#       runs-on: ubuntu-latest
+#       steps:
+#         - uses: actions/checkout@v4
+#           with: { fetch-depth: 0 }
+#         - uses: AbinandhMJ/fixlock@v0.7.0
+name: fixlock
+description: Stop AI coding assistants and teammates from silently undoing bug fixes. Fails the PR until the owner of a changed locked fix approves.
+author: Algotricz
+branding:
+  icon: lock
+  color: green
+inputs:
+  base:
+    description: Branch or ref to compare against. Defaults to the pull request's base branch.
+    required: false
+    default: ''
+  comment:
+    description: Post (and update) a PR comment listing affected locks and who must approve.
+    required: false
+    default: 'true'
+  notify:
+    description: Update linked issues in your tracker (Linear, ClickUp, Notion, webhook) when a fix is reverted.
+    required: false
+    default: 'false'
+  args:
+    description: Extra arguments for `fixlock check`.
+    required: false
+    default: ''
+  github-token:
+    description: Token used to read PR approvals and post the comment.
+    required: false
+    default: ${{ github.token }}
+outputs:
+  markdown:
+    description: Path of the markdown report.
+    value: ${{ steps.check.outputs.markdown }}
+runs:
+  using: composite
+  steps:
+    - name: Check Node.js
+      shell: bash
+      run: |
+        if ! command -v node >/dev/null || [ "$(node -p 'process.versions.node.split(".")[0]')" -lt 18 ]; then
+          echo "::error::fixlock needs Node.js 18+ on the runner. Add actions/setup-node before this step."; exit 1
+        fi
+    - name: Fetch the base branch
+      shell: bash
+      env:
+        BASE_INPUT: ${{ inputs.base }}
+        BASE_REF: ${{ github.base_ref }}
+      run: |
+        base="${BASE_INPUT:-${BASE_REF:-main}}"; base="${base#origin/}"
+        if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
+          echo "::warning::Shallow checkout: use actions/checkout with fetch-depth: 0 for exact results."
+          git fetch --no-tags --deepen=500 origin HEAD >/dev/null 2>&1 || true
+        fi
+        git fetch --no-tags origin "+refs/heads/${base}:refs/remotes/origin/${base}" >/dev/null 2>&1 || true
+        echo "FIXLOCK_BASE=origin/${base}" >> "$GITHUB_ENV"
+    - id: check
+      name: fixlock check
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        NOTIFY: ${{ inputs.notify }}
+        EXTRA: ${{ inputs.args }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+      run: |
+        out="${RUNNER_TEMP:-/tmp}/fixlock.md"
+        echo "markdown=$out" >> "$GITHUB_OUTPUT"
+        flags=(check --base "$FIXLOCK_BASE" --markdown "$out")
+        [ -n "$PR_NUMBER" ] && flags+=(--pr "$PR_NUMBER")
+        [ "$NOTIFY" = "true" ] && flags+=(--notify)
+        # shellcheck disable=SC2206
+        [ -n "$EXTRA" ] && flags+=($EXTRA)
+        status=0
+        node "$GITHUB_ACTION_PATH/bin/fixlock.js" "${flags[@]}" || status=$?
+        [ -s "$out" ] || echo "fixlock could not run; see the job log." > "$out"
+        exit $status
+    - name: PR comment
+      if: always() && inputs.comment == 'true' && github.event.pull_request.number && steps.check.outputs.markdown != ''
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        header: fixlock
+        path: ${{ steps.check.outputs.markdown }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}

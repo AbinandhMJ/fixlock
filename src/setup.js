@@ -7,9 +7,8 @@ const s = require('./store');
 
 /** How assistants should launch the server. Uses the project's local install when there is one. */
 function serverCommand(root) {
-  const local = fs.existsSync(path.join(root, 'node_modules', '@abinandhmj', 'fixlock'));
-  const args = local ? ['--no-install', 'fixlock', 'mcp'] : ['-y', '@abinandhmj/fixlock', 'mcp'];
-  return { command: 'npx', args };
+  const [command, ...args] = require('./cli').argv(root);
+  return { command, args: [...args, 'mcp'] };
 }
 
 function readJson(file) {

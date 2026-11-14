@@ -5,6 +5,7 @@ const readline = require('readline');
 const g = require('./git');
 const s = require('./store');
 const agents = require('./agents');
+const cli = require('./cli');
 
 function prompter() {
   const tty = !!process.stdin.isTTY;
@@ -121,13 +122,16 @@ function installClaudeHook() {
   try { settings = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { /* new file */ }
   settings.hooks = settings.hooks || {};
   const pre = (settings.hooks.PreToolUse = settings.hooks.PreToolUse || []);
-  const cmd = 'npx --no-install fixlock hook claude';
-  if (!pre.some((h) => (h.hooks || []).some((x) => x.command === cmd))) {
-    pre.push({ matcher: 'Edit|MultiEdit|Write', hooks: [{ type: 'command', command: cmd }] });
+  const cmd = `${cli.command(s.root())} hook claude`;
+  // replace any earlier fixlock hook (other version or launcher), keep everyone else's
+  for (const h of pre) h.hooks = (h.hooks || []).filter((x) => !cli.isOurs(x.command) || x.command === cmd);
+  settings.hooks.PreToolUse = pre.filter((h) => h.hooks.length);
+  if (!settings.hooks.PreToolUse.some((h) => h.hooks.some((x) => x.command === cmd))) {
+    settings.hooks.PreToolUse.push({ matcher: 'Edit|MultiEdit|Write', hooks: [{ type: 'command', command: cmd }] });
   }
   settings.permissions = settings.permissions || {};
   const deny = new Set(settings.permissions.deny || []);
-  ['Edit(.fixlock/**)', 'Write(.fixlock/**)', 'Edit(.claude/settings.json)', 'Write(.claude/settings.json)', 'Edit(.git/hooks/**)', 'Write(.git/hooks/**)', 'Bash(npx fixlock remove:*)', 'Bash(git push --no-verify:*)', 'Bash(git commit --no-verify:*)'].forEach((r) => deny.add(r));
+  ['Edit(.fixlock/**)', 'Write(.fixlock/**)', 'Edit(.claude/settings.json)', 'Write(.claude/settings.json)', 'Edit(.git/hooks/**)', 'Write(.git/hooks/**)', 'Bash(npx fixlock remove:*)', `Bash(npx ${cli.PKG} remove:*)`, `Bash(npx -y ${cli.PKG}@${cli.pin()} remove:*)`, 'Bash(git push --no-verify:*)', 'Bash(git commit --no-verify:*)'].forEach((r) => deny.add(r));
   settings.permissions.deny = [...deny];
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, JSON.stringify(settings, null, 2) + '\n');
@@ -135,11 +139,12 @@ function installClaudeHook() {
 
 function installGitHook() {
   const dir = path.join(s.root(), '.git', 'hooks');
+  const run = cli.command(s.root());
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, 'pre-commit'),
-    '#!/bin/sh\n# installed by fixlock — warns, never blocks; CI enforces approvals\n[ -n "$FIXLOCK_IN_HOOK" ] && exit 0\nnpx --no-install fixlock check --staged || true\n', { mode: 0o755 });
+    `#!/bin/sh\n# installed by fixlock — warns, never blocks; CI enforces approvals\n[ -n "$FIXLOCK_IN_HOOK" ] && exit 0\n${run} check --staged || true\n`, { mode: 0o755 });
   fs.writeFileSync(path.join(dir, 'post-commit'),
-    '#!/bin/sh\n# installed by fixlock — locks lines from fix:/feat: commits in a follow-up chore commit\n[ -n "$FIXLOCK_IN_HOOK" ] && exit 0\nFIXLOCK_IN_HOOK=1 npx --no-install fixlock autolock --commit-result --quiet || true\n', { mode: 0o755 });
+    `#!/bin/sh\n# installed by fixlock — locks lines from fix:/feat: commits in a follow-up chore commit\n[ -n "$FIXLOCK_IN_HOOK" ] && exit 0\nFIXLOCK_IN_HOOK=1 ${run} autolock --commit-result --quiet || true\n`, { mode: 0o755 });
 }
 
 module.exports = { interactive, defaults, installClaudeHook, installGitHook, prompter };

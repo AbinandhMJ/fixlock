@@ -94,7 +94,7 @@ function enterRepo(args) {
     if (root) {
       process.chdir(root);
       if (!fs.existsSync(path.join(root, '.fixlock', 'config.json'))) {
-        throw new Error(`fixlock is not set up in ${root}. Ask the developer to run "npx fixlock init".`);
+        throw new Error(`fixlock is not set up in ${root}. Ask the developer to run "npx @abinandhmj/fixlock init".`);
       }
       return root;
     }
