@@ -1,0 +1,3 @@
+[mcp_servers.fixlock]
+command = "npx"
+args = ["--no-install", "fixlock", "mcp"]

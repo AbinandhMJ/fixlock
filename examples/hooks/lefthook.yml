@@ -1,0 +1,10 @@
+# Merge into lefthook.yml if your project uses Lefthook instead of plain git hooks.
+pre-commit:
+  commands:
+    fixlock:
+      run: npx --no-install fixlock check --staged || true
+
+post-commit:
+  commands:
+    fixlock-autolock:
+      run: '[ -n "$FIXLOCK_IN_HOOK" ] || FIXLOCK_IN_HOOK=1 npx --no-install fixlock autolock --commit-result --quiet || true'

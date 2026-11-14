@@ -1,4 +1,5 @@
 'use strict';
+const cleanEnv = require('./env');
 // Checks the ClickUp, Notion and webhook adapters send the right requests (mock server).
 const http = require('http');
 const { sync } = require('../src/trackers');

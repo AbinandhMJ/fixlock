@@ -1,0 +1,2 @@
+# .husky/post-commit: lock the lines of fix:/feat: commits (saved in a follow-up chore(fixlock) commit)
+[ -n "$FIXLOCK_IN_HOOK" ] || FIXLOCK_IN_HOOK=1 npx --no-install fixlock autolock --commit-result --quiet || true

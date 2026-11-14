@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://abinandhmj.github.io/fixlock/
+    about: Guides for setup, AI assistants, CI and troubleshooting.
+  - name: Report a security vulnerability
+    url: https://github.com/AbinandhMJ/fixlock/security/advisories/new
+    about: Please report security issues privately, not as a public issue.

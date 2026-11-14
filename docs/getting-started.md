@@ -37,11 +37,24 @@ Not sure about an answer? Press Enter for the default. You can change everything
 ## 3. Lock the fixes you already have
 
 ```bash
-npx fixlock autolock --all --dry-run   # preview
-npx fixlock autolock --all             # lock them
+npx fixlock discover
 ```
 
-This finds past `fix:` commits, and messages like "fixed … bug" or "hotfix", whose lines are still in the code.
+`discover` reads your git history and ranks the past bug fixes whose code is still there, whatever your commit style. Each suggestion shows why it was picked:
+
+```
+Found 41 block(s) from 31 past fix(es) worth locking in 500 commit(s)
+
+  1. high   bug  lib/response.js:765-771  Fix behavior of null/undefined as "maxAge" in res.cookie  5855339
+       message says "fix" · links #3935 · came with a test (test/res.cookie.js) · adds a guard (null/empty check)
+       │ if (opts.maxAge != null) {  ⏎  var maxAge = opts.maxAge - 0  … (+3)
+
+Lock which? e.g. 1-3,5 · all · none (none):
+```
+
+Pick the ones you want (`1-5`, `all`), or run `npx fixlock discover --apply` to lock every suggestion. A fix that was **reverted and then re-applied** ranks highest: that bug has already come back once. When the fix came with a test, the test is linked to the lock.
+
+Only using Conventional Commits? `npx fixlock autolock --all` locks every `fix:`/`feat:` commit without scoring.
 
 ## 4. Commit and share
 
@@ -58,7 +71,17 @@ npm install
 npx fixlock install-hook
 ```
 
-## 5. Turn on the PR check
+## 5. Connect your AI assistants
+
+`init` already connects the project-level ones. Each developer using Codex or Windsurf also runs:
+
+```bash
+npx fixlock setup codex     # or windsurf
+```
+
+See [AI assistants](integrations/) for Claude Code, Cursor, Copilot and Codex.
+
+## 6. Turn on the PR check
 
 Add the CI step from [CI setup](ci-setup.md) and make it a required check on `main`.
 

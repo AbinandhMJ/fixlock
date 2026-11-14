@@ -12,7 +12,8 @@ function git(args, opts = {}) {
 }
 
 function repoRoot() {
-  return git(['rev-parse', '--show-toplevel']).trim();
+  const top = git(['rev-parse', '--show-toplevel']).trim();
+  try { return require('fs').realpathSync.native(top); } catch { return top; }
 }
 
 function userEmail() {

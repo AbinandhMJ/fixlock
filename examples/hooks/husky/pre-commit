@@ -1,0 +1,2 @@
+# .husky/pre-commit: warn about locked or working code being changed (never blocks)
+npx --no-install fixlock check --staged || true

@@ -12,6 +12,7 @@ const agents = require('./agents');
 const changelog = require('./changelog');
 const auto = require('./autolock');
 const stable = require('./stable');
+const discovery = require('./discover');
 
 const tty = process.stdout.isTTY && !process.env.NO_COLOR;
 const paint = (code) => (t) => (tty ? `\x1b[${code}m${t}\x1b[0m` : t);
@@ -27,13 +28,22 @@ async function cmdInit(args) {
   if (hooks.claude) init.installClaudeHook();
   if (hooks.git) init.installGitHook();
   if (hooks.codeowners) writeCodeowners(true);
+  let mcpDone = [];
+  if (hooks.mcp) {
+    const project = ['claude-code', 'cursor', 'copilot', 'gemini'].filter((id) => agents.enabled(cfg).includes(id));
+    if (project.length) mcpDone = require('./setup').setup(project).results;
+  }
   syncAgentFiles(true);
   console.log(c.green('\n✔ fixlock is set up.'));
   console.log(`  team: ${cfg.team.map((m) => `${m.name} (${m.role})`).join(', ') || '(none)'}`);
   console.log(`  AI tools: ${agents.enabled(cfg).join(', ') || '(none)'}`);
   if (hooks.claude) console.log('  Claude Code hook: .claude/settings.json');
+  if (mcpDone.length) console.log(`  MCP server connected for: ${mcpDone.map((r) => r.label).join(', ')}`);
+  const userLevel = ['codex', 'windsurf'].filter((id) => agents.enabled(cfg).includes(id));
+  if (hooks.mcp && userLevel.length) console.log(`  ${userLevel.join(' / ')} users: run  npx fixlock setup ${userLevel.join(' ')}  on your own machine`);
   console.log('\nCommit .fixlock/ and the generated files above so the whole team gets them.');
   console.log('Every developer runs once:  npm i -D @abinandhmj/fixlock' + (hooks.git ? '  &&  npx fixlock install-hook' : ''));
+  console.log('Find the fixes you already have:  npx fixlock discover');
   console.log('Lock a fix:  npx fixlock mark <file> <start>-<end> -m "why" --issue linear:ENG-12');
 }
 
@@ -66,7 +76,7 @@ async function cmdMark(args) {
   const [file, range] = args._;
   if (!file || !range) throw new Error('Usage: fixlock mark <file> <start>[-<end>] -m "why" [--type bug|feature] [--title ".."] [--issue linear:ENG-12] [--owner github] [--test spec]');
   const [start, end = start] = range.split('-').map((n) => parseInt(n, 10));
-  const rel = L.toPosix(path.relative(s.root(), path.resolve(file)));
+  const rel = L.repoRel(s.root(), file);
   const abs = path.join(s.root(), rel);
   if (!fs.existsSync(abs)) throw new Error(`File not found: ${file}`);
   const lines = fs.readFileSync(abs, 'utf8').split('\n');
@@ -85,6 +95,7 @@ async function cmdMark(args) {
     file: rel, snippet, owner: owner.github || owner.name, issue: args.issue || null, test: args.test || null,
     date: new Date().toISOString().slice(0, 10),
   };
+  L.withCopies(lock, lines.join('\n'));
   reg.locks.push(lock);
   s.saveRegistry(reg);
   console.log(c.green(`✔ ${lock.id} locked`) + ` — ${rel}:${start}-${end}, owner ${team.handle(owner)}, policy ${cfg.policies[type].onEdit}/${cfg.policies[type].approval}`);
@@ -127,7 +138,7 @@ function cmdWhy(args) {
   const target = args._[0];
   if (!target) throw new Error('Usage: fixlock why <file>[:line[-line]]');
   const m = target.match(/^(.*?)(?::(\d+)(?:-(\d+))?)?$/);
-  const rel = L.toPosix(path.relative(s.root(), path.resolve(m[1])));
+  const rel = L.repoRel(s.root(), m[1]);
   const cfg = s.loadConfig();
   const reg = s.loadRegistry();
   const abs = path.join(s.root(), rel);
@@ -174,11 +185,13 @@ async function cmdCheck(args) {
   const renames = {};
   if (!staged) { try { for (const ch of g.changedFiles(base)) if (ch.status === 'R') renames[ch.from] = ch.file; } catch { /* no base */ } }
 
+  const match = cfg.matching || {};
   for (const lock of reg.locks) {
     const target = renames[lock.file] || lock.file;
     const content = read(target);
-    const missing = content === null ? lock.snippet : L.missingLines(lock, content);
-    if (missing.length) findings.push({ kind: 'lock', lock, file: target, missing, deleted: content === null });
+    const v = L.verifyLock(lock, content, { mode: match.mode, file: target });
+    if (v.status === 'changed') findings.push({ kind: 'lock', lock, file: target, missing: v.missing, renamed: [], copies: v.copies || null, deleted: content === null });
+    else if (v.status === 'renamed' && match.renames !== 'allow') findings.push({ kind: 'lock', lock, file: target, missing: [], renamed: v.renames, deleted: false });
   }
 
   // Changes inside protected paths: warnings only.
@@ -217,15 +230,16 @@ async function cmdCheck(args) {
   }
 
   // Approvals: owner / lead approval on the PR clears a lock finding.
-  const needApproval = findings.filter((f) => f.kind === 'lock' && (cfg.policies[f.lock.type] || cfg.policies.bug).approval !== 'none');
+  const renameWarnOnly = (f) => f.renamed && f.renamed.length && (match.renames || 'warn') === 'warn';
+  const needApproval = findings.filter((f) => f.kind === 'lock' && !renameWarnOnly(f) && (cfg.policies[f.lock.type] || cfg.policies.bug).approval !== 'none');
   let appr = { approvers: new Set(), source: 'none' };
   if (!staged && needApproval.length) appr = await prApprovers(args.pr);
-  const author = (prAuthor() || '').toLowerCase();
+  const author = staged ? '' : (prAuthor() || '').toLowerCase(); // no PR exists yet at commit time
   for (const f of findings.filter((x) => x.kind === 'lock')) {
     const pol = cfg.policies[f.lock.type] || cfg.policies.bug;
     f.approvers = team.approvers(cfg, f.lock);
     const gh = f.approvers.map((a) => (a.github || '').toLowerCase()).filter(Boolean);
-    if (pol.approval === 'none') f.status = 'warn';
+    if (pol.approval === 'none' || renameWarnOnly(f)) f.status = 'warn';
     else if (gh.some((u) => appr.approvers.has(u))) f.status = 'approved';
     else if (author && gh.includes(author)) f.status = 'approved';
     else f.status = 'blocked';
@@ -256,6 +270,8 @@ function report(cfg, reg, findings, { base, staged, appr }) {
     console.log(`${tag}  ${f.lock.id} "${f.lock.title}" (${f.lock.type}, owner ${owner}) — ${f.deleted ? 'file deleted: ' : ''}${f.file}`);
     if (f.lock.reason && f.lock.reason !== f.lock.title) console.log(c.dim(`    why: ${f.lock.reason}`));
     for (const l of f.missing) console.log(c.dim(`    - ${l.trim()}`));
+    if (f.copies) console.log(c.dim(`    this code appeared ${f.copies.expected} times in the file; only ${f.copies.found} identical copies are left`));
+    if (f.renamed && f.renamed.length) console.log(c.dim(`    renamed (logic kept): ${f.renamed.map(([a, b]) => `${a} → ${b}`).join(', ')}`));
     if (f.status === 'blocked') console.log(`    → needs approval from ${f.approvers.map(team.handle).join(' or ')}${staged ? ' when you open the PR' : ' on the PR'}, or restore these lines.`);
     if (f.tracker) console.log(c.dim(`    tracker: ${f.tracker}`));
   }
@@ -275,11 +291,34 @@ function toMarkdown(cfg, findings, base) {
     const icon = { blocked: '❌', approved: '✅', warn: '⚠️' }[f.status];
     md += `- ${icon} **${f.lock.id}** ${f.lock.title} (${f.lock.type}) — \`${f.file}\`\n`;
     if (f.lock.reason && f.lock.reason !== f.lock.title) md += `  - Why it exists: ${f.lock.reason}\n`;
-    md += `  - Removed/rewritten: ${f.missing.map((l) => '`' + l.trim().replace(/`/g, "'") + '`').join(', ')}\n`;
+    if (f.missing.length) md += `  - Removed/rewritten: ${f.missing.map((l) => '`' + l.trim().replace(/`/g, "'") + '`').join(', ')}\n`;
+    if (f.renamed && f.renamed.length) md += `  - Renamed inside the lock (logic kept): ${f.renamed.map(([a, b]) => '`' + a + '` → `' + b + '`').join(', ')}\n`;
     if (f.status === 'blocked') md += `  - **Approve this PR as ${f.approvers.map(team.handle).join(' or ')}** to accept the change, or restore the lines.\n`;
     if (f.tracker) md += `  - Tracker: ${f.tracker}\n`;
   }
   return md;
+}
+
+/* ---------------- setup (AI assistants) ---------------- */
+function cmdSetup(args) {
+  const names = args._.length ? args._ : null;
+  if (!names) {
+    const T = require('./setup').TARGETS;
+    console.log(c.bold('Connect an AI assistant to fixlock:\n'));
+    for (const [id, t] of Object.entries(T)) console.log(`  npx fixlock setup ${id.padEnd(12)} ${t.label}${t.scope === 'user' ? c.dim('  (writes your user config)') : ''}`);
+    console.log(`  npx fixlock setup all          every project-level one above`);
+    return;
+  }
+  if (!s.configExists()) throw new Error('fixlock is not set up in this repo yet. Run: npx fixlock init');
+  const { results, cmd } = require('./setup').setup(names, { includeUser: !!args.user });
+  for (const r of results) {
+    console.log(c.green(`✔ ${r.label}`));
+    for (const f of r.files) console.log(c.dim(`    ${f.status.padEnd(9)} ${path.relative(process.cwd(), f.file) || f.file}${f.note ? '  — ' + f.note : ''}`));
+  }
+  syncAgentFiles(true);
+  console.log(`\nServer command: ${cmd.command} ${cmd.args.join(' ')}`);
+  console.log('Restart the assistant (or reload its MCP servers), then ask it: "use fixlock_why on <file>".');
+  if (results.some((r) => r.scope === 'project')) console.log('Commit the generated config files so the whole team gets them.');
 }
 
 /* ---------------- autolock ---------------- */
@@ -311,6 +350,60 @@ async function cmdAutolock(args) {
     g.git(['commit', '--no-verify', '-q', '-m', `chore(fixlock): lock ${locks.map((l) => l.id).join(', ')}`], { env: { ...process.env, FIXLOCK_IN_HOOK: '1' } });
     console.log(c.dim(`  committed: chore(fixlock): lock ${locks.map((l) => l.id).join(', ')}`));
   }
+}
+
+/* ---------------- discover ---------------- */
+async function cmdDiscover(args) {
+  const cfg = s.loadConfig();
+  const reg = s.loadRegistry();
+  const sel = args.since ? { since: args.since } : { max: args.max ? +args.max : 1000 };
+  const min = args.min === undefined ? 4 : +args.min;
+  const { found, skipped, scanned, fixes } = discovery.discover(cfg, reg, sel, { min, features: !args['no-features'], perCommit: args['per-commit'] });
+  const limit = args.limit ? +args.limit : 25;
+  const shown = found.slice(0, limit);
+  if (args.json) {
+    console.log(JSON.stringify({ scanned, fixes, min, found: found.map((f) => ({
+      file: f.file, lines: [f.start, f.end], type: f.type, score: f.score, confidence: f.confidence, signals: f.signals,
+      title: auto.cleanTitle(f.commit.subject), commit: f.commit.sha, test: f.test, snippet: f.snippet,
+    })), skipped }, null, 2));
+    return;
+  }
+  if (!found.length) {
+    console.log(c.green(`✔ Scanned ${scanned} commit(s): no unlocked past fixes found`) + c.dim(min > 0 ? ` (score ${min}+; try --min 0 to see weaker candidates)` : ''));
+    return;
+  }
+  const tag = { high: c.green('high  '), medium: c.yellow('medium'), low: c.dim('low   ') };
+  console.log(c.bold(`Found ${found.length} block(s) from ${fixes} past fix(es) worth locking in ${scanned} commit(s)`) + (found.length > shown.length ? c.dim(` (top ${shown.length}; --limit N for more)`) : '') + '\n');
+  shown.forEach((f, i) => {
+    console.log(`${String(i + 1).padStart(3)}. ${tag[f.confidence]} ${f.type === 'feature' ? c.cyan('feature') : 'bug    '} ${c.bold(`${f.file}:${f.start}-${f.end}`)}  ${f.commit.subject}  ${c.dim(f.commit.sha.slice(0, 7))}`);
+    console.log(c.dim(`       ${f.signals.join(' · ')}`));
+    console.log(c.dim(`       │ ${f.snippet.slice(0, 2).map((l) => l.trim()).join('  ⏎  ')}${f.snippet.length > 2 ? `  … (+${f.snippet.length - 2})` : ''}`));
+  });
+  skipped.slice(0, 3).forEach((x) => console.log(c.dim(`  skipped ${x}`)));
+  if (skipped.length > 3) console.log(c.dim(`  … and ${skipped.length - 3} more large blocks skipped (lock their key lines with fixlock mark)`));
+  let picked;
+  if (args['dry-run']) return;
+  if (args.apply || args.yes) picked = shown.map((_, i) => i);
+  else if (process.stdin.isTTY) {
+    const p = init.prompter();
+    try {
+      for (;;) {
+        const v = await p.ask('\nLock which? e.g. 1-3,5 · all · none', 'none');
+        try { picked = discovery.parseSelection(v, shown.length); break; } catch (e) { console.log(c.yellow(`  ${e.message}`)); }
+      }
+    } finally { p.close(); }
+  } else {
+    console.log(c.dim('\nRun `fixlock discover` in a terminal to choose, or add --apply to lock all of these.'));
+    return;
+  }
+  if (!picked.length) { console.log(c.dim('Nothing locked.')); return; }
+  const locks = discovery.toLocks(picked.map((i) => shown[i]), cfg, reg);
+  s.saveRegistry(reg);
+  console.log('');
+  for (const l of locks) console.log(c.green(`🔒 ${l.id} locked`) + ` — ${l.file} (${l.snippet.length} lines) · ${l.title}${l.test ? c.dim(' · test ' + l.test) : ''}`);
+  syncAgentFiles(true);
+  if (fs.existsSync(path.join(s.root(), '.github', 'CODEOWNERS'))) writeCodeowners(true);
+  console.log(c.dim(`\nCommit .fixlock/ so the locks apply to everyone: git add .fixlock && git commit -m "chore(fixlock): lock ${locks.length} past fix(es)"`));
 }
 
 /* ---------------- AI tool files / changelog / codeowners ---------------- */
@@ -372,11 +465,15 @@ module.exports = {
   sync: () => syncAgentFiles(false),
   tools: cmdTools,
   autolock: cmdAutolock,
+  discover: cmdDiscover,
   detect: () => cmdTools({ _: ['list'] }),
   changelog: () => { console.log(c.green(`✔ ${path.relative(process.cwd(), changelog.update()) || 'CHANGELOG.md'} updated`)); },
   release: (args) => { const r = changelog.release(args._[0]); syncAgentFiles(true); console.log(c.green(`✔ ${r.version} (${r.date}) written to CHANGELOG.md`) + c.dim('  — commit it, then tag: git tag v' + r.version.replace(/^v/, ''))); },
   codeowners: () => writeCodeowners(false),
   'install-hook': () => { init.installGitHook(); console.log(c.green('✔ pre-commit warning hook installed')); },
   'install-claude-hook': () => { init.installClaudeHook(); console.log(c.green('✔ Claude Code hook added to .claude/settings.json')); },
+  setup: cmdSetup,
+  demo: (args) => { require('./demo').run({ keep: !!args.keep, fast: !!args.fast }); },
+  mcp: () => require('./mcp').serve(),
   hook: (args) => { if (args._[0] !== 'claude') throw new Error('Usage: fixlock hook claude'); require('./hook').run(); },
 };

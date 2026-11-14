@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx --no-install fixlock hook claude"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "deny": [
+      "Edit(.fixlock/**)",
+      "Write(.fixlock/**)",
+      "Edit(.claude/settings.json)",
+      "Write(.claude/settings.json)",
+      "Edit(.git/hooks/**)",
+      "Write(.git/hooks/**)",
+      "Bash(npx fixlock remove:*)",
+      "Bash(git push --no-verify:*)",
+      "Bash(git commit --no-verify:*)"
+    ]
+  }
+}

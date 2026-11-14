@@ -16,11 +16,18 @@ function parse(argv) {
   return out;
 }
 
-const HELP = `fixlock — stop fixed bugs and finished features from coming back
+const HELP = `fixlock — stop fixed bugs and finished features from coming back · by Algotricz
+
+See it first:
+  fixlock demo [--keep] [--fast]       60-second walkthrough in a throwaway repo (nothing in your projects is touched)
 
 Setup (team lead, once):
   fixlock init                         Interactive: team, roles, GitHub users, policies, tracker, hooks
   fixlock team [list|add|remove]       Manage members: team add --name Abi --github abinandhmj --email a@x.com --role lead
+
+AI assistants:
+  fixlock setup [assistant…]           Connect claude-code, cursor, copilot, codex, gemini, windsurf (or "all")
+  fixlock mcp                          Run the MCP server (assistants start this themselves)
 
 AI tools & docs:
   fixlock tools                        Detect AI tools (repo, CLIs, VS Code/Cursor extensions) and show what is enabled
@@ -33,6 +40,9 @@ Daily:
   fixlock mark <file> <start>-<end> -m "why" [--type bug|feature] [--title ".."] [--issue linear:ENG-12] [--owner gh] [--test spec]
   fixlock autolock [--since ref | --all] [--dry-run]
                                        Lock lines from fix:/feat: commits (HEAD by default; --all backfills history)
+  fixlock discover [--max 1000 | --since ref] [--min 4] [--apply] [--json]
+                                       Find past fixes worth locking, from any commit style: reverted-and-reapplied
+                                       fixes, fix/regression messages, linked issues, tests, guard code. Ranked, pick which
   fixlock why <file>[:line]            What is locked here, who owns it, can I change it?
   fixlock list | remove <id>
 
@@ -45,6 +55,7 @@ CI / hooks:
 `;
 
 const [, , sub, ...rest] = process.argv;
+if (sub === '--version' || sub === '-v' || sub === 'version') { console.log(require('../package.json').version); process.exit(0); }
 const args = parse(rest);
 const alias = { ls: 'list', rm: 'remove' };
 const name = alias[sub] || sub;

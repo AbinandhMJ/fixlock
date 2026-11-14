@@ -6,6 +6,13 @@ title: Command reference
 
 Run with `npx fixlock <command>` (or `npx @abinandhmj/fixlock <command>` if not installed in the project). `npx fixlock --help` prints a summary.
 
+## Try it
+
+### `demo`
+A 60-second walkthrough in a throwaway repo: a fix is auto-locked, an AI edit that would undo it gets `ask`, the commit warns, CI blocks the PR, the owner approves. Nothing in your projects is touched.
+- `--keep`: keep the demo repo afterwards and print its path.
+- `--fast`: no pauses.
+
 ## Setup
 
 ### `init`
@@ -22,6 +29,15 @@ fixlock team remove ravik
 
 ### `tools [list | add | remove] [ids…]`
 Detect AI tools and choose which get rules files. See [AI tools](ai-tools.md).
+
+### `setup [assistant…]`
+Connect AI assistants: `claude-code`, `cursor`, `copilot`, `codex`, `gemini`, `windsurf`, or `all` (project-level ones). Writes the MCP server config and the assistant's rules file. `codex` and `windsurf` write to your user config. See [AI assistants](integrations/).
+
+### `mcp`
+Runs the MCP server over stdio. Assistants start it themselves; see the [MCP server reference](integrations/mcp.md).
+
+### `--version`
+Prints the installed version.
 
 ### `install-hook`
 Installs git hooks on this machine: `pre-commit` (warning) and `post-commit` (auto-lock).
@@ -57,6 +73,21 @@ Lock lines from fix/feature commits.
 | `--dry-run` | Show what would be locked |
 | `--commit-result` | Commit the new locks as `chore(fixlock): …` (used by the hook) |
 | `--no-sync` | Don't update the tracker |
+
+### `discover`
+Find past bug fixes worth locking, from any commit style, ranked by evidence: reverted-and-re-applied fixes, fix or regression wording, linked issues, a test in the same commit, guard code (null checks, error handling, bounds checks) and small, focused changes. Only lines still in the code (and still from that commit) are suggested; test files are linked, not locked.
+| Flag | Meaning |
+|---|---|
+| *(none)* | Scan the last 1000 commits, list the top 25, ask which to lock (in a terminal) |
+| `--max N` | Scan the last N commits |
+| `--since <ref>` | Scan commits after `<ref>` |
+| `--min N` | Minimum score (default 4; `0` shows everything). high ≥ 7, medium ≥ 4 |
+| `--limit N` | How many to list (default 25) |
+| `--per-commit N` | Blocks suggested per fix commit (default 2) |
+| `--no-features` | Leave out `feat:` commits |
+| `--apply` | Lock everything listed, without asking |
+| `--dry-run` | List only |
+| `--json` | Machine-readable output |
 
 ### `why <file>[:line[-line]]`
 Shows locks in a file or on given lines, the owner, and whether you can change them.

@@ -1,22 +1,65 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const structural = require('./structural');
 
 const norm = (l) => l.replace(/\s+/g, ' ').trim();
 const trivial = (l) => /^[\s{}()[\];,]*$/.test(l);
 const toPosix = (f) => f.split(path.sep).join('/');
 
+/** Real path, following symlinks and Windows 8.3 short names; works for files that don't exist yet. */
+function realish(p) {
+  const abs = path.resolve(p);
+  try { return fs.realpathSync.native(abs); } catch { /* not there yet */ }
+  const parent = path.dirname(abs);
+  return parent === abs ? abs : path.join(realish(parent), path.basename(abs));
+}
+
+/** Repo-relative POSIX path for a file given absolute or relative to the cwd. "../x" means outside the repo. */
+function repoRel(root, file) {
+  return toPosix(path.relative(realish(root), realish(file)));
+}
+
+/**
+ * Record how many identical copies of the snippet the file holds when the lock is made, so removing
+ * the locked copy isn't hidden by another copy elsewhere in the file.
+ */
+function withCopies(lock, content) {
+  const n = structural.count(lock.snippet, content, lock.file);
+  if (n > 1) lock.copies = n; else delete lock.copies;
+  return lock;
+}
+
 /** Line numbers (1-based) where a lock's snippet lines currently sit in `lines`. */
 function locate(lock, lines) {
+  // Structural first: it finds the lock as one contiguous block, even when reformatted or renamed.
+  // Matching lines one by one as text can pick up a common line ("try:", "return true") far away.
+  const r = structural.verify(lock.snippet, lines.join('\n'), lock.file);
+  if (r.lines) return Array.from({ length: r.lines[1] - r.lines[0] + 1 }, (_, k) => r.lines[0] + k);
+  return locateText(lock, lines);
+}
+
+/** Text-only locate: each snippet line, in order, preferring the nearest match after the previous one. */
+function locateText(lock, lines) {
   const n = lines.map(norm);
-  const found = [];
-  let from = 0;
-  for (const s of lock.snippet.map(norm)) {
-    let i = n.indexOf(s, from);
-    if (i === -1) i = n.indexOf(s);
-    if (i !== -1) { found.push(i + 1); from = i + 1; }
+  const snip = lock.snippet.map(norm);
+  // Try every place the first line occurs and keep the tightest run of matches.
+  let best = [];
+  const starts = [];
+  n.forEach((l, i) => { if (l === snip[0]) starts.push(i); });
+  if (!starts.length) starts.push(0);
+  for (const s0 of starts) {
+    const found = [];
+    let from = s0;
+    for (const s of snip) {
+      const i = n.indexOf(s, from);
+      if (i !== -1) { found.push(i + 1); from = i + 1; }
+    }
+    const span = found.length ? found[found.length - 1] - found[0] : Infinity;
+    const bestSpan = best.length ? best[best.length - 1] - best[0] : Infinity;
+    if (found.length > best.length || (found.length === best.length && span < bestSpan)) best = found;
   }
-  return found;
+  return best;
 }
 
 function missingLines(lock, content) {
@@ -24,17 +67,39 @@ function missingLines(lock, content) {
   return lock.snippet.filter((l) => !set.has(norm(l)));
 }
 
+/**
+ * Is a lock still intact in `content`? (null content = file deleted)
+ * opts.mode: "structural" (default; falls back to text for unsupported languages) | "text"
+ * opts.file: path to judge the language by (defaults to lock.file; differs after a file rename)
+ * Returns { status: "intact"|"renamed"|"changed", engine: "structural"|"text",
+ *           missing: [snippet lines no longer found as text], renames: [[old, new]], reformatted: bool }
+ */
+function verifyLock(lock, content, opts = {}) {
+  if (content === null || content === undefined) return { status: 'changed', engine: 'text', missing: lock.snippet, renames: [], reformatted: false };
+  const missing = missingLines(lock, content);
+  if (opts.mode !== 'text') {
+    const r = structural.verify(lock.snippet, content, opts.file || lock.file, { copies: lock.copies });
+    if (r.status === 'changed' && lock.copies > 1 && r.found > 0) {
+      return { status: 'changed', engine: r.engine, missing: lock.snippet, renames: [], reformatted: false, copies: { expected: lock.copies, found: r.found } };
+    }
+    if (r.status === 'intact') return { status: 'intact', engine: r.engine, missing: [], renames: [], reformatted: missing.length > 0 };
+    if (r.status === 'renamed') return { status: 'renamed', engine: r.engine, missing, renames: r.renames, reformatted: false };
+    if (r.status === 'changed') return { status: 'changed', engine: r.engine, missing: missing.length ? missing : lock.snippet, renames: [], reformatted: false };
+  }
+  return { status: missing.length ? 'changed' : 'intact', engine: 'text', missing, renames: [], reformatted: false };
+}
+
 function locksForFile(reg, root, file) {
-  const rel = toPosix(path.isAbsolute(file) ? path.relative(root, file) : file);
+  const rel = path.isAbsolute(file) ? repoRel(root, file) : toPosix(file);
   return { rel, locks: reg.locks.filter((l) => l.file === rel) };
 }
 
 /**
  * Which locks does a proposed change touch?
  * change: { file, before (full old content), after (full new content) } OR { file, startLine, endLine }
- * Returns [{ lock, lines: [n], removed: [snippet lines that would disappear] }]
+ * Returns [{ lock, lines: [n], removed: [snippet lines that would disappear], renames: [[old, new]] }]
  */
-function affected(reg, root, change) {
+function affected(reg, root, change, opts = {}) {
   const { rel, locks } = locksForFile(reg, root, change.file);
   if (!locks.length) return [];
   const abs = path.join(root, rel);
@@ -44,15 +109,27 @@ function affected(reg, root, change) {
   for (const lock of locks) {
     const at = locate(lock, lines);
     if (change.after !== undefined) {
-      const removed = missingLines(lock, change.after);
+      const v = verifyLock(lock, change.after, { mode: opts.mode, file: rel });
+      const removed = v.status === 'changed' ? v.missing : [];
+      const renames = v.status === 'renamed' ? v.renames : [];
       const touched = change.touched ? at.filter((n) => n >= change.touched[0] && n <= change.touched[1]) : [];
-      if (removed.length || touched.length) out.push({ lock, lines: at, removed });
+      if (removed.length || renames.length || touched.length) out.push({ lock, lines: at, removed, renames });
     } else {
       const hit = at.filter((n) => n >= change.startLine && n <= change.endLine);
-      if (hit.length) out.push({ lock, lines: at, removed: [] });
+      if (hit.length) out.push({ lock, lines: at, removed: [], renames: [] });
     }
   }
   return out;
 }
 
-module.exports = { norm, trivial, locate, missingLines, affected, toPosix };
+/** 1-based [first, last] line numbers that `needle` (found at index i of content) really covers, ignoring leading/trailing line breaks. */
+function spanLines(content, i, needle) {
+  let a = i; let b = i + needle.length;
+  while (a < b && content[a] === '\n') a++;
+  while (b > a && content[b - 1] === '\n') b--;
+  if (a >= b) return null;
+  const start = content.slice(0, a).split('\n').length;
+  return [start, start + content.slice(a, b).split('\n').length - 1];
+}
+
+module.exports = { repoRel, realish, spanLines, norm, trivial, locate, missingLines, verifyLock, withCopies, affected, toPosix };
