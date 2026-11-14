@@ -4,6 +4,10 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+_No changes yet._
+
+## [0.6.0] - 2026-11-14
+
 ### Fixed (found by the accuracy benchmark)
 - Line numbers after an unterminated quote (e.g. a `'` inside a regex) were off by one, which misplaced lock positions in `why`, hooks and the editor.
 - `locate()` could match a common line (`try:`, `return true`) hundreds of lines away; it now finds the lock as one block, preferring a match on whole lines.
@@ -21,6 +25,8 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 - **VS Code extension** (`extensions/vscode`, also for Cursor, Windsurf and VSCodium via Open VSX): locked lines in the gutter with hover and CodeLens, live Problems warnings when an edit changes locked code, "Lock selected lines", and fixlock's MCP tools registered for Copilot agent mode. Bundles fixlock; no Node.js install needed.
 
 ## [0.5.0] - 2026-11-11
+
+_Not published to npm on its own; everything below ships in 0.6.0._
 
 ### Added
 - **`fixlock demo`**: a 60-second walkthrough in a throwaway repo, using the real commands. Also recorded as an animated SVG, MP4 and GIF (`scripts/record-demo.js`).
