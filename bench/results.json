@@ -1,0 +1,567 @@
+{
+  "fixlock": "0.5.0+2df0144",
+  "date": "2026-11-14",
+  "seconds": 49,
+  "repos": [
+    {
+      "name": "express",
+      "url": "https://github.com/expressjs/express.git",
+      "sha": "43fca52d28a422c8be48fd489cbd4f2d6152bab6",
+      "lang": "JavaScript",
+      "discovered": 46,
+      "locks": 33,
+      "skipped": {
+        "language": 3,
+        "locate": 7,
+        "baseline": 3
+      }
+    },
+    {
+      "name": "ky",
+      "url": "https://github.com/sindresorhus/ky.git",
+      "sha": "3541888878c4d303a8bc2ad61815f4e048f55a5d",
+      "lang": "TypeScript",
+      "discovered": 154,
+      "locks": 80,
+      "skipped": {
+        "language": 0,
+        "locate": 7,
+        "baseline": 21
+      }
+    },
+    {
+      "name": "requests",
+      "url": "https://github.com/psf/requests.git",
+      "sha": "3c7baaa05ab4aa49cc819ce3a819d260de19c157",
+      "lang": "Python",
+      "discovered": 54,
+      "locks": 36,
+      "skipped": {
+        "language": 6,
+        "locate": 6,
+        "baseline": 6
+      }
+    },
+    {
+      "name": "cobra",
+      "url": "https://github.com/spf13/cobra.git",
+      "sha": "adbc8813901bba65827259daa8e22ff94ec1f30e",
+      "lang": "Go",
+      "discovered": 132,
+      "locks": 80,
+      "skipped": {
+        "language": 4,
+        "locate": 9,
+        "baseline": 36
+      }
+    }
+  ],
+  "summary": {
+    "locks": 229,
+    "edits": 1812,
+    "falsePositives": {
+      "text": 637,
+      "structural": 0,
+      "of": 1084
+    },
+    "renames": {
+      "textBlocked": 173,
+      "structuralBlocked": 8,
+      "structuralWarned": 165,
+      "of": 173
+    },
+    "detection": {
+      "text": 517,
+      "structural": 552,
+      "structuralWarnedOnly": 3,
+      "of": 555
+    }
+  },
+  "rows": [
+    {
+      "kind": "benign",
+      "name": "add comments",
+      "n": 229,
+      "langs": [
+        "Go",
+        "JavaScript",
+        "Python",
+        "TypeScript"
+      ],
+      "text": {
+        "changed": 209,
+        "renamed": 0
+      },
+      "structural": {
+        "changed": 0,
+        "renamed": 0
+      },
+      "misses": []
+    },
+    {
+      "kind": "benign",
+      "name": "wrap long line",
+      "n": 147,
+      "langs": [
+        "Go",
+        "JavaScript",
+        "Python",
+        "TypeScript"
+      ],
+      "text": {
+        "changed": 136,
+        "renamed": 0
+      },
+      "structural": {
+        "changed": 0,
+        "renamed": 0
+      },
+      "misses": []
+    },
+    {
+      "kind": "benign",
+      "name": "reindent",
+      "n": 190,
+      "langs": [
+        "Go",
+        "JavaScript",
+        "TypeScript"
+      ],
+      "text": {
+        "changed": 0,
+        "renamed": 0
+      },
+      "structural": {
+        "changed": 0,
+        "renamed": 0
+      },
+      "misses": []
+    },
+    {
+      "kind": "formatter",
+      "name": "prettier (narrow, single quotes, no semicolons)",
+      "n": 111,
+      "langs": [
+        "JavaScript",
+        "TypeScript"
+      ],
+      "text": {
+        "changed": 102,
+        "renamed": 0
+      },
+      "structural": {
+        "changed": 0,
+        "renamed": 0
+      },
+      "misses": []
+    },
+    {
+      "kind": "formatter",
+      "name": "prettier (wide, double quotes)",
+      "n": 111,
+      "langs": [
+        "JavaScript",
+        "TypeScript"
+      ],
+      "text": {
+        "changed": 58,
+        "renamed": 0
+      },
+      "structural": {
+        "changed": 0,
+        "renamed": 0
+      },
+      "misses": []
+    },
+    {
+      "kind": "rename",
+      "name": "rename a local variable",
+      "n": 173,
+      "langs": [
+        "Go",
+        "JavaScript",
+        "Python",
+        "TypeScript"
+      ],
+      "text": {
+        "changed": 173,
+        "renamed": 0
+      },
+      "structural": {
+        "changed": 8,
+        "renamed": 165
+      },
+      "misses": [
+        {
+          "repo": "ky",
+          "file": "source/utils/timeout.ts",
+          "lines": [
+            43,
+            44
+          ],
+          "verdict": "changed",
+          "before": "\t} finally {\n\t\tclearTimeout(timeoutId);",
+          "after": "\t\t});\n\t} finally {\n\t\tclearTimeoutRenamed(timeoutId);\n\t}\n}\n"
+        },
+        {
+          "repo": "ky",
+          "file": "source/core/Ky.ts",
+          "lines": [
+            539,
+            539
+          ],
+          "verdict": "changed",
+          "before": "\t\t\t&& !userProvidedContentType",
+          "after": "\t\t\t&& ((supportsFormData && this.#options.body instanceof globalThis.FormData) || this.#options.body instanceof URLSearchParams)\n\t\t\t&& !userProvidedContentTypeRenamed\n\t\t) {\n\t\t\tthis.#options.headers.delete('content-type');\n\t\t}"
+        },
+        {
+          "repo": "ky",
+          "file": "source/core/Ky.ts",
+          "lines": [
+            101,
+            110
+          ],
+          "verdict": "changed",
+          "before": "const createTextDecoder = (contentType: string): TextDecoder => {\n\tconst match = /;\\s*charset\\s*=\\s*(?:\"([^\"]+)\"|([^;,\\s]+))/i.exec(contentType);\n\tconst charset = match?.[1] ?? match?.[2];\n\tif (charset) {\n\t\ttry {\n\t\t\treturn new TextDecoder(charset);\n\t\t} catch {}\n\treturn new TextDecoder();",
+          "after": "\nconst createTextDecoder = (contentType: string): TextDecoder => {\n\tconst match = /;\\s*charsetRenamed\\s*=\\s*(?:\"([^\"]+)\"|([^;,\\s]+))/i.exec(contentType);\n\tconst charsetRenamed = match?.[1] ?? match?.[2];\n\tif (charsetRenamed) {\n\t\ttry {\n\t\t\treturn new TextDecoder(charsetRenamed);\n\t\t} catch {}\n\t}\n\n\treturn new TextDecoder();\n};\n\nconst isJsonContentType = (contentType: string): boolean => {"
+        },
+        {
+          "repo": "ky",
+          "file": "source/core/Ky.ts",
+          "lines": [
+            895,
+            895
+          ],
+          "verdict": "changed",
+          "before": "\t\t\t\t? await bodyPromise",
+          "after": "\t\t\tresult = timeoutMilliseconds === undefined\n\t\t\t\t? await bodyPromiseRenamed\n\t\t\t\t: await raceWithTimeout(bodyPromiseRenamed, timeoutMilliseconds);\n\t\t} catch (error: unknown) {\n\t\t\tif (this.#userProvidedAbortSignal?.aborted) {"
+        },
+        {
+          "repo": "requests",
+          "file": "pyproject.toml",
+          "lines": [
+            58,
+            58
+          ],
+          "verdict": "changed",
+          "before": "[dependency-groups]",
+          "after": "\n[dependencyRenamed-groups]\ntest = [\n    \"requests[socks]\",\n    \"pytest-httpbin==2.1.0\","
+        },
+        {
+          "repo": "requests",
+          "file": "src/requests/_types.py",
+          "lines": [
+            89,
+            89
+          ],
+          "verdict": "changed",
+          "before": "        SupportsItems[_ParamsMappingKeyType, _ParamsMappingValueType]",
+          "after": "    ParamsType: TypeAlias = (\n        SupportsItems[_ParamsMappingKeyTypeRenamed, _ParamsMappingValueType]\n        | tuple[tuple[_ParamsMappingKeyTypeRenamed, _ParamsMappingValueType], ...]\n        | Iterable[tuple[_ParamsMappingKeyTypeRenamed, _ParamsMappingValueType]]\n        | str"
+        },
+        {
+          "repo": "requests",
+          "file": "src/requests/_types.py",
+          "lines": [
+            158,
+            158
+          ],
+          "verdict": "changed",
+          "before": "        headers: HeadersType",
+          "after": "    class BaseRequestKwargs(TypedDict, total=False):\n        headersRenamed: HeadersType\n        cookies: RequestsCookieJar | CookieJar | dict[str, str] | None\n        files: FilesType\n        auth: AuthType"
+        },
+        {
+          "repo": "cobra",
+          "file": "command.go",
+          "lines": [
+            1488,
+            1488
+          ],
+          "verdict": "changed",
+          "before": "\t\tuseline = use",
+          "after": "\t} else {\n\t\tuselineRenamed = use\n\t}\n\tif c.DisableFlagsInUseLine {\n\t\treturn uselineRenamed"
+        }
+      ]
+    },
+    {
+      "kind": "harmful",
+      "name": "flip comparison",
+      "n": 79,
+      "langs": [
+        "Go",
+        "JavaScript",
+        "Python",
+        "TypeScript"
+      ],
+      "text": {
+        "changed": 72,
+        "renamed": 0
+      },
+      "structural": {
+        "changed": 79,
+        "renamed": 0
+      },
+      "misses": []
+    },
+    {
+      "kind": "harmful",
+      "name": "drop negation",
+      "n": 38,
+      "langs": [
+        "Go",
+        "JavaScript",
+        "Python",
+        "TypeScript"
+      ],
+      "text": {
+        "changed": 36,
+        "renamed": 0
+      },
+      "structural": {
+        "changed": 38,
+        "renamed": 0
+      },
+      "misses": []
+    },
+    {
+      "kind": "harmful",
+      "name": "delete a line",
+      "n": 189,
+      "langs": [
+        "Go",
+        "JavaScript",
+        "Python",
+        "TypeScript"
+      ],
+      "text": {
+        "changed": 176,
+        "renamed": 0
+      },
+      "structural": {
+        "changed": 186,
+        "renamed": 3
+      },
+      "misses": [
+        {
+          "repo": "ky",
+          "file": "source/core/Ky.ts",
+          "lines": [
+            1055,
+            1055
+          ],
+          "verdict": "renamed",
+          "before": "\t\t\t\tthis.#assignRequest(this.#withManagedSignal(result));",
+          "after": "\t\t\tif (isRequest(result)) {\n\t\t\t} else if (isResponse(result)) {\n\t\t\t\tthis.#hookResponses.add(result);\n\t\t\t\treturn result;\n\t\t\t}"
+        },
+        {
+          "repo": "ky",
+          "file": "source/core/Ky.ts",
+          "lines": [
+            1222,
+            1222
+          ],
+          "verdict": "renamed",
+          "before": "\t\tconst nonRequestOptions = findUnknownOptions(this.#options);",
+          "after": "\n\t\tthis.#retryLimit = normalizeRetryOptions(this.#options.retry).limit;\n\t\t// Reattach the managed signal because Node.js can garbage-collect the abort controller used by Request.clone().\n\t\tconst retryRequest = this.#retryLimit > 0 ? this.#withManagedSignal(this.request.clone()) : undefined;\n\t\tconst request = this.#wrapRequestWithUploadProgress(this.request);"
+        },
+        {
+          "repo": "requests",
+          "file": "src/requests/models.py",
+          "lines": [
+            946,
+            947
+          ],
+          "verdict": "renamed",
+          "before": "                except SSLError as e:\n                    raise RequestsSSLError(e)",
+          "after": "                    raise ConnectionError(e)\n                    raise RequestsSSLError(e)\n            else:\n                # Standard file-like object.\n                while True:\n                    chunk = self.raw.read(chunk_size)"
+        }
+      ]
+    },
+    {
+      "kind": "benign",
+      "name": "swap quote style",
+      "n": 38,
+      "langs": [
+        "JavaScript",
+        "TypeScript"
+      ],
+      "text": {
+        "changed": 38,
+        "renamed": 0
+      },
+      "structural": {
+        "changed": 0,
+        "renamed": 0
+      },
+      "misses": []
+    },
+    {
+      "kind": "harmful",
+      "name": "swap and/or",
+      "n": 47,
+      "langs": [
+        "Go",
+        "JavaScript",
+        "Python",
+        "TypeScript"
+      ],
+      "text": {
+        "changed": 45,
+        "renamed": 0
+      },
+      "structural": {
+        "changed": 47,
+        "renamed": 0
+      },
+      "misses": []
+    },
+    {
+      "kind": "harmful",
+      "name": "change string",
+      "n": 75,
+      "langs": [
+        "Go",
+        "JavaScript",
+        "Python",
+        "TypeScript"
+      ],
+      "text": {
+        "changed": 73,
+        "renamed": 0
+      },
+      "structural": {
+        "changed": 75,
+        "renamed": 0
+      },
+      "misses": []
+    },
+    {
+      "kind": "benign",
+      "name": "blank lines",
+      "n": 99,
+      "langs": [
+        "Go",
+        "JavaScript",
+        "Python",
+        "TypeScript"
+      ],
+      "text": {
+        "changed": 0,
+        "renamed": 0
+      },
+      "structural": {
+        "changed": 0,
+        "renamed": 0
+      },
+      "misses": []
+    },
+    {
+      "kind": "harmful",
+      "name": "change number",
+      "n": 40,
+      "langs": [
+        "Go",
+        "JavaScript",
+        "Python",
+        "TypeScript"
+      ],
+      "text": {
+        "changed": 36,
+        "renamed": 0
+      },
+      "structural": {
+        "changed": 40,
+        "renamed": 0
+      },
+      "misses": []
+    },
+    {
+      "kind": "harmful",
+      "name": "change field",
+      "n": 87,
+      "langs": [
+        "Go",
+        "JavaScript",
+        "Python",
+        "TypeScript"
+      ],
+      "text": {
+        "changed": 79,
+        "renamed": 0
+      },
+      "structural": {
+        "changed": 87,
+        "renamed": 0
+      },
+      "misses": []
+    },
+    {
+      "kind": "benign",
+      "name": "drop semicolons",
+      "n": 73,
+      "langs": [
+        "JavaScript",
+        "TypeScript"
+      ],
+      "text": {
+        "changed": 71,
+        "renamed": 0
+      },
+      "structural": {
+        "changed": 0,
+        "renamed": 0
+      },
+      "misses": []
+    },
+    {
+      "kind": "formatter",
+      "name": "black (line length 40)",
+      "n": 33,
+      "langs": [
+        "Python"
+      ],
+      "text": {
+        "changed": 19,
+        "renamed": 0
+      },
+      "structural": {
+        "changed": 0,
+        "renamed": 0
+      },
+      "misses": []
+    },
+    {
+      "kind": "formatter",
+      "name": "black (line length 120)",
+      "n": 31,
+      "langs": [
+        "Python"
+      ],
+      "text": {
+        "changed": 4,
+        "renamed": 0
+      },
+      "structural": {
+        "changed": 0,
+        "renamed": 0
+      },
+      "misses": []
+    },
+    {
+      "kind": "formatter",
+      "name": "gofmt (after re-indenting with spaces)",
+      "n": 22,
+      "langs": [
+        "Go"
+      ],
+      "text": {
+        "changed": 0,
+        "renamed": 0
+      },
+      "structural": {
+        "changed": 0,
+        "renamed": 0
+      },
+      "misses": []
+    }
+  ]
+}
