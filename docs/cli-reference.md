@@ -74,6 +74,21 @@ Lock lines from fix/feature commits.
 | `--commit-result` | Commit the new locks as `chore(fixlock): …` (used by the hook) |
 | `--no-sync` | Don't update the tracker |
 
+### `discover`
+Find past bug fixes worth locking, from any commit style, ranked by evidence: reverted-and-re-applied fixes, fix or regression wording, linked issues, a test in the same commit, guard code (null checks, error handling, bounds checks) and small, focused changes. Only lines still in the code (and still from that commit) are suggested; test files are linked, not locked.
+| Flag | Meaning |
+|---|---|
+| *(none)* | Scan the last 1000 commits, list the top 25, ask which to lock (in a terminal) |
+| `--max N` | Scan the last N commits |
+| `--since <ref>` | Scan commits after `<ref>` |
+| `--min N` | Minimum score (default 4; `0` shows everything). high ≥ 7, medium ≥ 4 |
+| `--limit N` | How many to list (default 25) |
+| `--per-commit N` | Blocks suggested per fix commit (default 2) |
+| `--no-features` | Leave out `feat:` commits |
+| `--apply` | Lock everything listed, without asking |
+| `--dry-run` | List only |
+| `--json` | Machine-readable output |
+
 ### `why <file>[:line[-line]]`
 Shows locks in a file or on given lines, the owner, and whether you can change them.
 

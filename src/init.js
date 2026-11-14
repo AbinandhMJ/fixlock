@@ -142,4 +142,4 @@ function installGitHook() {
     '#!/bin/sh\n# installed by fixlock — locks lines from fix:/feat: commits in a follow-up chore commit\n[ -n "$FIXLOCK_IN_HOOK" ] && exit 0\nFIXLOCK_IN_HOOK=1 npx --no-install fixlock autolock --commit-result --quiet || true\n', { mode: 0o755 });
 }
 
-module.exports = { interactive, defaults, installClaudeHook, installGitHook };
+module.exports = { interactive, defaults, installClaudeHook, installGitHook, prompter };

@@ -20,6 +20,8 @@ Behind all of them, the git hooks warn at commit time and [CI](../ci-setup.md) b
 npx fixlock setup claude-code   # or: cursor, copilot, codex, gemini, windsurf, all
 ```
 
+Prefer clicks? The [VS Code extension](vscode.md) shows locks in the editor, warns as you type, and connects Copilot agent mode automatically.
+
 | Assistant | Guide |
 |---|---|
 | Claude Code | [Claude Code](claude-code.md) |
