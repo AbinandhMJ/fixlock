@@ -4,6 +4,7 @@ title: Supported languages
 
 # Supported languages
 
+::: v-pre
 fixlock compares the **structure** of locked code, not its text, so reformatting, comments and line wrapping never count as changes ([how it works](how-it-works.md), [accuracy](benchmark.md)). It understands 63 languages and formats. Any other file (Markdown, plain text, images…) is matched line by line as text, so a lock still works there, it just treats every text change as a change.
 
 Check how fixlock reads a file: `npx @abinandhmj/fixlock languages path/to/file`.
@@ -71,8 +72,8 @@ Check how fixlock reads a file: `npx @abinandhmj/fixlock languages path/to/file`
 | CSS | `.css` `.pcss` `.postcss` `.wxss` |  |
 | SCSS, Less, Stylus | `.scss` `.less` `.styl` `.stylus` |  |
 | Sass (indented) | `.sass` | indentation is part of the logic |
-| HTML and templates: Angular, Vue, Svelte, Astro, Django/Jinja, Twig, Liquid, Handlebars, EJS, ERB, Razor, Blade, JSP, Thymeleaf, FreeMarker, Go templates | `.html` `.htm` `.xhtml` `.shtml` `.vue` `.svelte` `.astro` `.hbs` `.handlebars` `.mustache` `.j2` `.jinja` `.jinja2` `.njk` `.nunjucks` `.twig` `.liquid` `.ejs` `.erb` `.html.erb` `.cshtml` `.razor` `.vbhtml` `.blade.php` `.jsp` `.jspx` `.tag` `.ftl` `.ftlh` `.gohtml` `.tmpl` `.tpl` `.mjml` `.html.heex` `.leex` `.eex` `.jte` `.cfm` `.marko` `.riot` | templates: tags, attributes, {{ }} expressions, <script> and <style>; case-insensitive |
-| XML (Maven, .csproj, Android, XAML, plist, SVG…) | `.xml` `.xsd` `.xsl` `.xslt` `.plist` `.csproj` `.vbproj` `.fsproj` `.vcxproj` `.props` `.targets` `.resx` `.xaml` `.axaml` `.storyboard` `.xib` `.wsdl` `.nuspec` `.config` `.manifest` `.rss` `.atom` `.kml` `.gpx` `.svg` `.xlf` `.xliff` `.iml` `.jelly` `.tld` `.fxml` `.launch` | templates: tags, attributes, {{ }} expressions, <script> and <style> |
+| HTML and templates: Angular, Vue, Svelte, Astro, Django/Jinja, Twig, Liquid, Handlebars, EJS, ERB, Razor, Blade, JSP, Thymeleaf, FreeMarker, Go templates | `.html` `.htm` `.xhtml` `.shtml` `.vue` `.svelte` `.astro` `.hbs` `.handlebars` `.mustache` `.j2` `.jinja` `.jinja2` `.njk` `.nunjucks` `.twig` `.liquid` `.ejs` `.erb` `.html.erb` `.cshtml` `.razor` `.vbhtml` `.blade.php` `.jsp` `.jspx` `.tag` `.ftl` `.ftlh` `.gohtml` `.tmpl` `.tpl` `.mjml` `.html.heex` `.leex` `.eex` `.jte` `.cfm` `.marko` `.riot` | templates: tags, attributes, `{{ }}` expressions, `<script>` and `<style>`; case-insensitive |
+| XML (Maven, .csproj, Android, XAML, plist, SVG…) | `.xml` `.xsd` `.xsl` `.xslt` `.plist` `.csproj` `.vbproj` `.fsproj` `.vcxproj` `.props` `.targets` `.resx` `.xaml` `.axaml` `.storyboard` `.xib` `.wsdl` `.nuspec` `.config` `.manifest` `.rss` `.atom` `.kml` `.gpx` `.svg` `.xlf` `.xliff` `.iml` `.jelly` `.tld` `.fxml` `.launch` | templates: tags, attributes, `{{ }}` expressions, `<script>` and `<style>` |
 
 ## What "understands" means
 
@@ -84,3 +85,4 @@ Check how fixlock reads a file: `npx @abinandhmj/fixlock languages path/to/file`
 - **Templates**: in HTML, Vue, Svelte and the like, a lock can be markup or code from `<script>`, `<style>` or a `{{ }}` expression; attribute values (`[disabled]="form.invalid"`, `v-if="…"`) are read as code, so reformatting them is fine and changing them isn't.
 
 Missing a language? It's usually one line in [`src/languages.js`](https://github.com/AbinandhMJ/fixlock/blob/main/src/languages.js): [open an issue](https://github.com/AbinandhMJ/fixlock/issues) or a PR.
+:::
