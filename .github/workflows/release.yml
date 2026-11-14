@@ -1,7 +1,8 @@
 # Publishes to npm with provenance when a version tag is pushed:
 #   npm version minor && git push --follow-tags
-# Needs the repo secret NPM_TOKEN (npm → Access Tokens → Granular, publish rights for @abinandhmj/fixlock),
-# or npm "trusted publishing" configured for this workflow (then NPM_TOKEN can be removed).
+# Auth is npm trusted publishing (OIDC): no token is stored anywhere. On npmjs.com, the package's
+# Settings → Trusted Publisher → GitHub Actions must list user AbinandhMJ, repo fixlock, workflow
+# release.yml, with "npm publish" allowed. Needs npm >= 11.5.1 (Node 24 ships it).
 name: Release
 on:
   push:
@@ -16,14 +17,15 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           registry-url: https://registry.npmjs.org
+          package-manager-cache: false   # never cache in release builds
+      - name: npm supports trusted publishing
+        run: npx --yes semver@7 -r '>=11.5.1' "$(npm --version)"
       - name: Tag matches package.json
         run: test "v$(node -p "require('./package.json').version")" = "${GITHUB_REF_NAME}"
       - run: npm test
-      - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npm publish --provenance --access public   # OIDC: no NODE_AUTH_TOKEN
       - name: GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
