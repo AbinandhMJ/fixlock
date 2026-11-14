@@ -12,6 +12,7 @@ const agents = require('./agents');
 const changelog = require('./changelog');
 const auto = require('./autolock');
 const stable = require('./stable');
+const discovery = require('./discover');
 
 const tty = process.stdout.isTTY && !process.env.NO_COLOR;
 const paint = (code) => (t) => (tty ? `\x1b[${code}m${t}\x1b[0m` : t);
@@ -42,6 +43,7 @@ async function cmdInit(args) {
   if (hooks.mcp && userLevel.length) console.log(`  ${userLevel.join(' / ')} users: run  npx fixlock setup ${userLevel.join(' ')}  on your own machine`);
   console.log('\nCommit .fixlock/ and the generated files above so the whole team gets them.');
   console.log('Every developer runs once:  npm i -D @abinandhmj/fixlock' + (hooks.git ? '  &&  npx fixlock install-hook' : ''));
+  console.log('Find the fixes you already have:  npx fixlock discover');
   console.log('Lock a fix:  npx fixlock mark <file> <start>-<end> -m "why" --issue linear:ENG-12');
 }
 
@@ -348,6 +350,60 @@ async function cmdAutolock(args) {
   }
 }
 
+/* ---------------- discover ---------------- */
+async function cmdDiscover(args) {
+  const cfg = s.loadConfig();
+  const reg = s.loadRegistry();
+  const sel = args.since ? { since: args.since } : { max: args.max ? +args.max : 1000 };
+  const min = args.min === undefined ? 4 : +args.min;
+  const { found, skipped, scanned, fixes } = discovery.discover(cfg, reg, sel, { min, features: !args['no-features'], perCommit: args['per-commit'] });
+  const limit = args.limit ? +args.limit : 25;
+  const shown = found.slice(0, limit);
+  if (args.json) {
+    console.log(JSON.stringify({ scanned, fixes, min, found: found.map((f) => ({
+      file: f.file, lines: [f.start, f.end], type: f.type, score: f.score, confidence: f.confidence, signals: f.signals,
+      title: auto.cleanTitle(f.commit.subject), commit: f.commit.sha, test: f.test, snippet: f.snippet,
+    })), skipped }, null, 2));
+    return;
+  }
+  if (!found.length) {
+    console.log(c.green(`✔ Scanned ${scanned} commit(s): no unlocked past fixes found`) + c.dim(min > 0 ? ` (score ${min}+; try --min 0 to see weaker candidates)` : ''));
+    return;
+  }
+  const tag = { high: c.green('high  '), medium: c.yellow('medium'), low: c.dim('low   ') };
+  console.log(c.bold(`Found ${found.length} block(s) from ${fixes} past fix(es) worth locking in ${scanned} commit(s)`) + (found.length > shown.length ? c.dim(` (top ${shown.length}; --limit N for more)`) : '') + '\n');
+  shown.forEach((f, i) => {
+    console.log(`${String(i + 1).padStart(3)}. ${tag[f.confidence]} ${f.type === 'feature' ? c.cyan('feature') : 'bug    '} ${c.bold(`${f.file}:${f.start}-${f.end}`)}  ${f.commit.subject}  ${c.dim(f.commit.sha.slice(0, 7))}`);
+    console.log(c.dim(`       ${f.signals.join(' · ')}`));
+    console.log(c.dim(`       │ ${f.snippet.slice(0, 2).map((l) => l.trim()).join('  ⏎  ')}${f.snippet.length > 2 ? `  … (+${f.snippet.length - 2})` : ''}`));
+  });
+  skipped.slice(0, 3).forEach((x) => console.log(c.dim(`  skipped ${x}`)));
+  if (skipped.length > 3) console.log(c.dim(`  … and ${skipped.length - 3} more large blocks skipped (lock their key lines with fixlock mark)`));
+  let picked;
+  if (args['dry-run']) return;
+  if (args.apply || args.yes) picked = shown.map((_, i) => i);
+  else if (process.stdin.isTTY) {
+    const p = init.prompter();
+    try {
+      for (;;) {
+        const v = await p.ask('\nLock which? e.g. 1-3,5 · all · none', 'none');
+        try { picked = discovery.parseSelection(v, shown.length); break; } catch (e) { console.log(c.yellow(`  ${e.message}`)); }
+      }
+    } finally { p.close(); }
+  } else {
+    console.log(c.dim('\nRun `fixlock discover` in a terminal to choose, or add --apply to lock all of these.'));
+    return;
+  }
+  if (!picked.length) { console.log(c.dim('Nothing locked.')); return; }
+  const locks = discovery.toLocks(picked.map((i) => shown[i]), cfg, reg);
+  s.saveRegistry(reg);
+  console.log('');
+  for (const l of locks) console.log(c.green(`🔒 ${l.id} locked`) + ` — ${l.file} (${l.snippet.length} lines) · ${l.title}${l.test ? c.dim(' · test ' + l.test) : ''}`);
+  syncAgentFiles(true);
+  if (fs.existsSync(path.join(s.root(), '.github', 'CODEOWNERS'))) writeCodeowners(true);
+  console.log(c.dim(`\nCommit .fixlock/ so the locks apply to everyone: git add .fixlock && git commit -m "chore(fixlock): lock ${locks.length} past fix(es)"`));
+}
+
 /* ---------------- AI tool files / changelog / codeowners ---------------- */
 function syncAgentFiles(quiet) {
   const cfg = s.loadConfig();
@@ -407,6 +463,7 @@ module.exports = {
   sync: () => syncAgentFiles(false),
   tools: cmdTools,
   autolock: cmdAutolock,
+  discover: cmdDiscover,
   detect: () => cmdTools({ _: ['list'] }),
   changelog: () => { console.log(c.green(`✔ ${path.relative(process.cwd(), changelog.update()) || 'CHANGELOG.md'} updated`)); },
   release: (args) => { const r = changelog.release(args._[0]); syncAgentFiles(true); console.log(c.green(`✔ ${r.version} (${r.date}) written to CHANGELOG.md`) + c.dim('  — commit it, then tag: git tag v' + r.version.replace(/^v/, ''))); },
