@@ -104,7 +104,7 @@ Either restore the lines, or ask the owner to review. Once they approve on GitHu
 
 ## False alarms
 
-Locks match text. Renaming a variable or reformatting a locked line counts as a change. If you changed a locked line on purpose and the owner agreed:
+Reformatting or commenting a locked line is fine: fixlock compares code structure, not text. Renaming a variable shows a warning but doesn't block. If you changed a locked line's logic on purpose and the owner agreed:
 
 1. Get the PR approved.
 2. The owner re-locks the new lines: `npx fixlock remove FIX-001` then `npx fixlock mark …`.

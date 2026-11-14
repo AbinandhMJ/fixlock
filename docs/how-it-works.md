@@ -24,7 +24,7 @@ Locks live in `.fixlock/registry.json`, committed with your code, so the whole t
 - **for history**: `npx fixlock autolock --all` locks past fixes that are still in the code.
 - **by hand**: `npx fixlock mark <file> <lines> -m "why"` for the few lines that matter most.
 
-A lock matches the *text* of its lines, not their line numbers, so code can move around freely. Only deleting or rewriting the locked lines counts as a change.
+A lock matches the *structure* of its code, not line numbers or exact text. Code can move around, be reformatted or gain comments freely. Only changing what the locked code does (deleting it, flipping a condition, changing a value, reading a different field) counts as a change. A consistent variable rename is reported separately as a rename. Files in languages fixlock can't parse (Markdown, JSON, …) are matched line by line as text.
 
 ## 2. The AI checks before editing
 

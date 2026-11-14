@@ -182,11 +182,13 @@ async function cmdCheck(args) {
   const renames = {};
   if (!staged) { try { for (const ch of g.changedFiles(base)) if (ch.status === 'R') renames[ch.from] = ch.file; } catch { /* no base */ } }
 
+  const match = cfg.matching || {};
   for (const lock of reg.locks) {
     const target = renames[lock.file] || lock.file;
     const content = read(target);
-    const missing = content === null ? lock.snippet : L.missingLines(lock, content);
-    if (missing.length) findings.push({ kind: 'lock', lock, file: target, missing, deleted: content === null });
+    const v = L.verifyLock(lock, content, { mode: match.mode, file: target });
+    if (v.status === 'changed') findings.push({ kind: 'lock', lock, file: target, missing: v.missing, renamed: [], deleted: content === null });
+    else if (v.status === 'renamed' && match.renames !== 'allow') findings.push({ kind: 'lock', lock, file: target, missing: [], renamed: v.renames, deleted: false });
   }
 
   // Changes inside protected paths: warnings only.
@@ -225,7 +227,8 @@ async function cmdCheck(args) {
   }
 
   // Approvals: owner / lead approval on the PR clears a lock finding.
-  const needApproval = findings.filter((f) => f.kind === 'lock' && (cfg.policies[f.lock.type] || cfg.policies.bug).approval !== 'none');
+  const renameWarnOnly = (f) => f.renamed && f.renamed.length && (match.renames || 'warn') === 'warn';
+  const needApproval = findings.filter((f) => f.kind === 'lock' && !renameWarnOnly(f) && (cfg.policies[f.lock.type] || cfg.policies.bug).approval !== 'none');
   let appr = { approvers: new Set(), source: 'none' };
   if (!staged && needApproval.length) appr = await prApprovers(args.pr);
   const author = staged ? '' : (prAuthor() || '').toLowerCase(); // no PR exists yet at commit time
@@ -233,7 +236,7 @@ async function cmdCheck(args) {
     const pol = cfg.policies[f.lock.type] || cfg.policies.bug;
     f.approvers = team.approvers(cfg, f.lock);
     const gh = f.approvers.map((a) => (a.github || '').toLowerCase()).filter(Boolean);
-    if (pol.approval === 'none') f.status = 'warn';
+    if (pol.approval === 'none' || renameWarnOnly(f)) f.status = 'warn';
     else if (gh.some((u) => appr.approvers.has(u))) f.status = 'approved';
     else if (author && gh.includes(author)) f.status = 'approved';
     else f.status = 'blocked';
@@ -264,6 +267,7 @@ function report(cfg, reg, findings, { base, staged, appr }) {
     console.log(`${tag}  ${f.lock.id} "${f.lock.title}" (${f.lock.type}, owner ${owner}) — ${f.deleted ? 'file deleted: ' : ''}${f.file}`);
     if (f.lock.reason && f.lock.reason !== f.lock.title) console.log(c.dim(`    why: ${f.lock.reason}`));
     for (const l of f.missing) console.log(c.dim(`    - ${l.trim()}`));
+    if (f.renamed && f.renamed.length) console.log(c.dim(`    renamed (logic kept): ${f.renamed.map(([a, b]) => `${a} → ${b}`).join(', ')}`));
     if (f.status === 'blocked') console.log(`    → needs approval from ${f.approvers.map(team.handle).join(' or ')}${staged ? ' when you open the PR' : ' on the PR'}, or restore these lines.`);
     if (f.tracker) console.log(c.dim(`    tracker: ${f.tracker}`));
   }
@@ -283,7 +287,8 @@ function toMarkdown(cfg, findings, base) {
     const icon = { blocked: '❌', approved: '✅', warn: '⚠️' }[f.status];
     md += `- ${icon} **${f.lock.id}** ${f.lock.title} (${f.lock.type}) — \`${f.file}\`\n`;
     if (f.lock.reason && f.lock.reason !== f.lock.title) md += `  - Why it exists: ${f.lock.reason}\n`;
-    md += `  - Removed/rewritten: ${f.missing.map((l) => '`' + l.trim().replace(/`/g, "'") + '`').join(', ')}\n`;
+    if (f.missing.length) md += `  - Removed/rewritten: ${f.missing.map((l) => '`' + l.trim().replace(/`/g, "'") + '`').join(', ')}\n`;
+    if (f.renamed && f.renamed.length) md += `  - Renamed inside the lock (logic kept): ${f.renamed.map(([a, b]) => '`' + a + '` → `' + b + '`').join(', ')}\n`;
     if (f.status === 'blocked') md += `  - **Approve this PR as ${f.approvers.map(team.handle).join(' or ')}** to accept the change, or restore the lines.\n`;
     if (f.tracker) md += `  - Tracker: ${f.tracker}\n`;
   }
