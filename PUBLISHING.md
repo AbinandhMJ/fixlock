@@ -2,10 +2,23 @@
 
 Releases are automated by `.github/workflows/release.yml`.
 
-## One-time setup
-1. On npmjs.com: **Access Tokens → Generate New Token → Granular**, with read and write access to `@abinandhmj/fixlock`.
-2. On GitHub: **Settings → Secrets and variables → Actions → New repository secret**, named `NPM_TOKEN`, with that token as the value.
-   (Or set up npm "trusted publishing" for this repo and the `release.yml` workflow, and skip the token.)
+## One-time setup: trusted publishing
+
+Releases log in to npm with GitHub's OIDC identity, so no npm token is stored anywhere.
+
+On npmjs.com, open the package → **Settings** → **Trusted Publisher** → **GitHub Actions**, and enter:
+
+| Field | Value |
+|---|---|
+| Organization or user | `AbinandhMJ` |
+| Repository | `fixlock` |
+| Workflow filename | `release.yml` |
+| Environment | *(leave empty)* |
+| Allowed actions | **npm publish** (staged publish alone isn't enough) |
+
+That's all. The workflow already has `id-token: write` and runs on Node 24, which includes npm 11.5.1+.
+
+Once a trusted release has gone out, you can tighten the package's **Publishing access** to "Require two-factor authentication and disallow tokens". Trusted publishing keeps working, and stolen tokens can't publish. Delete any old `NPM_TOKEN` secret and npm automation tokens.
 
 ## Each release
 1. Add the changes under a new version heading in `CHANGELOG.md`.
