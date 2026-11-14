@@ -40,14 +40,16 @@ function changeFrom(input) {
 }
 
 function lockLines(cfg, hits) {
-  return hits.map(({ lock, lines, removed, level }) => {
+  return hits.map(({ lock, lines, removed, renames = [], level }) => {
     const owner = team.find(cfg, lock.owner);
     const appr = team.approvers(cfg, lock).map(team.handle).join(' or ') || 'the team lead';
     const where = lines.length ? `lines ${Math.min(...lines)}-${Math.max(...lines)}` : 'its locked lines';
     const kind = lock.type === 'feature' ? 'feature' : 'bug fix';
     let m = `• ${lock.id} "${lock.title}" (${kind} by ${team.handle(owner) || lock.owner}) — ${lock.file} ${where}`;
     if (lock.reason && lock.reason !== lock.title) m += `\n  Why it exists: ${lock.reason}`;
-    m += removed.length ? `\n  This edit removes/rewrites: ${removed.map((l) => l.trim()).join(' | ')}` : '\n  This edit touches those lines (they are kept).';
+    if (removed.length) m += `\n  This edit removes/rewrites: ${removed.map((l) => l.trim()).join(' | ')}`;
+    else if (renames.length) m += `\n  This edit renames inside the locked code (logic kept): ${renames.map(([a, b]) => `${a} → ${b}`).join(', ')}`;
+    else m += '\n  This edit touches those lines (the logic is kept).';
     if (level === 'block') m += `\n  Policy: AI must NOT change these lines. A human change needs PR approval from ${appr}.`;
     else if (level === 'ask') m += `\n  Policy: confirm with the developer; the PR will need approval from ${appr}.`;
     else m += `\n  Policy: warning only${(cfg.policies[lock.type] || {}).approval !== 'none' ? `; the PR will need approval from ${appr}` : ''}.`;
@@ -75,11 +77,14 @@ function evaluate(change) {
   const cfg = s.loadConfig();
   const reg = s.loadRegistry();
   const person = team.current(cfg);
-  const hits = affected(reg, s.root(), change)
+  const match = cfg.matching || {};
+  const hits = affected(reg, s.root(), change, { mode: match.mode })
     .filter((h) => !team.exempt(cfg, h.lock, person))
+    .filter((h) => h.removed.length || !h.renames.length || match.renames !== 'allow' || change.touched)
     .map((h) => {
       const pol = (cfg.policies[h.lock.type] || cfg.policies.bug).onEdit;
-      return { ...h, level: h.removed.length ? pol : 'warn' };
+      const renameLevel = match.renames === 'allow' ? 'warn' : (match.renames || 'warn');
+      return { ...h, level: h.removed.length ? pol : (h.renames.length ? renameLevel : 'warn') };
     });
 
   // Working-code guard: committed lines (someone else's, or your own older ones) being deleted/rewritten.
@@ -101,7 +106,7 @@ function evaluate(change) {
     level,
     reason: message(cfg, hits, person, stableSum, file),
     locks: hits.map((h) => ({ id: h.lock.id, title: h.lock.title, type: h.lock.type, owner: h.lock.owner, level: h.level,
-      lines: h.lines, removed: h.removed, approvers: team.approvers(cfg, h.lock).map(team.handle) })),
+      lines: h.lines, removed: h.removed, renames: h.renames, approvers: team.approvers(cfg, h.lock).map(team.handle) })),
     stable: stableSum,
   };
 }

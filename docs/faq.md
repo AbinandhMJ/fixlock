@@ -40,7 +40,9 @@ So the worst case is that a reverted fix is caught at the PR instead of before t
 
 ## What if I rename a variable inside a locked line?
 
-Matching is text-based, so that counts as a change. If the edit is intended, the owner approves and re-locks the new lines. Code-aware matching is on the roadmap.
+fixlock compares code structure, not text. Reformatting, comments, quote style and line wrapping don't count as changes. A consistent rename of a variable (`user` → `account` everywhere in the lock) is reported as a **rename warning**: the PR isn't blocked, but reviewers see it. Renaming a field or object key (`user.role` → `user.type`) reads different data, so it counts as a real change.
+
+You can make renames stricter or quieter with [`matching.renames`](configuration.md#matching).
 
 ## Does fixlock send my code anywhere?
 
