@@ -17,7 +17,7 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
   - `fixlock languages [file]` shows the supported languages and how a file is read.
   - Docs: [Python, Go, Java, .NET and other projects](https://abinandhmj.github.io/fixlock/any-language).
 - `fixlock discover` recognizes fixes and tests across ecosystems: Go, Rust, Swift, Kotlin, Java, C#, PHP, Ruby and SQL guards, template conditions, access checks; test files from `src/test/`, `*Tests.cs`, `_spec.rb`, `*_test.dart`… It skips lockfiles, vendored, generated and build files.
-- Accuracy benchmark extended to **11 repositories in 11 languages** (adds Java, Kotlin, Rust, Ruby, PHP, C#, Swift).
+- Accuracy benchmark extended to **11 repositories in 11 languages** (adds Java, Kotlin, Rust, Ruby, PHP, C#, Swift): 764 locks, 5,271 edits. 0.0% of harmless edits flagged (text matching: 55.7%), 99.9% of harmful edits caught (text: 92.3%).
 
 ### Fixed
 - Breaking a lock is no longer excused as a "rename" when a look-alike block (the same code with other names) exists elsewhere in the file: locks record `siblings`; older locks count them in the base version.

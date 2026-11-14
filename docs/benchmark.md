@@ -10,11 +10,11 @@ How often does fixlock get it wrong? We locked real bug fixes from real projects
 
 | | Text matching (≤ 0.5) | Structural matching (0.6+) |
 |---|---|---|
-| **False positives**: harmless edits flagged as a change | **55.7%** (1622 of 2914) | **0.1%** (3 of 2914) |
+| **False positives**: harmless edits flagged as a change | **55.7%** (1622 of 2914) | **0.0%** (0 of 2914) |
 | **Detection**: harmful edits caught | 92.3% (1704 of 1846) | **99.9%** (1845 of 1846) |
 | **Variable renames** blocked as a change | 99.8% | 2.9% (96.9% reported as a rename) |
 
-764 locks · 5271 edits · 11 repositories · fixlock 0.6.0+436c965 · 2026-11-14
+764 locks · 5271 edits · 11 repositories · fixlock 0.6.0+bdadb1b · 2026-11-14
 
 ## Corpus
 
@@ -39,11 +39,11 @@ Locks are the past fixes `fixlock discover` suggests for each repository (score 
 | Edit | Languages | Edits | Text flags | Structural flags |
 |---|---|---|---|---|
 | add comments | C#, Go, Java, JavaScript, Kotlin, PHP, Python, Ruby, Rust, Swift, TypeScript | 764 | 89.8% | 0.0% |
-| reindent | C#, Go, Java, JavaScript, Kotlin, PHP, Python, Ruby, Rust, Swift, TypeScript | 729 | 0.0% | 0.3% |
+| reindent | C#, Go, Java, JavaScript, Kotlin, PHP, Python, Ruby, Rust, Swift, TypeScript | 729 | 0.0% | 0.0% |
 | wrap long line | C#, Go, Java, JavaScript, Kotlin, PHP, Python, Ruby, Rust, Swift, TypeScript | 520 | 91.5% | 0.0% |
 | blank lines | C#, Go, Java, JavaScript, Kotlin, PHP, Python, Ruby, Rust, Swift, TypeScript | 300 | 0.0% | 0.0% |
 | drop semicolons | C#, Java, JavaScript, PHP, Rust, TypeScript | 264 | 91.3% | 0.0% |
-| prettier (narrow, single quotes, no semicolons) | JavaScript, TypeScript | 111 | 92.8% | 0.9% |
+| prettier (narrow, single quotes, no semicolons) | JavaScript, TypeScript | 111 | 92.8% | 0.0% |
 | prettier (wide, double quotes) | JavaScript, TypeScript | 111 | 54.1% | 0.0% |
 | swap quote style | JavaScript, TypeScript | 41 | 100.0% | 0.0% |
 | black (line length 40) | Python | 28 | 53.6% | 0.0% |
@@ -73,9 +73,6 @@ Renaming a local variable everywhere in the file keeps the logic but can hide a 
 ## Where structural matching gets it wrong
 
 - **Warned as a rename, not blocked: delete a line** in gson `metrics/src/main/java/com/google/gson/metrics/ParseBenchmark.java:367-367`
-- **False positive: reindent** in ripgrep `crates/printer/src/json.rs:785-799`
-- **False positive: reindent** in ripgrep `crates/printer/src/summary.rs:679-693`
-- **False positive: prettier (narrow, single quotes, no semicolons)** in ky `source/index.ts:43-44`
 - **Rename blocked as a change: rename a local variable** in ky `source/utils/timeout.ts:43-44`
 - **Rename blocked as a change: rename a local variable** in ky `source/core/Ky.ts:539-539`
 - **Rename blocked as a change: rename a local variable** in ky `source/core/Ky.ts:895-895`

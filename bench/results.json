@@ -1,7 +1,7 @@
 {
-  "fixlock": "0.6.0+436c965",
+  "fixlock": "0.6.0+bdadb1b",
   "date": "2026-11-14",
-  "seconds": 231,
+  "seconds": 233,
   "repos": [
     {
       "name": "express",
@@ -152,7 +152,7 @@
     "edits": 5271,
     "falsePositives": {
       "text": 1622,
-      "structural": 3,
+      "structural": 0,
       "of": 2914
     },
     "renames": {
@@ -245,33 +245,10 @@
         "renamed": 0
       },
       "structural": {
-        "changed": 2,
+        "changed": 0,
         "renamed": 0
       },
-      "misses": [
-        {
-          "repo": "ripgrep",
-          "file": "crates/printer/src/json.rs",
-          "lines": [
-            785,
-            799
-          ],
-          "verdict": "changed",
-          "before": "    fn binary_data(\n        &mut self,\n        searcher: &Searcher,\n        binary_byte_offset: u64,\n    ) -> Result<bool, io::Error> {\n        if searcher.binary_detection().quit_byte().is_some() {\n            if let Some(ref path) = self.path {\n                log::debug!(\n                    \"ignoring {path}: found binary data at \\\n                     offset {binary_byte_offset}\",\n                    path = path.display(),\n        Ok(true)",
-          "after": "\n      fn binary_data(\n          &mut self,\n          searcher: &Searcher,\n          binary_byte_offset: u64,\n      ) -> Result<bool, io::Error> {\n          if searcher.binary_detection().quit_byte().is_some() {\n              if let Some(ref path) = self.path {\n                  log::debug!(\n                      \"ignoring {path}: found binary data at \\\n                       offset {binary_byte_offset}\",\n                      path = path.display(),\n                  );\n              }\n          }\n          Ok(true)\n    }\n\n    fn begin(&mut self, _searcher: &Searcher) -> Result<bool, io::Error> {"
-        },
-        {
-          "repo": "ripgrep",
-          "file": "crates/printer/src/summary.rs",
-          "lines": [
-            679,
-            693
-          ],
-          "verdict": "changed",
-          "before": "    fn binary_data(\n        &mut self,\n        searcher: &Searcher,\n        binary_byte_offset: u64,\n    ) -> Result<bool, io::Error> {\n        if searcher.binary_detection().quit_byte().is_some() {\n            if let Some(ref path) = self.path {\n                log::debug!(\n                    \"ignoring {path}: found binary data at \\\n                     offset {binary_byte_offset}\",\n                    path = path.as_path().display(),\n        Ok(true)",
-          "after": "\n      fn binary_data(\n          &mut self,\n          searcher: &Searcher,\n          binary_byte_offset: u64,\n      ) -> Result<bool, io::Error> {\n          if searcher.binary_detection().quit_byte().is_some() {\n              if let Some(ref path) = self.path {\n                  log::debug!(\n                      \"ignoring {path}: found binary data at \\\n                       offset {binary_byte_offset}\",\n                      path = path.as_path().display(),\n                  );\n              }\n          }\n          Ok(true)\n    }\n\n    fn begin(&mut self, _searcher: &Searcher) -> Result<bool, io::Error> {"
-        }
-      ]
+      "misses": []
     },
     {
       "kind": "formatter",
@@ -286,22 +263,10 @@
         "renamed": 0
       },
       "structural": {
-        "changed": 1,
+        "changed": 0,
         "renamed": 0
       },
-      "misses": [
-        {
-          "repo": "ky",
-          "file": "source/index.ts",
-          "lines": [
-            43,
-            44
-          ],
-          "verdict": "changed",
-          "before": "\tky.extend = (newDefaults?: Partial<Options> | ((parentDefaults: Partial<Options>) => Partial<Options>)) => {\n\t\tif (typeof newDefaults === 'function') {",
-          "after": "(whole file reformatted)"
-        }
-      ]
+      "misses": []
     },
     {
       "kind": "formatter",
