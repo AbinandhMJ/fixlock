@@ -5,7 +5,8 @@ const path = require('path');
 const g = require('./git');
 const s = require('./store');
 const team = require('./team');
-const { norm, trivial } = require('./locks');
+const L = require('./locks');
+const { norm, trivial } = L;
 
 const DEFAULTS = {
   enabled: true,
@@ -109,6 +110,7 @@ function toLocks(cands, cfg, reg) {
       issue: issueFrom(cd.commit.subject, cfg), test: null, date: new Date().toISOString().slice(0, 10),
       source: { commit: cd.commit.sha, auto: true },
     };
+    try { L.withCopies(lock, fs.readFileSync(path.join(s.root(), cd.file), 'utf8')); } catch { /* file unreadable: no copy count */ }
     reg.locks.push(lock);
     return lock;
   });

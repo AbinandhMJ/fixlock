@@ -42,7 +42,9 @@ So the worst case is that a reverted fix is caught at the PR instead of before t
 
 fixlock compares code structure, not text. Reformatting, comments, quote style and line wrapping don't count as changes. A consistent rename of a variable (`user` → `account` everywhere in the lock) is reported as a **rename warning**: the PR isn't blocked, but reviewers see it. Renaming a field or object key (`user.role` → `user.type`) reads different data, so it counts as a real change.
 
-You can make renames stricter or quieter with [`matching.renames`](configuration.md#matching).
+Two cautious exceptions: in a very short lock (a few tokens), or when the old name is still used in the code around it (`isAdmin` → `isGuest` while `isAdmin` is still in use), a rename counts as a change.
+
+You can make renames stricter or quieter with [`matching.renames`](configuration.md#matching). How often matching gets it right on real code: see the [accuracy benchmark](benchmark.md).
 
 ## Does fixlock send my code anywhere?
 

@@ -20,22 +20,46 @@ function repoRel(root, file) {
   return toPosix(path.relative(realish(root), realish(file)));
 }
 
+/**
+ * Record how many identical copies of the snippet the file holds when the lock is made, so removing
+ * the locked copy isn't hidden by another copy elsewhere in the file.
+ */
+function withCopies(lock, content) {
+  const n = structural.count(lock.snippet, content, lock.file);
+  if (n > 1) lock.copies = n; else delete lock.copies;
+  return lock;
+}
+
 /** Line numbers (1-based) where a lock's snippet lines currently sit in `lines`. */
 function locate(lock, lines) {
+  // Structural first: it finds the lock as one contiguous block, even when reformatted or renamed.
+  // Matching lines one by one as text can pick up a common line ("try:", "return true") far away.
+  const r = structural.verify(lock.snippet, lines.join('\n'), lock.file);
+  if (r.lines) return Array.from({ length: r.lines[1] - r.lines[0] + 1 }, (_, k) => r.lines[0] + k);
+  return locateText(lock, lines);
+}
+
+/** Text-only locate: each snippet line, in order, preferring the nearest match after the previous one. */
+function locateText(lock, lines) {
   const n = lines.map(norm);
-  const found = [];
-  let from = 0;
-  for (const s of lock.snippet.map(norm)) {
-    let i = n.indexOf(s, from);
-    if (i === -1) i = n.indexOf(s);
-    if (i !== -1) { found.push(i + 1); from = i + 1; }
+  const snip = lock.snippet.map(norm);
+  // Try every place the first line occurs and keep the tightest run of matches.
+  let best = [];
+  const starts = [];
+  n.forEach((l, i) => { if (l === snip[0]) starts.push(i); });
+  if (!starts.length) starts.push(0);
+  for (const s0 of starts) {
+    const found = [];
+    let from = s0;
+    for (const s of snip) {
+      const i = n.indexOf(s, from);
+      if (i !== -1) { found.push(i + 1); from = i + 1; }
+    }
+    const span = found.length ? found[found.length - 1] - found[0] : Infinity;
+    const bestSpan = best.length ? best[best.length - 1] - best[0] : Infinity;
+    if (found.length > best.length || (found.length === best.length && span < bestSpan)) best = found;
   }
-  if (found.length < lock.snippet.length) {
-    // Reformatted or renamed code: the text no longer lines up, but the structure may.
-    const r = structural.verify(lock.snippet, lines.join('\n'), lock.file);
-    if (r.lines) return Array.from({ length: r.lines[1] - r.lines[0] + 1 }, (_, k) => r.lines[0] + k);
-  }
-  return found;
+  return best;
 }
 
 function missingLines(lock, content) {
@@ -54,7 +78,10 @@ function verifyLock(lock, content, opts = {}) {
   if (content === null || content === undefined) return { status: 'changed', engine: 'text', missing: lock.snippet, renames: [], reformatted: false };
   const missing = missingLines(lock, content);
   if (opts.mode !== 'text') {
-    const r = structural.verify(lock.snippet, content, opts.file || lock.file);
+    const r = structural.verify(lock.snippet, content, opts.file || lock.file, { copies: lock.copies });
+    if (r.status === 'changed' && lock.copies > 1 && r.found > 0) {
+      return { status: 'changed', engine: r.engine, missing: lock.snippet, renames: [], reformatted: false, copies: { expected: lock.copies, found: r.found } };
+    }
     if (r.status === 'intact') return { status: 'intact', engine: r.engine, missing: [], renames: [], reformatted: missing.length > 0 };
     if (r.status === 'renamed') return { status: 'renamed', engine: r.engine, missing, renames: r.renames, reformatted: false };
     if (r.status === 'changed') return { status: 'changed', engine: r.engine, missing: missing.length ? missing : lock.snippet, renames: [], reformatted: false };
@@ -105,4 +132,4 @@ function spanLines(content, i, needle) {
   return [start, start + content.slice(a, b).split('\n').length - 1];
 }
 
-module.exports = { repoRel, realish, spanLines, norm, trivial, locate, missingLines, verifyLock, affected, toPosix };
+module.exports = { repoRel, realish, spanLines, norm, trivial, locate, missingLines, verifyLock, withCopies, affected, toPosix };

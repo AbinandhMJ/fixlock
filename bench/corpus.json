@@ -1,0 +1,6 @@
+[
+  { "name": "express", "lang": "JavaScript", "url": "https://github.com/expressjs/express.git", "sha": "43fca52d28a422c8be48fd489cbd4f2d6152bab6", "depth": 600 },
+  { "name": "ky", "lang": "TypeScript", "url": "https://github.com/sindresorhus/ky.git", "sha": "3541888878c4d303a8bc2ad61815f4e048f55a5d", "depth": 400 },
+  { "name": "requests", "lang": "Python", "url": "https://github.com/psf/requests.git", "sha": "3c7baaa05ab4aa49cc819ce3a819d260de19c157", "depth": 800 },
+  { "name": "cobra", "lang": "Go", "url": "https://github.com/spf13/cobra.git", "sha": "adbc8813901bba65827259daa8e22ff94ec1f30e", "depth": 600 }
+]

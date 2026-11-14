@@ -34,6 +34,14 @@ const GUARDS = [
   { re: /\b(mutex|semaphore|debounce|throttle|idempot\w*|race|inFlight|isLocked|already(Sent|Charged|Processed|Running))\b/i, label: 'ordering/concurrency' },
 ];
 
+const S = require('./structural');
+/** Does a snippet hold code (not only comments / doc strings)? Unknown languages: any non-comment line. */
+function hasCode(snippet, file) {
+  const fam = S.family(file);
+  if (!fam) return snippet.some((l) => !isComment(l));
+  // at least 3 code tokens: "fetch," or "var len;" is too small to mean anything on its own
+  return S.tokenize(snippet.join('\n'), fam).filter((t) => t.k !== 'str' && !(t.k === 'op' && '{}()[];,'.includes(t.v))).length >= 3;
+}
 const COMMENT = /^\s*(\/\/|\/?\*|#(?!\[)|<!--|--\s|;;)/;
 const isComment = (l) => COMMENT.test(l);
 
@@ -129,7 +137,7 @@ function discover(cfg, reg, sel = {}, opts = {}) {
   const { out, skipped } = auto.candidates(scored.map((x) => x.commit), cfg, reg);
   const blocks = out
     .filter((cd) => !TEST_FILE.test(cd.file)) // tests are linked to a lock, not locked themselves
-    .filter((cd) => cd.snippet.some((l) => !isComment(l))); // a block of only comments protects nothing
+    .filter((cd) => hasCode(cd.snippet, cd.file)); // comments or a docstring alone protect nothing
   const scoredBlocks = blocks.map((cd) => {
     const m = meta.get(cd.commit.sha);
     const guards = guardsIn(cd.snippet);
