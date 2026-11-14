@@ -122,7 +122,7 @@ Team roles and owner/lead approval policies · generated `CODEOWNERS` · `CHANGE
 
 ## Limitations
 
-- Matching is text-based: renaming a variable inside a locked line counts as a change. Re-lock after intentional edits.
+- Structural matching covers JS/TS, Python, Java, Go, C#, Kotlin, Rust, C/C++, Swift, PHP and similar languages. Other files (Markdown, JSON, …) are matched as text. A consistent rename of variables inside a lock is reported as a warning, not ignored; field and key renames count as changes.
 - Only Claude Code can intercept an edit before it happens. Other assistants check through MCP or their rules file, so a model that ignores both is caught at commit time and in CI.
 - Approvals are read from GitHub; GitLab and Bitbucket are on the roadmap.
 

@@ -23,7 +23,8 @@ All settings live in `.fixlock/config.json`. `init` writes it; you can edit it b
   "tracker": { "type": "linear", "onFix": "Done", "onRegression": "In Progress" },
   "protectedPaths": [],
   "changelog": true,
-  "ignoreTrivialLines": true
+  "ignoreTrivialLines": true,
+  "matching": { "mode": "structural", "renames": "warn" }
 }
 ```
 
@@ -66,6 +67,15 @@ Tool ids to write rules files for: `claude-code`, `codex`, `cursor`, `copilot`, 
 | `bugPattern` | conventional `fix:`/`bugfix:`/`hotfix:` + words fix/fixed/bug/hotfix/issue | Regex for bug-fix commit messages |
 | `featurePattern` | `^feat(\(.+\))?!?:` | Regex for feature commit messages |
 | `ignore` | lock files, `.md`, `.json`, images, `.fixlock/` | Files never auto-locked |
+
+## `matching`
+
+How locks are compared with the current code.
+
+| Field | Default | Meaning |
+|---|---|---|
+| `mode` | `structural` | `structural` compares tokens, so formatting, comments, quote style, semicolons, trailing commas and line wrapping are ignored. Used for JS/TS, Python, Java, Go, C#, Kotlin, Rust, C/C++, Swift, PHP, Ruby and similar; other files fall back to text. `text` compares lines of text (whitespace-insensitive), as before v0.6. |
+| `renames` | `warn` | What a consistent rename of variables inside a lock means: `allow` (ignore it), `warn` (report, don't block), `ask` / `block` (treat it like a change: the AI asks first and the PR needs approval). Renaming a field or object key is always a change. |
 
 ## `tracker`
 

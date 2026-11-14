@@ -31,6 +31,12 @@ const DEFAULT_CONFIG = {
   // Optional tracker sync. Tokens come from env vars, never from this file.
   tracker: null, // { type: "linear"|"clickup"|"notion"|"webhook", onFix: "Done", onRegression: "Reopened", ... }
   ignoreTrivialLines: true,
+  // How locks are compared with the current code.
+  //   mode:    "structural" – compare tokens: formatting, comments, quote style and line wrapping don't count
+  //                           as changes (JS/TS, Python, Java, Go, C#, Kotlin, Rust, … – other files use text)
+  //            "text"       – compare lines of text (whitespace-insensitive), as before v0.6
+  //   renames: what a consistent rename of variables inside a lock means: "allow" | "warn" | "ask" | "block"
+  matching: { mode: 'structural', renames: 'warn' },
 };
 
 function root() { return repoRoot(); }
@@ -41,7 +47,8 @@ function readJson(file, fallback) { try { return JSON.parse(fs.readFileSync(file
 function loadConfig() {
   const raw = readJson(p('config.json'), {});
   return { ...DEFAULT_CONFIG, ...raw, policies: { ...DEFAULT_CONFIG.policies, ...(raw.policies || {}) },
-    stableCode: { ...DEFAULT_CONFIG.stableCode, ...(raw.stableCode || {}) }, autoLock: { ...DEFAULT_CONFIG.autoLock, ...(raw.autoLock || {}) } };
+    stableCode: { ...DEFAULT_CONFIG.stableCode, ...(raw.stableCode || {}) }, autoLock: { ...DEFAULT_CONFIG.autoLock, ...(raw.autoLock || {}) },
+    matching: { ...DEFAULT_CONFIG.matching, ...(raw.matching || {}) } };
 }
 function saveConfig(cfg) { ensureDir(); fs.writeFileSync(p('config.json'), JSON.stringify(cfg, null, 2) + '\n'); }
 function configExists() { return fs.existsSync(p('config.json')); }
