@@ -68,6 +68,30 @@ ok(L.verifyLock({ file: 'a.ts', snippet: SNIP }, null).status === 'changed', 'de
 // locate() finds reformatted locks (used by `why` and the MCP server)
 ok(L.locate({ file: 'a.ts', snippet: SNIP }, "x()\nif (!user ||\n    user.role !== 'admin') {\n  return res.status(403).json({ error: 'forbidden' })\n}".split('\n')).join(',') === '2,3,4', 'locate() follows reformatted code');
 
+// Found by the accuracy benchmark (bench/run.js):
+// 1. an unterminated quote (here inside a regex literal) must not shift the line numbers after it
+ok(S.verify(['if (a) {', 'b();'], "const re = /[\\'\"]/g;\nx();\n\nif (a) {\n b();\n}", 'a.js').lines.join('-') === '4-5', 'line numbers stay right after a quote inside a regex');
+// 2. renames must be believable: old names gone nearby, snippet long enough to be distinctive
+const OPTS = ['  var opts = options || {};'];
+ok(S.verify(OPTS, 'function f(options) {\n  var opts = options && {};\n  var view = this.cache || {};\n}', 'a.js').status === 'changed', 'swapped || is not excused as a "rename" of some other line');
+ok(S.verify(['  var len;'], 'function f() {\n  var size;\n}', 'a.js').status === 'changed', 'a tiny snippet is never matched by renaming');
+ok(S.verify(['const m = /;\\s*charset=(?:"([^"]+)"|([^;,]+))/i.exec(t);', 'x();'], 'const m = /;\\s*charset=(?:"([^"]+)"|([^;,]+))/i.exec(t)\nx()', 'a.ts').status === 'intact', 'quotes inside a regex literal are not strings');
+ok(S.verify(['    fn(null, null)'], 'if (!user) return fn(null, null)\nx()\nif (ok) {\n    fn(null, null)\n}', 'a.js').lines.join('-') === '4-4', 'prefers the match on its own line over the same tokens inside another line');
+ok(S.verify(['this.#cache.clear();'], 'this.#store.clear()', 'a.ts').status === 'changed', 'renaming a private field (#cache → #store) is a change');
+ok(S.verify(['const r = a / b / c;'], 'const r = a / b / c', 'a.ts').status === 'intact' && S.verify(['const r = a / b / c;'], 'const r = a / b * c', 'a.ts').status === 'changed', 'division is not mistaken for a regex');
+ok(S.verify(['type A = Promise<Uint8Array<ArrayBuffer>>;'], 'type A = Promise<\n  Uint8Array<ArrayBuffer>\n>', 'a.ts').status === 'intact', 'nested generics split by a formatter are intact');
+const SWAP = ['  if (!isAdmin || role !== "admin") {', '    return deny(403);'];
+ok(S.verify(SWAP, 'function f(isAdmin, isGuest, role) {\n  log(isAdmin);\n  if (!isGuest || role !== "admin") {\n    return deny(403);\n  }\n}', 'a.js').status === 'changed', 'isAdmin → isGuest while isAdmin is still used nearby is a change, not a rename');
+ok(S.verify(SWAP, 'function f(admin, role) {\n  if (!admin || role !== "admin") {\n    return deny(403);\n  }\n}', 'a.js').status === 'renamed', 'a real rename (old name gone) is still a rename');
+// 3. duplicate code: removing the locked copy is caught even when an identical copy remains
+const DUP = 'function a(fn) {\n  if (!user) return fn(null, null)\n}\nfunction b(fn) {\n  if (!user) return fn(null, null)\n}\n';
+const dupLock = L.withCopies({ file: 'a.js', snippet: ['  if (!user) return fn(null, null)'] }, DUP);
+ok(dupLock.copies === 2, 'withCopies records identical copies');
+ok(L.verifyLock(dupLock, DUP).status === 'intact', 'both copies there: intact');
+const oneLeft = L.verifyLock(dupLock, DUP.replace('  if (!user) return fn(null, null)\n}\nfunction b', '  return fn(null, null)\n}\nfunction b'));
+ok(oneLeft.status === 'changed' && oneLeft.copies && oneLeft.copies.found === 1, 'one copy changed: caught, with the copy count', JSON.stringify(oneLeft));
+ok(L.withCopies({ file: 'a.js', snippet: ['  if (!user) return fn(null, null)'] }, 'if (!user) return fn(null, null)').copies === undefined, 'single copy: no copies field');
+
 /* ---------------- CLI: fixlock check in a real repo ---------------- */
 const CLI = path.join(__dirname, '..', 'bin', 'fixlock.js');
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'fixlock-structural-'));

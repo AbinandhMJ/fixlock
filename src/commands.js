@@ -95,6 +95,7 @@ async function cmdMark(args) {
     file: rel, snippet, owner: owner.github || owner.name, issue: args.issue || null, test: args.test || null,
     date: new Date().toISOString().slice(0, 10),
   };
+  L.withCopies(lock, lines.join('\n'));
   reg.locks.push(lock);
   s.saveRegistry(reg);
   console.log(c.green(`✔ ${lock.id} locked`) + ` — ${rel}:${start}-${end}, owner ${team.handle(owner)}, policy ${cfg.policies[type].onEdit}/${cfg.policies[type].approval}`);
@@ -189,7 +190,7 @@ async function cmdCheck(args) {
     const target = renames[lock.file] || lock.file;
     const content = read(target);
     const v = L.verifyLock(lock, content, { mode: match.mode, file: target });
-    if (v.status === 'changed') findings.push({ kind: 'lock', lock, file: target, missing: v.missing, renamed: [], deleted: content === null });
+    if (v.status === 'changed') findings.push({ kind: 'lock', lock, file: target, missing: v.missing, renamed: [], copies: v.copies || null, deleted: content === null });
     else if (v.status === 'renamed' && match.renames !== 'allow') findings.push({ kind: 'lock', lock, file: target, missing: [], renamed: v.renames, deleted: false });
   }
 
@@ -269,6 +270,7 @@ function report(cfg, reg, findings, { base, staged, appr }) {
     console.log(`${tag}  ${f.lock.id} "${f.lock.title}" (${f.lock.type}, owner ${owner}) — ${f.deleted ? 'file deleted: ' : ''}${f.file}`);
     if (f.lock.reason && f.lock.reason !== f.lock.title) console.log(c.dim(`    why: ${f.lock.reason}`));
     for (const l of f.missing) console.log(c.dim(`    - ${l.trim()}`));
+    if (f.copies) console.log(c.dim(`    this code appeared ${f.copies.expected} times in the file; only ${f.copies.found} identical copies are left`));
     if (f.renamed && f.renamed.length) console.log(c.dim(`    renamed (logic kept): ${f.renamed.map(([a, b]) => `${a} → ${b}`).join(', ')}`));
     if (f.status === 'blocked') console.log(`    → needs approval from ${f.approvers.map(team.handle).join(' or ')}${staged ? ' when you open the PR' : ' on the PR'}, or restore these lines.`);
     if (f.tracker) console.log(c.dim(`    tracker: ${f.tracker}`));

@@ -4,9 +4,18 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+### Fixed (found by the accuracy benchmark)
+- Line numbers after an unterminated quote (e.g. a `'` inside a regex) were off by one, which misplaced lock positions in `why`, hooks and the editor.
+- `locate()` could match a common line (`try:`, `return true`) hundreds of lines away; it now finds the lock as one block, preferring a match on whole lines.
+- Regex literals (`/"([^"]+)"/`) were read as strings; closing generics (`Promise<Array<T>>`) split by a formatter no longer differ from `>>`; JS private fields (`#cache`) are member names, not renameable variables.
+- A rename is only accepted when it's believable: the snippet has at least 4 code tokens and the old names are gone from the surrounding code (the whole file for short snippets). This stops a deleted or swapped line from being excused as a "rename" of similar code elsewhere.
+- Removing the locked copy of code that appears more than once in a file is now caught: locks record `copies`.
+- `fixlock discover` no longer suggests comment-only, docstring-only or trivially small blocks.
+
 ### Added
 - **Structural matching**: locks now compare code structure instead of text, with zero new dependencies. Reformatting, added comments, quote style, semicolons, trailing commas and line wrapping no longer count as changes to a lock. A consistent variable rename is reported as a rename (a warning by default) instead of a revert. Field and object-key renames, flipped conditions, changed values and removed checks are still caught. Supports JS/TS, Python, Java, Go, C#, Kotlin, Rust, C/C++, Swift, PHP, Ruby and similar; other files are matched as text.
 - **`fixlock discover`**: finds past bug fixes worth locking in git history, whatever the commit style, and ranks them with the reasons shown: fixes that were reverted and re-applied, fix/regression wording, linked issues, tests in the same commit, guard code and small focused changes. Pick which to lock, or `--apply`. Linked tests are recorded on the lock. `fixlock init` now points to it.
+- **Accuracy benchmark** (`bench/`, [docs](https://abinandhmj.github.io/fixlock/benchmark)): 229 real fixes from Express, ky, Requests and Cobra, 1,812 edits. Structural matching flags 0.0% of harmless edits (text matching: 58.8%) and catches 99.5% of harmful ones (text: 93.2%).
 - `matching` config: `mode` (`structural` | `text`) and `renames` (`allow` | `warn` | `ask` | `block`).
 - `fixlock why` and the MCP `fixlock_why` tool find locks that were reformatted.
 - **VS Code extension** (`extensions/vscode`, also for Cursor, Windsurf and VSCodium via Open VSX): locked lines in the gutter with hover and CodeLens, live Problems warnings when an edit changes locked code, "Lock selected lines", and fixlock's MCP tools registered for Copilot agent mode. Bundles fixlock; no Node.js install needed.
