@@ -8,6 +8,7 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 - **Structural matching**: locks now compare code structure instead of text, with zero new dependencies. Reformatting, added comments, quote style, semicolons, trailing commas and line wrapping no longer count as changes to a lock. A consistent variable rename is reported as a rename (a warning by default) instead of a revert. Field and object-key renames, flipped conditions, changed values and removed checks are still caught. Supports JS/TS, Python, Java, Go, C#, Kotlin, Rust, C/C++, Swift, PHP, Ruby and similar; other files are matched as text.
 - `matching` config: `mode` (`structural` | `text`) and `renames` (`allow` | `warn` | `ask` | `block`).
 - `fixlock why` and the MCP `fixlock_why` tool find locks that were reformatted.
+- **VS Code extension** (`extensions/vscode`, also for Cursor, Windsurf and VSCodium via Open VSX): locked lines in the gutter with hover and CodeLens, live Problems warnings when an edit changes locked code, "Lock selected lines", and fixlock's MCP tools registered for Copilot agent mode. Bundles fixlock; no Node.js install needed.
 
 ## [0.5.0] - 2026-11-11
 

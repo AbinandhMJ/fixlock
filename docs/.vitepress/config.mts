@@ -36,6 +36,7 @@ export default defineConfig({
       ] },
       { text: 'AI assistants', items: [
         { text: 'Overview', link: '/integrations/' },
+        { text: 'VS Code extension', link: '/integrations/vscode' },
         { text: 'Claude Code', link: '/integrations/claude-code' },
         { text: 'Cursor', link: '/integrations/cursor' },
         { text: 'GitHub Copilot', link: '/integrations/copilot' },

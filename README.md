@@ -50,6 +50,8 @@ Then connect your assistant:
 npx fixlock setup claude-code   # or: cursor · copilot · codex · gemini · windsurf · all
 ```
 
+Using VS Code, Cursor or Windsurf? Install the **fixlock** extension ([guide](https://abinandhmj.github.io/fixlock/integrations/vscode)) to see locks in the editor, get warned as you type, and connect Copilot agent mode automatically.
+
 📖 **[Full docs](https://abinandhmj.github.io/fixlock/)**: [How it works](https://abinandhmj.github.io/fixlock/how-it-works) · [Getting started](https://abinandhmj.github.io/fixlock/getting-started) · [Team lead](https://abinandhmj.github.io/fixlock/team-lead-guide) · [Developer](https://abinandhmj.github.io/fixlock/developer-guide) · [AI assistants](https://abinandhmj.github.io/fixlock/integrations/) · [CI](https://abinandhmj.github.io/fixlock/ci-setup) · [Recipes](https://abinandhmj.github.io/fixlock/recipes) · [FAQ](https://abinandhmj.github.io/fixlock/faq) · [Commands](https://abinandhmj.github.io/fixlock/cli-reference)
 
 ## AI assistants
