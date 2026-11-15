@@ -63,7 +63,7 @@ function message(cfg, hits, person, stableSum, file) {
   const what = hits.length && stableSum ? 'locked and already-working code'
     : hits.length ? (hits.length === 1 ? 'a locked ' + (hits[0].lock.type === 'feature' ? 'feature' : 'bug fix') : hits.length + ' locked fixes/features')
       : 'code that already works';
-  return `🔒 fixlock: heads up${person.name ? ' ' + String(person.name).split(/[ @]/)[0] : ''} — this change affects ${what}${hits.length ? ', which may bring back old behaviour' : ' and may change how it behaves'}:\n${parts.join('\n')}\n` +
+  return `fixlock: heads up${person.name ? ' ' + String(person.name).split(/[ @]/)[0] : ''} — this change affects ${what}${hits.length ? ', which may bring back old behaviour' : ' and may change how it behaves'}:\n${parts.join('\n')}\n` +
     'AI: do not rewrite working code silently. Tell the developer exactly which lines you want to change and why, and only continue if they agree. Otherwise leave these lines as they are and build around them.';
 }
 

@@ -156,7 +156,7 @@ function why(args) {
       onEdit: pol.onEdit, approvers: team.approvers(cfg, l).map(team.handle), youMayChange: team.exempt(cfg, l, me), issue: l.issue || null,
     };
   });
-  const text = out.map((o) => `🔒 ${o.id} "${o.title}" (${o.type}, owner ${o.owner})${o.lines ? ` lines ${o.lines[0]}-${o.lines[1]}` : ''}\n` +
+  const text = out.map((o) => `LOCKED ${o.id} "${o.title}" (${o.type}, owner ${o.owner})${o.lines ? ` lines ${o.lines[0]}-${o.lines[1]}` : ''}\n` +
     (o.reason && o.reason !== o.title ? `   why: ${o.reason}\n` : '') +
     `   must keep: ${o.mustKeep.map((x) => x.trim()).join(' | ')}\n` +
     `   ${o.youMayChange ? 'the current developer may change this' : `on edit: ${o.onEdit}; PR approval from ${o.approvers.join(' or ') || 'nobody'}`}`).join('\n');

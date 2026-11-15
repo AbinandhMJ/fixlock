@@ -79,8 +79,8 @@ async function sync(cfg, lock, event, context = {}) {
   if (!ref) return null;
   const status = event === 'fixed' ? (tcfg.onFix ?? null) : (tcfg.onRegression ?? null);
   const comment = event === 'fixed'
-    ? `🔒 Locked by fixlock as ${lock.id} — ${lock.file}. Future PRs that revert this ${lock.type === 'feature' ? 'feature' : 'fix'} will be flagged.`
-    : `⚠️ fixlock: ${lock.id} "${lock.title}" was reverted${context.pr ? ` in PR #${context.pr}` : ''}${context.branch ? ` (branch ${context.branch})` : ''}${context.author ? ` by ${context.author}` : ''}. The bug may be back.`;
+    ? `Locked by fixlock as ${lock.id} — ${lock.file}. Future PRs that revert this ${lock.type === 'feature' ? 'feature' : 'fix'} will be flagged.`
+    : `fixlock: ${lock.id} "${lock.title}" was reverted${context.pr ? ` in PR #${context.pr}` : ''}${context.branch ? ` (branch ${context.branch})` : ''}${context.author ? ` by ${context.author}` : ''}. The bug may be back.`;
   try {
     await adapters[ref.type](ref.id, status, comment, tcfg, { event, lock: { id: lock.id, title: lock.title, type: lock.type, file: lock.file, owner: lock.owner }, ...context });
     return `${ref.type}:${ref.id} → ${status || 'commented'}`;

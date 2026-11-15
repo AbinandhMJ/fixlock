@@ -93,7 +93,7 @@ The **MCP server** (`npx fixlock mcp`) gives every assistant four read-only tool
 What the developer sees when an assistant tries to undo a fix:
 
 ```
-🔒 fixlock: heads up Ravi — this change affects a locked bug fix, which may bring back old behaviour:
+fixlock: heads up Ravi — this change affects a locked bug fix, which may bring back old behaviour:
 • FIX-001 "SAP date format" (bug fix by @abinandhmj) — src/date.ts lines 2-3
   Why it exists: SAP B1 rejects ISO timestamps for DocDate
   This edit removes/rewrites: return `${d.getFullYear()}-${p(d.getMonth() + 1)}`;

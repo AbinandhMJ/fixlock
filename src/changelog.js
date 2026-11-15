@@ -38,7 +38,7 @@ function unreleased(cfg, reg) {
     if (sec && !groups[sec[0]].some((x) => x.includes(c.text))) groups[sec[0]].push(line);
   }
   let md = '';
-  if (breaking.length) md += `### ⚠ Breaking\n${breaking.join('\n')}\n\n`;
+  if (breaking.length) md += `### Breaking\n${breaking.join('\n')}\n\n`;
   for (const [name] of SECTIONS) if (groups[name].length) md += `### ${name}\n${groups[name].join('\n')}\n\n`;
   return md || '_No changes yet._\n\n';
 }

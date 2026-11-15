@@ -38,7 +38,7 @@ Your git email must be in the team list. If it isn't, ask your lead to add it.
 If you use Claude Code, you will sometimes see a prompt like this before an edit:
 
 ```
-🔒 fixlock: heads up Ravi — this change affects a locked bug fix, which may bring back old behaviour:
+fixlock: heads up Ravi — this change affects a locked bug fix, which may bring back old behaviour:
 • FIX-001 "SAP date format" (bug fix by @abinandhmj) — src/app/core/utils/date.util.ts lines 3-4
   Why it exists: SAP B1 rejects ISO timestamps for DocDate
   This edit removes/rewrites: return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
@@ -74,7 +74,7 @@ npx fixlock why src/app/core/utils/date.util.ts:3
 ```
 
 ```
-🔒 FIX-001 SAP date format  (bug, owner @abinandhmj)
+LOCKED FIX-001 SAP date format  (bug, owner @abinandhmj)
    lines 3-4 · why: SAP B1 rejects ISO timestamps for DocDate
    policy: ask; approval: @abinandhmj
 ```
@@ -104,7 +104,7 @@ Lock the **few lines that actually fix the bug**, not the whole function. Small 
 
 The PR comment tells you which lock is affected and who must approve:
 
-> ❌ **FIX-001** SAP date format (bug) — `src/app/core/utils/date.util.ts`
+> **Needs approval: FIX-001** SAP date format (bug) — `src/app/core/utils/date.util.ts`
 > **Approve this PR as @abinandhmj** to accept the change, or restore the lines.
 
 Either restore the lines, or ask the owner to review. Once they approve on GitHub, re-run the check and it turns green.

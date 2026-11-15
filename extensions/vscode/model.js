@@ -67,11 +67,11 @@ function analyze(state, rel, text) {
 function hoverText(item) {
   const { lock } = item;
   const kind = lock.type === 'feature' ? 'feature' : 'bug fix';
-  let md = `**🔒 ${lock.id}** ${escape(lock.title)} _(${kind}, owner ${escape(item.owner)})_\n\n`;
+  let md = `**Locked: ${lock.id}** ${escape(lock.title)} _(${kind}, owner ${escape(item.owner)})_\n\n`;
   if (lock.reason && lock.reason !== lock.title) md += `**Why it exists:** ${escape(lock.reason)}\n\n`;
   if (lock.issue) md += `**Issue:** ${escape(lock.issue)}\n\n`;
-  if (item.status === 'changed') md += '⚠️ **Your current edits change this locked code.** The PR will need approval';
-  else if (item.status === 'renamed') md += `ℹ️ Renamed inside the lock (logic kept): ${item.renames.map(([a, b]) => `\`${a}\` → \`${b}\``).join(', ')}. Approval may be needed`;
+  if (item.status === 'changed') md += '**Your current edits change this locked code.** The PR will need approval';
+  else if (item.status === 'renamed') md += `Renamed inside the lock (logic kept): ${item.renames.map(([a, b]) => `\`${a}\` → \`${b}\``).join(', ')}. Approval may be needed`;
   else md += 'Changing what this code does needs approval';
   md += item.approvers.length ? ` from ${item.approvers.map(escape).join(' or ')}.` : '.';
   md += `\n\nAI edits: **${item.policy.onEdit}** · PR approval: **${item.policy.approval}**`;
@@ -99,7 +99,7 @@ function escape(s) { return String(s || '').replace(/([\\`*_{}[\]()#+!|<>])/g, '
 function pickItems(state) {
   const team = engine('team.js');
   return state.locks.map((l) => ({
-    label: `🔒 ${l.id} ${l.title}`,
+    label: `$(lock) ${l.id} ${l.title}`,
     description: l.file,
     detail: [l.type === 'feature' ? 'feature' : 'bug fix', `owner ${team.handle(team.find(state.cfg, l.owner)) || l.owner}`, l.reason && l.reason !== l.title ? l.reason : null, l.issue].filter(Boolean).join(' · '),
     lock: l,

@@ -40,7 +40,7 @@ function run(opts = {}) {
     .replace(/^(LOCKED|REVERTED FIX)/, (m) => c.red(c.bold(m)))
     .replace(/^APPROVED/, (m) => c.green(c.bold(m)))
     .replace(/^(REWRITE|WARNING)/, (m) => c.yellow(c.bold(m)))
-    .replace(/(✖.*)$/, (m) => c.red(m)).replace(/(✔.*)$/, (m) => c.green(m)).replace(/^(🔒.*)$/, (m) => c.lime(m));
+    .replace(/(✖.*)$/, (m) => c.red(m)).replace(/(✔.*)$/, (m) => c.green(m)).replace(/^(fixlock: heads up.*)$/, (m) => c.lime(m));
   const step = (n, title) => { pause(700); say(); say(`${c.lime(c.bold(n))} ${c.bold(title)}`); };
   const cmd = (t) => say(`   ${c.cyan('$')} ${t}`);
 
@@ -88,7 +88,7 @@ function run(opts = {}) {
     } finally { process.chdir(cwd); if (prevUser === undefined) delete process.env.FIXLOCK_USER; else process.env.FIXLOCK_USER = prevUser; }
     const label = { ask: c.yellow(c.bold('ASK THE DEVELOPER FIRST')), block: c.red(c.bold('DO NOT MAKE THIS CHANGE')), warn: c.yellow('WARNING'), ok: c.green('OK') }[verdict ? verdict.level : 'ok'];
     say(`   ${c.dim('│')} verdict: ${label}`);
-    show(verdict ? verdict.reason : '', (l) => !/^AI:/.test(l) && !/^🔒 fixlock: heads up/.test(l));
+    show(verdict ? verdict.reason : '', (l) => !/^AI:/.test(l) && !/^fixlock: heads up/.test(l));
     say(c.dim('   The AI stops and asks Ravi. Most of the time, this is where the bug stays fixed.'));
 
     // 3. Ravi commits anyway

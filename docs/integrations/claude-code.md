@@ -28,7 +28,7 @@ Commit all three. Teammates get them on `git pull`. Claude Code asks once to app
 When Claude tries to change a locked line, the hook asks you first:
 
 ```
-🔒 fixlock: heads up Ravi — this change affects a locked bug fix, which may bring back old behaviour:
+fixlock: heads up Ravi — this change affects a locked bug fix, which may bring back old behaviour:
 • FIX-001 "SAP date format" (bug fix by @abinandhmj) — src/date.ts lines 2-3
   Why it exists: SAP B1 rejects ISO timestamps for DocDate
   Policy: confirm with the developer; the PR will need approval from @abinandhmj.
