@@ -16,6 +16,7 @@ const ok = (cond, msg) => { if (!cond) { console.error(`FAIL ${msg}`); console.e
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fixlock-regbench-'));
 const git = (...a) => execFileSync('git', a, { cwd: dir, encoding: 'utf8', env: { ...process.env, GIT_AUTHOR_NAME: 'T', GIT_AUTHOR_EMAIL: 't@x', GIT_COMMITTER_NAME: 'T', GIT_COMMITTER_EMAIL: 't@x' } });
 git('init', '-q', '-b', 'main');
+git('config', 'core.autocrlf', 'false'); // Windows runners default to CRLF checkouts
 const before = 'def charge(amount):\n    total = amount * 100\n    return total\n\n\ndef refund(amount):\n    return -amount\n';
 const fixed = 'def charge(amount):\n    if amount <= 0:\n        raise ValueError("amount must be positive")\n    total = amount * 100\n    return total\n\n\ndef refund(amount):\n    return -amount\n';
 fs.writeFileSync(path.join(dir, 'pay.py'), before);
