@@ -40,8 +40,18 @@ try {
 
   for (const c of ['npx --no-install fixlock hook claude', 'npx -y @abinandhmj/fixlock hook claude', 'npx -y @abinandhmj/fixlock@0.5 hook claude', 'npx fixlock check --staged || true'])
     ok(cli.isOurs(c), `recognised as fixlock's: ${c}`);
-  for (const c of ['npx prettier --check .', 'npx eslint --fix', 'echo fixlock'])
+  for (const c of ['fixlock hook claude', '/home/a/.local/bin/fixlock check --staged || true', 'C:\\tools\\fixlock.exe hook claude'])
+    ok(cli.isOurs(c), `recognised as fixlock's (native command): ${c}`);
+  for (const c of ['npx prettier --check .', 'npx eslint --fix', 'echo fixlock', 'fixlockx hook claude'])
     ok(!cli.isOurs(c), `not fixlock's: ${c}`);
+
+  // the native command (pip / pipx / uv): recorded as "launcher", or FIXLOCK_LAUNCHER on one machine
+  const nat = repo('native', { '.fixlock/config.json': JSON.stringify({ launcher: 'fixlock' }), 'package.json': '{}' });
+  ok(cli.command(nat) === 'fixlock' && cli.human(nat) === 'fixlock', 'launcher "fixlock": hooks and messages use the native command');
+  process.env.FIXLOCK_LAUNCHER = 'fixlock';
+  ok(cli.command(goRepo) === 'fixlock', 'FIXLOCK_LAUNCHER=fixlock overrides on one machine');
+  delete process.env.FIXLOCK_LAUNCHER;
+  ok(cli.defaultLauncher(goRepo) === null, 'init from Node (npx) records no launcher');
 
   // init in a Python repo: every generated file uses the scoped command
   const py = repo('py', { 'app.py': 'def f(x):\n    if x is None:\n        return 0\n    return x\n' });

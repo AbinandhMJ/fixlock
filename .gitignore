@@ -3,3 +3,5 @@ docs/.vitepress/dist/
 node_modules/
 docs/public/llms.txt
 docs/public/llms-full.txt
+__pycache__/
+/dist/

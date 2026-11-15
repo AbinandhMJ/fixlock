@@ -5,6 +5,9 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 ## [Unreleased]
 
 ### Added
+- **On PyPI**: `pipx install fixlock` (or `uv tool install fixlock`, `pip install fixlock`) installs a standalone `fixlock` binary for Linux glibc/musl, macOS and Windows on x64 and ARM, with no Node.js needed. `python -m fixlock` works too; other platforms get a fallback that runs it through `npx`.
+  - `init` from the native command records `"launcher": "fixlock"`, so hooks, MCP configs and rules call `fixlock …`. `FIXLOCK_LAUNCHER` overrides it on one machine.
+  - The release workflow builds the binaries with Bun and publishes the wheels with PyPI trusted publishing; CI tests the wheel on a machine with no Node.js on PATH.
 - **63 languages and formats** for structural matching ([list](https://abinandhmj.github.io/fixlock/languages)), from one table in `src/languages.js`: Java, Kotlin, Scala, Groovy/Gradle, C#, F#, Go, Rust, Swift, Dart, C/C++/Objective-C, PHP, Ruby, Elixir, Python, Lua, Haskell, Clojure/Lisp, Erlang, R, Julia, Perl, SQL, Terraform, YAML, TOML, Dockerfile, Makefile, shell, PowerShell, CSS/SCSS/Less, GraphQL, Protobuf and more.
   - **Templates**: HTML, Angular, Vue, Svelte, Astro, Django/Jinja, Twig, Liquid, Handlebars, EJS, ERB, Razor, Blade, JSP, Thymeleaf and Go templates are read as tags, attributes and `{{ }}` expressions, with `<script>` and `<style>` in their own language.
   - **Indentation is logic** in Python, YAML, Nim, CoffeeScript and Sass: moving a line in or out of a block is caught.
