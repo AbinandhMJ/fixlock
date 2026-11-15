@@ -11,8 +11,8 @@
 #         - uses: actions/checkout@v4
 #           with: { fetch-depth: 0 }
 #         - uses: AbinandhMJ/fixlock@v0.7.0
-name: fixlock
-description: Stop AI coding assistants and teammates from silently undoing bug fixes. Fails the PR until the owner of a changed locked fix approves.
+name: fixlock by Algotricz
+description: Stop AI coding assistants and teammates from silently undoing bug fixes. Fails the PR until the fix owner approves.
 author: Algotricz
 branding:
   icon: lock

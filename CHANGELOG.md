@@ -4,7 +4,8 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
-_No changes yet._
+### Changed
+- The GitHub Action is listed on GitHub Marketplace as **fixlock by Algotricz**. `uses: AbinandhMJ/fixlock@…` is unchanged.
 
 ## [0.7.0] - 2026-11-15
 
