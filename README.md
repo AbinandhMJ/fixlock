@@ -44,7 +44,14 @@ npx fixlock init                         # team, rules, AI assistants, hooks
 npx fixlock autolock --all --dry-run     # see which past fixes it would lock
 ```
 
-**Any language.** Structural matching reads [63 languages and formats](https://abinandhmj.github.io/fixlock/languages): TypeScript, Python, Java, Kotlin, Go, Rust, C#, Swift, PHP, Ruby, SQL, Terraform, YAML, Angular/Vue/Svelte templates and more. Not a JavaScript project? `pipx install fixlock` gets a standalone binary with no Node.js needed (or run `npx @abinandhmj/fixlock init`), and use the [GitHub Action or pre-commit hook](https://abinandhmj.github.io/fixlock/any-language).
+No Node.js? Install the standalone binary from [PyPI](https://pypi.org/project/fixlock/) and drop the `npx`:
+
+```bash
+pipx install fixlock                     # or: uv tool install fixlock · pip install fixlock
+fixlock init
+```
+
+**Any language.** Structural matching reads [63 languages and formats](https://abinandhmj.github.io/fixlock/languages): TypeScript, Python, Java, Kotlin, Go, Rust, C#, Swift, PHP, Ruby, SQL, Terraform, YAML, Angular/Vue/Svelte templates and more. Not a JavaScript project? Use `pipx install fixlock` (or `npx @abinandhmj/fixlock init`) and the [GitHub Action or pre-commit hook](https://abinandhmj.github.io/fixlock/any-language).
 
 Already have fixes in your history? `npx fixlock discover` finds and ranks them so you're protected from day one.
 
@@ -56,18 +63,18 @@ npx fixlock setup claude-code   # or: cursor · copilot · codex · gemini · wi
 
 Using VS Code, Cursor or Windsurf? Install the **fixlock** extension ([guide](https://abinandhmj.github.io/fixlock/integrations/vscode)) to see locks in the editor, get warned as you type, and connect Copilot agent mode automatically.
 
-📖 **[Full docs](https://abinandhmj.github.io/fixlock/)**: [How it works](https://abinandhmj.github.io/fixlock/how-it-works) · [Getting started](https://abinandhmj.github.io/fixlock/getting-started) · [Team lead](https://abinandhmj.github.io/fixlock/team-lead-guide) · [Developer](https://abinandhmj.github.io/fixlock/developer-guide) · [AI assistants](https://abinandhmj.github.io/fixlock/integrations/) · [CI](https://abinandhmj.github.io/fixlock/ci-setup) · [Recipes](https://abinandhmj.github.io/fixlock/recipes) · [FAQ](https://abinandhmj.github.io/fixlock/faq) · [Commands](https://abinandhmj.github.io/fixlock/cli-reference)
+**[Full docs](https://abinandhmj.github.io/fixlock/)**: [How it works](https://abinandhmj.github.io/fixlock/how-it-works) · [Getting started](https://abinandhmj.github.io/fixlock/getting-started) · [Team lead](https://abinandhmj.github.io/fixlock/team-lead-guide) · [Developer](https://abinandhmj.github.io/fixlock/developer-guide) · [AI assistants](https://abinandhmj.github.io/fixlock/integrations/) · [CI](https://abinandhmj.github.io/fixlock/ci-setup) · [Recipes](https://abinandhmj.github.io/fixlock/recipes) · [FAQ](https://abinandhmj.github.io/fixlock/faq) · [Commands](https://abinandhmj.github.io/fixlock/cli-reference)
 
 ## AI assistants
 
 | Assistant | MCP check before edit | Rules file | Pre-edit hook | Guide |
 |---|:-:|---|:-:|---|
-| Claude Code | ✅ `.mcp.json` | `CLAUDE.md` | ✅ | [→](https://abinandhmj.github.io/fixlock/integrations/claude-code) |
-| Cursor | ✅ `.cursor/mcp.json` | `.cursor/rules/fixlock.mdc` | | [→](https://abinandhmj.github.io/fixlock/integrations/cursor) |
-| GitHub Copilot | ✅ `.vscode/mcp.json` | `.github/copilot-instructions.md` | | [→](https://abinandhmj.github.io/fixlock/integrations/copilot) |
-| OpenAI Codex | ✅ `~/.codex/config.toml` | `AGENTS.md` | | [→](https://abinandhmj.github.io/fixlock/integrations/codex) |
-| Gemini CLI | ✅ `.gemini/settings.json` | `GEMINI.md` | | |
-| Windsurf | ✅ user config | `.windsurf/rules/fixlock.md` | | |
+| Claude Code | Yes: `.mcp.json` | `CLAUDE.md` | Yes | [→](https://abinandhmj.github.io/fixlock/integrations/claude-code) |
+| Cursor | Yes: `.cursor/mcp.json` | `.cursor/rules/fixlock.mdc` | | [→](https://abinandhmj.github.io/fixlock/integrations/cursor) |
+| GitHub Copilot | Yes: `.vscode/mcp.json` | `.github/copilot-instructions.md` | | [→](https://abinandhmj.github.io/fixlock/integrations/copilot) |
+| OpenAI Codex | Yes: `~/.codex/config.toml` | `AGENTS.md` | | [→](https://abinandhmj.github.io/fixlock/integrations/codex) |
+| Gemini CLI | Yes: `.gemini/settings.json` | `GEMINI.md` | | |
+| Windsurf | Yes: user config | `.windsurf/rules/fixlock.md` | | |
 | Cline, Roo, Continue, Aider, Amazon Q, Junie | any MCP client | their native rules file | | [→](https://abinandhmj.github.io/fixlock/ai-tools) |
 
 The **MCP server** (`npx fixlock mcp`) gives every assistant four read-only tools:
@@ -86,7 +93,7 @@ The **MCP server** (`npx fixlock mcp`) gives every assistant four read-only tool
 What the developer sees when an assistant tries to undo a fix:
 
 ```
-🔒 fixlock: heads up Ravi — this change affects a locked bug fix, which may bring back old behaviour:
+fixlock: heads up Ravi — this change affects a locked bug fix, which may bring back old behaviour:
 • FIX-001 "SAP date format" (bug fix by @abinandhmj) — src/date.ts lines 2-3
   Why it exists: SAP B1 rejects ISO timestamps for DocDate
   This edit removes/rewrites: return `${d.getFullYear()}-${p(d.getMonth() + 1)}`;

@@ -71,7 +71,7 @@ Payload:
 {
   "issue": "BUG-9",
   "status": "reopened",
-  "message": "⚠️ fixlock: FIX-003 \"GST rounding\" was reverted in PR #42 …",
+  "message": "fixlock: FIX-003 \"GST rounding\" was reverted in PR #42 …",
   "event": "regression",
   "lock": { "id": "FIX-003", "title": "GST rounding", "type": "bug", "file": "src/app/tax.ts", "owner": "abinandhmj" },
   "pr": "42", "branch": "feature/x", "author": "ravik"

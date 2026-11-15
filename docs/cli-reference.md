@@ -4,7 +4,7 @@ title: Command reference
 
 # Command reference
 
-Run with `npx fixlock <command>` (or `npx @abinandhmj/fixlock <command>` if not installed in the project). `npx fixlock --help` prints a summary.
+Run with `npx fixlock <command>` (or `npx @abinandhmj/fixlock <command>` if not installed in the project). Installed from PyPI (`pipx install fixlock`), it's just `fixlock <command>`, and `python -m fixlock <command>` works too. `fixlock --help` prints a summary.
 
 ## Try it
 

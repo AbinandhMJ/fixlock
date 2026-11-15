@@ -8,6 +8,9 @@ _No changes yet._
 
 ## [0.7.0] - 2026-11-15
 
+### Changed
+- No emojis in fixlock's output: CLI messages, the Claude Code hook, MCP answers, PR comments, tracker comments, `CHANGELOG.md` headings, the VS Code extension (it uses VS Code's own lock and warning icons) and the docs. PR comment items are labelled **Needs approval**, **Approved** or **Changed**.
+
 ### Added
 - **On PyPI**: `pipx install fixlock` (or `uv tool install fixlock`, `pip install fixlock`) installs a standalone `fixlock` binary for Linux glibc/musl, macOS and Windows on x64 and ARM, with no Node.js needed. `python -m fixlock` works too; other platforms get a fallback that runs it through `npx`.
   - `init` from the native command records `"launcher": "fixlock"`, so hooks, MCP configs and rules call `fixlock …`. `FIXLOCK_LAUNCHER` overrides it on one machine.

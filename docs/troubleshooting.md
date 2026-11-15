@@ -17,14 +17,22 @@ Ask your lead to add the email you actually commit with (`fixlock team add … -
 
 ## Claude Code doesn't show any fixlock prompt
 
-- `.claude/settings.json` must contain `npx --no-install fixlock hook claude`. Run `npx fixlock install-claude-hook`.
-- fixlock must be installed in the project (`npm i -D @abinandhmj/fixlock`). `--no-install` won't download it.
+- `.claude/settings.json` must contain a fixlock hook command: `npx --no-install fixlock hook claude` (installed with npm), `npx -y @abinandhmj/fixlock@<version> hook claude` (not installed), or `fixlock hook claude` (installed with pip). Run `fixlock install-claude-hook` to rewrite it.
+- With `npx --no-install`, fixlock must be installed in the project (`npm i -D @abinandhmj/fixlock`); it won't download it. With `fixlock hook claude`, the `fixlock` command must be on your PATH (`pipx install fixlock`).
 - Restart Claude Code after changing settings.
 - You won't be prompted for locks you own, your own uncommitted work, or edits under `minLines`.
 - Test the hook by hand:
   ```bash
   echo '{"tool_name":"Write","cwd":".","tool_input":{"file_path":"src/x.ts","content":""}}' | npx fixlock hook claude
   ```
+
+## `fixlock: command not found`
+
+The repo was set up with the pip-installed command (`"launcher": "fixlock"` in `.fixlock/config.json`), so its hooks call `fixlock` directly.
+
+- Install it once: `pipx install fixlock` (or `uv tool install fixlock`).
+- With pipx, run `pipx ensurepath` and open a new terminal if `fixlock` still isn't found.
+- Prefer npx on your machine? Set `FIXLOCK_LAUNCHER=npx` in your environment. To switch the whole repo, change `launcher` in `.fixlock/config.json` and run `fixlock sync` (see [Configuration](configuration.md#launcher)).
 
 ## Commit warning or auto-lock doesn't run
 

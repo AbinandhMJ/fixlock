@@ -32,7 +32,7 @@ const yes = (v) => /^y(es)?$/i.test(v);
 async function interactive(cfg) {
   const p = prompter();
   try {
-    console.log('\n🔒 fixlock setup — run this once as the team lead / project manager.\n');
+    console.log('\nfixlock setup — run this once as the team lead / project manager.\n');
     cfg.project = await p.ask('Project name', cfg.project || path.basename(s.root()));
 
     console.log('\nTeam members (leave name empty to finish). GitHub username is used for PR approvals;');

@@ -109,7 +109,7 @@ const codeLensProvider = {
     if (!cfg().get('codeLens', true)) return [];
     const { items } = analyzeDoc(doc);
     return items.filter((i) => i.range).map((i) => new vscode.CodeLens(new vscode.Range(i.range[0] - 1, 0, i.range[0] - 1, 0), {
-      title: `${i.status === 'changed' ? '⚠️' : '🔒'} ${i.lock.id} ${i.lock.title} · ${i.owner}${i.status === 'changed' ? ' · changed by your edit' : ''}`,
+      title: `${i.status === 'changed' ? '$(warning)' : '$(lock)'} ${i.lock.id} ${i.lock.title} · ${i.owner}${i.status === 'changed' ? ' · changed by your edit' : ''}`,
       command: 'fixlock.why',
       arguments: [doc.uri, i.range[0]],
     }));
@@ -211,7 +211,7 @@ async function cmdWhy(uri, line) {
   const lines = [`${i.lock.id} "${i.lock.title}" — ${i.lock.type === 'feature' ? 'feature' : 'bug fix'}, owner ${i.owner}`];
   if (i.lock.reason && i.lock.reason !== i.lock.title) lines.push(`Why: ${i.lock.reason}`);
   lines.push(`AI edits: ${i.policy.onEdit} · PR approval from ${i.approvers.join(' or ') || 'nobody'}`);
-  if (i.status === 'changed') lines.push('⚠️ Your current edits change this code.');
+  if (i.status === 'changed') lines.push('Your current edits change this code.');
   vscode.window.showInformationMessage(lines.join('\n'), { modal: false }, ...(i.lock.issue ? ['Copy issue'] : [])).then((a) => {
     if (a) vscode.env.clipboard.writeText(i.lock.issue);
   });

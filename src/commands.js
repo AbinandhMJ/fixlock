@@ -155,7 +155,7 @@ function cmdWhy(args) {
   const me = team.current(cfg);
   for (const { l, at } of hits) {
     const pol = cfg.policies[l.type] || cfg.policies.bug;
-    console.log(`${c.yellow('🔒 ' + l.id)} ${l.title}  (${l.type}, owner ${team.handle(team.find(cfg, l.owner)) || l.owner})`);
+    console.log(`${c.yellow('LOCKED ' + l.id)} ${l.title}  (${l.type}, owner ${team.handle(team.find(cfg, l.owner)) || l.owner})`);
     console.log(`   lines ${at.length ? Math.min(...at) + '-' + Math.max(...at) : '?'}${l.reason && l.reason !== l.title ? ' · why: ' + l.reason : ''}`);
     console.log(c.dim(`   ${team.exempt(cfg, l, me) ? 'you can change this (you are an approver)' : `policy: ${pol.onEdit}; approval: ${team.approvers(cfg, l).map(team.handle).join(' or ') || 'none'}`}`));
   }
@@ -296,14 +296,14 @@ function report(cfg, reg, findings, { base, staged, appr, strict }) {
 }
 
 function toMarkdown(cfg, findings, base) {
-  if (!findings.length) return `### ✅ fixlock\nEvery locked fix and feature is intact (base \`${base}\`).\n`;
+  if (!findings.length) return `### fixlock: all clear\nEvery locked fix and feature is intact (base \`${base}\`).\n`;
   const blocked = findings.filter((f) => f.status === 'blocked');
-  let md = `### ${blocked.length ? '🔒' : '⚠️'} fixlock: ${blocked.length ? `${blocked.length} locked change(s) need approval` : 'review notes'}\n\n`;
+  let md = `### fixlock: ${blocked.length ? `${blocked.length} locked change(s) need approval` : 'review notes'}\n\n`;
   for (const f of findings) {
-    if (f.kind === 'path') { md += `- ⚠️ ${f.msg}\n`; continue; }
-    if (f.kind === 'stable') { md += `- ⚠️ **Rewrite of working code:** ${f.msg}. Check this was intended.\n`; continue; }
-    const icon = { blocked: '❌', approved: '✅', warn: '⚠️' }[f.status];
-    md += `- ${icon} **${f.lock.id}** ${f.lock.title} (${f.lock.type}) — \`${f.file}\`\n`;
+    if (f.kind === 'path') { md += `- **Warning:** ${f.msg}\n`; continue; }
+    if (f.kind === 'stable') { md += `- **Rewrite of working code:** ${f.msg}. Check this was intended.\n`; continue; }
+    const label = { blocked: 'Needs approval', approved: 'Approved', warn: 'Changed' }[f.status];
+    md += `- **${label}: ${f.lock.id}** ${f.lock.title} (${f.lock.type}) — \`${f.file}\`\n`;
     if (f.lock.reason && f.lock.reason !== f.lock.title) md += `  - Why it exists: ${f.lock.reason}\n`;
     if (f.missing.length) md += `  - Removed/rewritten: ${f.missing.map((l) => '`' + l.trim().replace(/`/g, "'") + '`').join(', ')}\n`;
     if (f.renamed && f.renamed.length) md += `  - Renamed inside the lock (logic kept): ${f.renamed.map(([a, b]) => '`' + a + '` → `' + b + '`').join(', ')}\n`;
@@ -353,7 +353,7 @@ async function cmdAutolock(args) {
   const locks = auto.toLocks(out, cfg, reg);
   if (!locks.length) { if (!args.quiet) console.log('Nothing new to lock (already locked).'); skipped.forEach((x) => console.log(c.dim(`  skipped ${x}`))); return; }
   s.saveRegistry(reg);
-  for (const l of locks) console.log(c.green(`🔒 ${l.id} auto-locked`) + ` — ${l.file} (${l.snippet.length} lines) · ${l.title}${l.issue ? ' · ' + l.issue : ''}`);
+  for (const l of locks) console.log(c.green(`✔ ${l.id} auto-locked`) + ` — ${l.file} (${l.snippet.length} lines) · ${l.title}${l.issue ? ' · ' + l.issue : ''}`);
   skipped.forEach((x) => console.log(c.dim(`  skipped ${x}`)));
   const written = syncAgentFiles(true) || [];
   if (fs.existsSync(path.join(s.root(), '.github', 'CODEOWNERS'))) { writeCodeowners(true); written.push('.github/CODEOWNERS'); }
@@ -429,7 +429,7 @@ async function cmdDiscover(args) {
   const locks = discovery.toLocks(picked.map((i) => shown[i]), cfg, reg);
   s.saveRegistry(reg);
   console.log('');
-  for (const l of locks) console.log(c.green(`🔒 ${l.id} locked`) + ` — ${l.file} (${l.snippet.length} lines) · ${l.title}${l.test ? c.dim(' · test ' + l.test) : ''}`);
+  for (const l of locks) console.log(c.green(`✔ ${l.id} locked`) + ` — ${l.file} (${l.snippet.length} lines) · ${l.title}${l.test ? c.dim(' · test ' + l.test) : ''}`);
   syncAgentFiles(true);
   if (fs.existsSync(path.join(s.root(), '.github', 'CODEOWNERS'))) writeCodeowners(true);
   console.log(c.dim(`\nCommit .fixlock/ so the locks apply to everyone: git add .fixlock && git commit -m "chore(fixlock): lock ${locks.length} past fix(es)"`));
