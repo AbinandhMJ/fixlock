@@ -4,6 +4,10 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+_No changes yet._
+
+## [0.7.0] - 2026-11-15
+
 ### Added
 - **63 languages and formats** for structural matching ([list](https://abinandhmj.github.io/fixlock/languages)), from one table in `src/languages.js`: Java, Kotlin, Scala, Groovy/Gradle, C#, F#, Go, Rust, Swift, Dart, C/C++/Objective-C, PHP, Ruby, Elixir, Python, Lua, Haskell, Clojure/Lisp, Erlang, R, Julia, Perl, SQL, Terraform, YAML, TOML, Dockerfile, Makefile, shell, PowerShell, CSS/SCSS/Less, GraphQL, Protobuf and more.
   - **Templates**: HTML, Angular, Vue, Svelte, Astro, Django/Jinja, Twig, Liquid, Handlebars, EJS, ERB, Razor, Blade, JSP, Thymeleaf and Go templates are read as tags, attributes and `{{ }}` expressions, with `<script>` and `<style>` in their own language.

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.0
+
+- Bundles fixlock 0.7: structural matching for 63 languages and formats, including Angular, Vue, Svelte, Razor, Blade and Jinja templates, SQL, Terraform and YAML.
+- Locks are understood in any language; "Find past fixes" recognizes fixes and tests across ecosystems.
+
 ## 0.6.0
 
 First release of the fixlock extension.
