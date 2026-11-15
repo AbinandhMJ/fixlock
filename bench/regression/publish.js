@@ -11,7 +11,7 @@
 // title: one that undoes the fix (regression) and one that only adds comments (control). Branch names
 // and titles don't tell them apart; which is which is saved in bench/regression/harness.json.
 //
-// Pushing uses your normal git credentials. Opening PRs needs a token: GITHUB_TOKEN, or `gh auth token`.
+// Pushing uses your normal git credentials. Opening PRs uses the GitHub CLI (`gh auth login`), or GITHUB_TOKEN.
 'use strict';
 const fs = require('fs');
 const os = require('os');
@@ -24,7 +24,7 @@ const opt = (n, d) => { const i = args.indexOf(`--${n}`); return i === -1 ? d : 
 const DRY = args.includes('--dry-run');
 const REPO = opt('repo');
 const CASES = path.join(__dirname, '.cases');
-const API = process.env.GITHUB_API || 'https://api.github.com';
+const { api } = require('./github');
 if (!DRY && !/^[\w.-]+\/[\w.-]+$/.test(REPO || '')) { console.error('Usage: publish.js --repo owner/name   (or --dry-run)'); process.exit(2); }
 if (!fs.existsSync(CASES)) { console.error('No cases yet: run node bench/regression/run.js first.'); process.exit(2); }
 
@@ -119,13 +119,7 @@ if (DRY) {
 }
 
 (async () => {
-  const token = process.env.GITHUB_TOKEN || (() => { try { return execFileSync('gh', ['auth', 'token'], { encoding: 'utf8' }).trim(); } catch { return ''; } })();
-  if (!token) throw new Error('Set GITHUB_TOKEN (or log in with `gh auth login`) to open the pull requests.');
-  const gh = async (method, p, body) => {
-    const res = await fetch(API + p, { method, headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'User-Agent': 'fixlock-regression-bench', ...(body ? { 'Content-Type': 'application/json' } : {}) }, body: body ? JSON.stringify(body) : undefined });
-    if (!res.ok) throw new Error(`${method} ${p}: ${res.status} ${(await res.text()).slice(0, 300)}`);
-    return res.json();
-  };
+  const gh = api;
   const repo = await gh('GET', `/repos/${REPO}`);
   if (repo.private) throw new Error(`${REPO} is private. Use a public repository so free reviewer plans apply and anyone can check the results.`);
   if (repo.size > 0) throw new Error(`${REPO} isn't empty. Create a new, empty repository for the bench.`);

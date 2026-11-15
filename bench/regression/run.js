@@ -67,6 +67,15 @@ for (const m of ENGINES) {
 const results = { generated: new Date().toISOString().slice(0, 10), seconds: Math.round((Date.now() - t0) / 1000), repos: [...new Set(rows.map((r) => r.repo))].length, summary, cases: rows };
 fs.writeFileSync(path.join(__dirname, 'results.json'), JSON.stringify(results, null, 2) + '\n');
 
+/* ---------------- AI reviewers (from score.js, if they've been run) ---------------- */
+const reviewsFile = path.join(__dirname, 'reviews.json');
+const reviews = fs.existsSync(reviewsFile) ? JSON.parse(fs.readFileSync(reviewsFile, 'utf8')) : null;
+const BOT_NAMES = { 'cubic-dev-ai[bot]': 'Cubic', 'coderabbitai[bot]': 'CodeRabbit' };
+const reviewers = reviews ? Object.entries(reviews.table).filter(([bot]) => BOT_NAMES[bot]).map(([bot, t]) => ({ bot, name: BOT_NAMES[bot], ...t })) : [];
+const reviewerVerdict = (bot, id, kind) => { const r = reviews && reviews.rows.find((x) => x.bot === bot && x.case === id && x.kind === kind); return r ? r.verdict : null; };
+const ran = reviewers.filter((r) => r.regression[1]);
+const notRun = reviewers.filter((r) => !r.regression[1]);
+
 /* ---------------- docs/regression-bench.md ---------------- */
 const s = summary.structural; const t = summary.text;
 const pct = (a, b) => (b ? `${(100 * a / b).toFixed(1).replace(/\.0$/, '')}%` : '–');
@@ -92,15 +101,14 @@ The Regression Bench is ${rows.length} real bug fixes from ${results.repos} open
 | **fixlock** (structural matching, the default) | **${s.caught} of ${s.cases} (${pct(s.caught, s.cases)})** | **${s.falseAlarms} of ${s.cases} (${pct(s.falseAlarms, s.cases)})** |
 | fixlock, text matching | ${t.caught} of ${t.cases} (${pct(t.caught, t.cases)}) | ${t.falseAlarms} of ${t.cases} (${pct(t.falseAlarms, t.cases)}) |
 | git merge | 0 (no conflict) | 0 |
-| AI code review (CodeRabbit, Cubic) | Pending: see [Run it against AI reviewers](#run-it-against-ai-reviewers) | Pending |
-
+${ran.map((r) => `| ${r.name} (AI code review, on GitHub) | ${r.regression[0]} of ${r.regression[1]} (${pct(r.regression[0], r.regression[1])}) | ${r.control[0]} of ${r.control[1]}${r.noise ? ` (plus ${r.noise} comments about the added code comments)` : ''} |`).join('\n')}${ran.length ? '\n' : ''}${notRun.map((r) => `| ${r.name} | Didn't review: see [AI reviewers](#ai-reviewers) | |`).join('\n')}${notRun.length ? '\n' : ''}${!reviewers.length ? '| AI code review | Not run yet: see [Run it against AI reviewers](#run-it-against-ai-reviewers) | |\n' : ''}
 ${s.warned ? `${s.warned} more regression(s) were reported as a rename: the PR still shows a warning, but isn't blocked.\n\n` : ''}A regression counts as caught when fixlock reports a locked fix as changed, which fails the PR check until the fix's owner approves. Locks are the ones \`fixlock discover\` and auto-lock would make for the fix; nobody chose them by hand.
 
 ## Cases
 
-| Case | Fix | File | Regression | Control |
-|---|---|---|---|---|
-${rows.map((r) => `| ${r.id} | [${short(r.fix.sha)}](${r.url}/commit/${r.fix.sha}) ${r.fix.subject.replace(/\|/g, '\\|').slice(0, 70)} | \`${r.file}\` | ${{ changed: 'Caught', renamed: 'Warned', intact: 'Missed' }[r.regression.structural]} | ${{ changed: 'False alarm', renamed: 'Warned', intact: 'Passed' }[r.control.structural]} |`).join('\n')}
+| Case | Fix | File | fixlock: regression | fixlock: control${ran.map((r) => ` | ${r.name}: regression`).join('')} |
+|---|---|---|---|---${ran.map(() => '|---').join('')}|
+${rows.map((r) => `| ${r.id} | [${short(r.fix.sha)}](${r.url}/commit/${r.fix.sha}) ${r.fix.subject.replace(/\|/g, '\\|').slice(0, 70)} | \`${r.file}\` | ${{ changed: 'Caught', renamed: 'Warned', intact: 'Missed' }[r.regression.structural]} | ${{ changed: 'False alarm', renamed: 'Warned', intact: 'Passed' }[r.control.structural]}${ran.map((b) => ` | ${{ flagged: 'Caught', silent: 'Missed' }[reviewerVerdict(b.bot, r.id, 'regression')] || '–'}`).join('')} |`).join('\n')}
 
 ${(() => {
   const miss = rows.filter((r) => r.regression.structural !== 'changed');
@@ -128,7 +136,19 @@ Cases are chosen without asking fixlock anything, so the selection can't favour 
 - fixlock only protects fixes that are locked. Here every fix is locked by \`discover\`; in a real repository, a fix nobody locked (and that \`discover\` doesn't find) isn't protected.
 - Some commits that \`discover\` ranks as fixes are partly refactors. They're kept as found, to avoid hand-picking.
 
-## Run it against AI reviewers
+${reviews ? `## AI reviewers
+
+On ${reviews.scored.slice(0, 10)}, the bench was published to [${reviews.repo}](https://github.com/${reviews.repo}) with \`publish.js\`: every fix in the history with its original message and author, then one regression PR and one control PR per case under neutral names. The reviewers and the [fixlock GitHub App](github-app.md) were installed on the repository and reviewed every PR on their own.
+
+${ran.map((r) => `- **${r.name}** reviewed all ${r.regression[1] + r.control[1]} PRs. It flagged ${r.regression[0]} of ${r.regression[1]} regressions, usually naming the exact fix it undid, and claimed no behavior change on any control. Its other ${r.noise} comments on controls were about the placeholder comments the controls add. It missed: ${rows.filter((x) => reviewerVerdict(r.bot, x.id, 'regression') === 'silent').map((x) => x.id).join(', ')}.`).join('\n')}
+${notRun.map((r) => `- **${r.name}** didn't review. It skips automatic reviews in repositories with fewer than 10 stars, and when asked on each PR (\`@coderabbitai review\`) it answered with its hourly rate limit. It's left unscored rather than scored as 0.`).join('\n')}
+- The **fixlock GitHub App** gave the same verdict on every PR as this page's offline run.
+
+How the comments were graded: a regression counts as caught only if a comment says the change removes or breaks the fix; a control counts as a false alarm only if a comment claims a behavior change or a bug. ${reviews.note ? 'The verdicts were graded by Claude (AI) from each comment and are recorded with the comments themselves in' : 'Every verdict and the comment behind it is in'} [\`bench/regression/reviews.md\`](https://github.com/AbinandhMJ/fixlock/blob/main/bench/regression/reviews.md), so anyone can check them.
+
+AI reviewers don't know which lines are fixes; they judge the diff on its merits, and catching ${ran.length ? ran[0].regression[0] : 0} undone fixes that way is impressive. fixlock knows because the fixes were locked, so it also caught ${ran.length ? rows.filter((x) => x.regression.structural === 'changed' && reviewerVerdict(ran[0].bot, x.id, 'regression') === 'silent').length : 0} that ${ran.length ? ran[0].name : 'the reviewer'} let through, for example ${ran.length ? rows.filter((x) => x.regression.structural === 'changed' && reviewerVerdict(ran[0].bot, x.id, 'regression') === 'silent').slice(0, 3).map((x) => `"${x.fix.subject.replace(/ \(#\d+\)/g, '')}" (${x.id})`).join(', ') : ''}. The two work well together.
+
+` : ''}## Run it against AI reviewers
 
 AI code reviewers can't be run offline, so the bench comes with a harness that runs them on the same cases, on GitHub:
 

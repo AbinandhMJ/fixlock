@@ -11,33 +11,23 @@
 //   auto verdict "silent"   = it reviewed but raised nothing there
 // An AI review can flag a regression in its own words, so a person confirms each verdict in
 // bench/regression/grades.json ({ "<pr number>": { "<bot>": "flagged" | "silent" } }); confirmed
-// verdicts win over automatic ones. Writes bench/regression/reviews.md and reviews.json.
+// verdicts win over automatic ones. A reviewer that never reviewed (rate limits, plan limits) is graded
+// "not-run" and reported as such, never as 0. Writes bench/regression/reviews.md and reviews.json.
+//
+// fixlock's own PR comment is skipped (its check run is the verdict), and so are check runs that never
+// fail on any PR (they carry no verdict).
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const { execFileSync } = require('child_process');
 
 const args = process.argv.slice(2);
 const opt = (n, d) => { const i = args.indexOf(`--${n}`); return i === -1 ? d : args[i + 1]; };
 const H = JSON.parse(fs.readFileSync(path.join(__dirname, 'harness.json'), 'utf8'));
 const REPO = opt('repo', H.repo);
-const API = process.env.GITHUB_API || 'https://api.github.com';
+const { api, all } = require('./github');
 const CASES = path.join(__dirname, '.cases');
 const gradesFile = path.join(__dirname, 'grades.json');
 const grades = fs.existsSync(gradesFile) ? JSON.parse(fs.readFileSync(gradesFile, 'utf8')) : {};
-
-const token = process.env.GITHUB_TOKEN || (() => { try { return execFileSync('gh', ['auth', 'token'], { encoding: 'utf8' }).trim(); } catch { return ''; } })();
-async function all(p) {
-  const out = [];
-  for (let page = 1; ; page++) {
-    const res = await fetch(`${API}${p}${p.includes('?') ? '&' : '?'}per_page=100&page=${page}`, { headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'fixlock-regression-bench', ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
-    if (!res.ok) throw new Error(`GET ${p}: ${res.status}`);
-    const items = await res.json();
-    const list = Array.isArray(items) ? items : items.check_runs || [];
-    out.push(...list);
-    if (list.length < 100) return out;
-  }
-}
 
 /** Line numbers (new file) changed by the PR, and the code lines it removed. */
 function changes(id, kind) {
@@ -50,6 +40,7 @@ function changes(id, kind) {
 }
 
 const isBot = (u) => u && (u.type === 'Bot' || /\[bot\]$/.test(u.login));
+const SKIP = new Set(['fixlock-by-algotricz[bot]']);
 
 (async () => {
   const rows = [];
@@ -58,42 +49,50 @@ const isBot = (u) => u && (u.type === 'Bot' || /\[bot\]$/.test(u.login));
     const ch = changes(p.case, p.kind);
     const pr = `/repos/${REPO}/pulls/${p.number}`;
     const [inline, reviews, comments] = await Promise.all([all(`${pr}/comments`), all(`${pr}/reviews`), all(`/repos/${REPO}/issues/${p.number}/comments`)]);
-    const head = (await (await fetch(`${API}${pr}`, { headers: { 'User-Agent': 'fixlock-regression-bench', ...(token ? { Authorization: `Bearer ${token}` } : {}) } })).json()).head.sha;
+    const head = (await api('GET', pr)).head.sha;
     const checks = await all(`/repos/${REPO}/commits/${head}/check-runs`);
     const bots = {};
-    const add = (login, flagged, text) => {
-      const b = bots[login] || (bots[login] = { flagged: false, excerpts: [] });
+    const add = (login, flagged, text, inlineComment = false) => {
+      const b = bots[login] || (bots[login] = { flagged: false, inline: 0, excerpts: [] });
       b.flagged = b.flagged || flagged;
+      if (inlineComment) b.inline++;
       if (text && b.excerpts.length < 2) b.excerpts.push(text.replace(/\s+/g, ' ').slice(0, 220));
     };
     const quotesRemoved = (text) => ch.removed.some((l) => (text || '').includes(l));
     for (const c of inline.filter((x) => isBot(x.user))) {
       const line = c.line || c.original_line || 0;
-      add(c.user.login, line >= ch.from - 2 && line <= ch.to + 2, c.body);
+      add(c.user.login, line >= ch.from - 2 && line <= ch.to + 2, c.body, true);
     }
     for (const r of reviews.filter((x) => isBot(x.user))) add(r.user.login, r.state === 'CHANGES_REQUESTED' || (p.kind === 'regression' && quotesRemoved(r.body)), r.body);
     for (const c of comments.filter((x) => isBot(x.user))) add(c.user.login, p.kind === 'regression' && quotesRemoved(c.body), c.body);
     for (const c of checks.filter((x) => x.app && x.status === 'completed')) add(`check: ${c.name} (${c.app.slug})`, c.conclusion === 'failure', c.output && c.output.title);
     for (const [login, b] of Object.entries(bots)) {
-      const confirmed = grades[p.number] && grades[p.number][login];
-      rows.push({ pr: p.number, case: p.case, kind: p.kind, bot: login, auto: b.flagged ? 'flagged' : 'silent', verdict: confirmed || (b.flagged ? 'flagged' : 'silent'), confirmed: !!confirmed, excerpts: b.excerpts });
+      if (SKIP.has(login)) continue;
+      // A failing/passing check is a deterministic verdict; bots' comments need a person's reading.
+      const confirmed = (grades[p.number] && grades[p.number][login]) || (login.startsWith('check: ') ? (b.flagged ? 'flagged' : 'silent') : null);
+      rows.push({ pr: p.number, case: p.case, kind: p.kind, bot: login, auto: b.flagged ? 'flagged' : 'silent', verdict: confirmed || (b.flagged ? 'flagged' : 'silent'), confirmed: !!confirmed, commented: b.inline > 0, excerpts: b.excerpts });
     }
   }
 
-  // Per bot: regressions flagged, controls flagged (false alarms).
+  // Check runs that never fail anywhere carry no verdict.
+  const failingChecks = new Set(rows.filter((r) => r.bot.startsWith('check: ') && r.auto === 'flagged').map((r) => r.bot));
+  const kept = rows.filter((r) => !r.bot.startsWith('check: ') || failingChecks.has(r.bot));
+  // Per bot: regressions flagged, controls flagged (false alarms), controls with other comments (noise).
   const table = {};
-  for (const r of rows) {
-    const t = table[r.bot] || (table[r.bot] = { regression: [0, 0], control: [0, 0], unconfirmed: 0 });
+  for (const r of kept) {
+    const t = table[r.bot] || (table[r.bot] = { regression: [0, 0], control: [0, 0], noise: 0, notRun: 0, unconfirmed: 0 });
+    if (r.verdict === 'not-run') { t.notRun++; continue; }
     t[r.kind][1]++;
     if (r.verdict === 'flagged') t[r.kind][0]++;
+    else if (r.kind === 'control' && r.commented) t.noise++;
     if (!r.confirmed) t.unconfirmed++;
   }
-  fs.writeFileSync(path.join(__dirname, 'reviews.json'), JSON.stringify({ repo: REPO, scored: new Date().toISOString(), table, rows }, null, 2) + '\n');
+  fs.writeFileSync(path.join(__dirname, 'reviews.json'), JSON.stringify({ repo: REPO, scored: new Date().toISOString(), note: grades._note || null, table, rows: kept }, null, 2) + '\n');
   const md = `# Regression Bench: reviews on ${REPO}
 
-| Reviewer | Regressions flagged | False alarms on controls | Verdicts not yet confirmed by a person |
-|---|---|---|---|
-${Object.entries(table).map(([bot, t]) => `| ${bot} | ${t.regression[0]} of ${t.regression[1]} | ${t.control[0]} of ${t.control[1]} | ${t.unconfirmed} |`).join('\n')}
+| Reviewer | Regressions flagged | False alarms on controls | Other comments on controls | Verdicts not confirmed |
+|---|---|---|---|---|
+${Object.entries(table).map(([bot, t]) => (t.notRun && !t.regression[1] ? `| ${bot} | not run on ${t.notRun} PRs | | | |` : `| ${bot} | ${t.regression[0]} of ${t.regression[1]} | ${t.control[0]} of ${t.control[1]} | ${t.noise} | ${t.unconfirmed} |`)).join('\n')}
 
 Confirm or correct a verdict in \`bench/regression/grades.json\`, e.g. \`{ "12": { "coderabbitai[bot]": "flagged" } }\`, then run score.js again.
 
@@ -101,7 +100,7 @@ Confirm or correct a verdict in \`bench/regression/grades.json\`, e.g. \`{ "12":
 
 | PR | Case | Kind | Reviewer | Verdict | What it said |
 |---|---|---|---|---|---|
-${rows.map((r) => `| [#${r.pr}](https://github.com/${REPO}/pull/${r.pr}) | ${r.case} | ${r.kind} | ${r.bot} | ${r.verdict}${r.confirmed ? '' : ' (auto)'} | ${r.excerpts.join(' / ').replace(/\|/g, '\\|')} |`).join('\n')}
+${kept.map((r) => `| [#${r.pr}](https://github.com/${REPO}/pull/${r.pr}) | ${r.case} | ${r.kind} | ${r.bot} | ${r.verdict}${r.confirmed ? '' : ' (auto)'} | ${r.excerpts.join(' / ').replace(/\|/g, '\\|')} |`).join('\n')}
 `;
   fs.writeFileSync(path.join(__dirname, 'reviews.md'), md);
   console.log(md.split('\n## Every review')[0]);

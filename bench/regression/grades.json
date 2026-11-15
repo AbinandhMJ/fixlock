@@ -1,0 +1,267 @@
+{
+ "1": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "2": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "3": {
+  "cubic-dev-ai[bot]": "flagged",
+  "coderabbitai[bot]": "not-run"
+ },
+ "4": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "5": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "6": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "7": {
+  "cubic-dev-ai[bot]": "flagged",
+  "coderabbitai[bot]": "not-run"
+ },
+ "8": {
+  "cubic-dev-ai[bot]": "flagged",
+  "coderabbitai[bot]": "not-run"
+ },
+ "9": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "10": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "11": {
+  "cubic-dev-ai[bot]": "flagged",
+  "coderabbitai[bot]": "not-run"
+ },
+ "12": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "13": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "14": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "15": {
+  "cubic-dev-ai[bot]": "flagged",
+  "coderabbitai[bot]": "not-run"
+ },
+ "16": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "17": {
+  "cubic-dev-ai[bot]": "flagged",
+  "coderabbitai[bot]": "not-run"
+ },
+ "18": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "19": {
+  "cubic-dev-ai[bot]": "flagged",
+  "coderabbitai[bot]": "not-run"
+ },
+ "20": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "21": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "22": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "23": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "24": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "25": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "26": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "27": {
+  "cubic-dev-ai[bot]": "flagged",
+  "coderabbitai[bot]": "not-run"
+ },
+ "28": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "29": {
+  "cubic-dev-ai[bot]": "flagged",
+  "coderabbitai[bot]": "not-run"
+ },
+ "30": {
+  "cubic-dev-ai[bot]": "flagged",
+  "coderabbitai[bot]": "not-run"
+ },
+ "31": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "32": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "33": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "34": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "35": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "36": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "37": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "38": {
+  "cubic-dev-ai[bot]": "flagged",
+  "coderabbitai[bot]": "not-run"
+ },
+ "39": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "40": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "41": {
+  "cubic-dev-ai[bot]": "flagged",
+  "coderabbitai[bot]": "not-run"
+ },
+ "42": {
+  "cubic-dev-ai[bot]": "flagged",
+  "coderabbitai[bot]": "not-run"
+ },
+ "43": {
+  "cubic-dev-ai[bot]": "flagged",
+  "coderabbitai[bot]": "not-run"
+ },
+ "44": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "45": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "46": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "47": {
+  "cubic-dev-ai[bot]": "flagged",
+  "coderabbitai[bot]": "not-run"
+ },
+ "48": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "49": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "50": {
+  "cubic-dev-ai[bot]": "flagged",
+  "coderabbitai[bot]": "not-run"
+ },
+ "51": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "52": {
+  "cubic-dev-ai[bot]": "flagged",
+  "coderabbitai[bot]": "not-run"
+ },
+ "53": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "54": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "55": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "56": {
+  "cubic-dev-ai[bot]": "flagged",
+  "coderabbitai[bot]": "not-run"
+ },
+ "57": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "58": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "59": {
+  "cubic-dev-ai[bot]": "flagged",
+  "coderabbitai[bot]": "not-run"
+ },
+ "60": {
+  "cubic-dev-ai[bot]": "flagged",
+  "coderabbitai[bot]": "not-run"
+ },
+ "61": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "62": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "63": {
+  "cubic-dev-ai[bot]": "flagged",
+  "coderabbitai[bot]": "not-run"
+ },
+ "64": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "65": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "66": {
+  "cubic-dev-ai[bot]": "silent",
+  "coderabbitai[bot]": "not-run"
+ },
+ "_note": "Verdicts graded on 2026-11-15 by Claude (AI) from each review comment, using the rules in docs/regression-bench.md: a regression is flagged only if a comment says the change removes or breaks the fix; a control is flagged only if a comment claims a behavior change or bug (comments about the added code comments are noise, not false alarms). CodeRabbit did not review (rate limited), so it is not-run. To be confirmed by a person."
+}
