@@ -61,8 +61,18 @@ function applyApprovals(cfg, findings, { approvers = new Set(), author = '' } = 
     else if (gh.some((u) => approvers.has(u))) f.status = 'approved';
     else if (who && gh.includes(who)) f.status = 'approved';
     else f.status = 'blocked';
+    if (f.status === 'blocked' && !gh.length) f.unapprovable = unapprovable(f.approvers);
   }
   return findings.filter((f) => f.status === 'blocked');
+}
+
+/** Why nobody can approve a lock on GitHub, and how to fix it. */
+function unapprovable(approvers) {
+  if (!approvers.length) return 'Nobody can approve this: the lock has no owner on the team and the team has no lead. Add one with `fixlock team add --name "…" --github <username> --role lead`, or restore the lines.';
+  const names = approvers.map((m) => m.name);
+  const m = approvers[0];
+  const cmd = `fixlock team add --name "${m.name}" --github <username>${m.emails && m.emails[0] ? ` --email ${m.emails[0]}` : ''} --role ${m.role}`;
+  return `${names.join(' and ')} ${names.length > 1 ? 'have' : 'has'} no GitHub username in \`.fixlock/config.json\`, so this can't be approved on GitHub. Add it with \`${cmd}\`, or restore the lines.`;
 }
 
 /** Latest review state per reviewer → Set of logins (lowercase) whose latest review is APPROVED. */
@@ -85,7 +95,8 @@ function toMarkdown(cfg, findings, base) {
     if (f.lock.reason && f.lock.reason !== f.lock.title) md += `  - Why it exists: ${f.lock.reason}\n`;
     if (f.missing.length) md += `  - Removed/rewritten: ${f.missing.map((l) => '`' + l.trim().replace(/`/g, "'") + '`').join(', ')}\n`;
     if (f.renamed && f.renamed.length) md += `  - Renamed inside the lock (logic kept): ${f.renamed.map(([a, b]) => '`' + a + '` → `' + b + '`').join(', ')}\n`;
-    if (f.status === 'blocked') md += `  - **Approve this PR as ${f.approvers.map(team.handle).join(' or ')}** to accept the change, or restore the lines.\n`;
+    if (f.status === 'blocked' && f.unapprovable) md += `  - ${f.unapprovable}\n`;
+    else if (f.status === 'blocked') md += `  - **Approve this PR as ${f.approvers.map(team.handle).join(' or ')}** to accept the change, or restore the lines.\n`;
     if (f.tracker) md += `  - Tracker: ${f.tracker}\n`;
   }
   return md;

@@ -15,7 +15,7 @@ function current(cfg) {
   return find(cfg, id) || { name: id || 'unknown', github: null, emails: id ? [id] : [], role: 'developer', unknown: true };
 }
 
-const handle = (m) => (m ? (m.github ? `@${m.github}` : m.name) : 'unknown');
+const handle = (m) => (m ? (m.github ? `@${m.github}` : m.name) : ''); // nobody → '' so callers can fall back to the recorded owner
 
 /** GitHub usernames allowed to approve changes to a lock, per policy. */
 function approvers(cfg, lock) {
@@ -29,6 +29,11 @@ function approvers(cfg, lock) {
   return [...set];
 }
 
+/** Approvers of a lock who can approve on GitHub (they have a GitHub username). */
+function githubApprovers(cfg, lock) {
+  return approvers(cfg, lock).filter((m) => m.github);
+}
+
 /** Can this person change the lock without anyone's approval? */
 function exempt(cfg, lock, person) {
   const policy = cfg.policies[lock.type] || cfg.policies.bug;
@@ -36,4 +41,4 @@ function exempt(cfg, lock, person) {
   return approvers(cfg, lock).some((a) => a === person || (person.github && lc(a.github) === lc(person.github)));
 }
 
-module.exports = { find, current, handle, approvers, exempt };
+module.exports = { find, current, handle, approvers, githubApprovers, exempt };

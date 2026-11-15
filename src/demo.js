@@ -49,7 +49,7 @@ function run(opts = {}) {
     write(FILE, 'export function toSapDate(d: Date): string {\n  return d.toISOString();\n}\n');
     write('src/orders/order.ts', 'export interface Order { id: string; docDate: Date }\n');
     git(ABI, 'add', '.'); git(ABI, 'commit', '-qm', 'chore: initial');
-    fixlock(ABI, ['init', '--yes']);
+    fixlock(ABI, ['init', '--yes', '--no-git-hooks']); // the demo runs auto-lock itself, to show it
     fixlock(ABI, ['team', 'add', '--name', ABI.name, '--github', ABI.github, '--email', ABI.email, '--role', 'lead']);
     fixlock(ABI, ['team', 'add', '--name', RAVI.name, '--github', RAVI.github, '--email', RAVI.email, '--role', 'developer']);
     git(ABI, 'add', '.'); git(ABI, 'commit', '-qm', 'chore: set up fixlock');

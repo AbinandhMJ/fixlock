@@ -83,6 +83,7 @@ runs:
         status=0
         node "$GITHUB_ACTION_PATH/bin/fixlock.js" "${flags[@]}" || status=$?
         [ -s "$out" ] || echo "fixlock could not run; see the job log." > "$out"
+        printf '\n<sub>[fixlock](https://abinandhmj.github.io/fixlock/) · fixed stays fixed · a product of Algotricz</sub>\n' >> "$out"
         exit $status
     - name: PR comment
       if: always() && inputs.comment == 'true' && github.event.pull_request.number && steps.check.outputs.markdown != ''

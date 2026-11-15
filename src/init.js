@@ -105,15 +105,27 @@ async function interactive(cfg) {
   } finally { p.close(); }
 }
 
+/** The logged-in GitHub CLI user, if gh is installed and logged in (null otherwise; never prompts). */
+function githubLogin() {
+  if (process.env.FIXLOCK_GITHUB_LOGIN !== undefined) return process.env.FIXLOCK_GITHUB_LOGIN || null; // tests, CI
+  try {
+    const r = require('child_process').spawnSync('gh', ['api', 'user', '--jq', '.login'], { encoding: 'utf8', timeout: 5000, stdio: ['ignore', 'pipe', 'ignore'] });
+    const login = r.status === 0 ? r.stdout.trim() : '';
+    return /^[A-Za-z0-9-]{1,39}$/.test(login) ? login : null;
+  } catch { return null; }
+}
+
 function defaults(cfg) {
   if (!cfg.team.length) {
     const email = g.userEmail();
     const name = (g.git(['config', 'user.name'], { allowFail: true }) || '').trim() || email;
-    if (email) cfg.team.push({ name, github: null, emails: [email.toLowerCase()], role: 'lead' });
+    if (email) cfg.team.push({ name, github: githubLogin(), emails: [email.toLowerCase()], role: 'lead' });
   }
   cfg.project = cfg.project || path.basename(s.root());
   if (!cfg.aiTools) cfg.aiTools = [...new Set([...agents.detect().map((f) => f.id), 'claude-code', 'codex'])];
-  return { claude: true, git: false, codeowners: false, mcp: true };
+  // Same as answering the interactive questions with their defaults, except CODEOWNERS (it changes who
+  // GitHub asks to review, so it stays opt-in: `fixlock codeowners`).
+  return { claude: true, git: true, codeowners: false, mcp: true };
 }
 
 function installClaudeHook() {
@@ -147,4 +159,4 @@ function installGitHook() {
     `#!/bin/sh\n# installed by fixlock — locks lines from fix:/feat: commits in a follow-up chore commit\n[ -n "$FIXLOCK_IN_HOOK" ] && exit 0\nFIXLOCK_IN_HOOK=1 ${run} autolock --commit-result --quiet || true\n`, { mode: 0o755 });
 }
 
-module.exports = { interactive, defaults, installClaudeHook, installGitHook, prompter };
+module.exports = { interactive, defaults, installClaudeHook, installGitHook, prompter, githubLogin };

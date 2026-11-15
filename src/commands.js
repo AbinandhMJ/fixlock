@@ -25,6 +25,7 @@ async function cmdInit(args) {
   const cfg = s.loadConfig();
   const useDefaults = args.yes || (!process.stdin.isTTY && !args.interactive);
   const hooks = useDefaults ? init.defaults(cfg) : await init.interactive(cfg);
+  if (args['no-git-hooks']) hooks.git = false; // CI, scripted setups
   if (!cfg.launcher && cli.defaultLauncher(s.root())) cfg.launcher = cli.defaultLauncher(s.root()); // pip/pipx/binary install
   s.saveConfig(cfg);
   s.saveRegistry(s.loadRegistry());
@@ -44,10 +45,17 @@ async function cmdInit(args) {
   if (mcpDone.length) console.log(`  MCP server connected for: ${mcpDone.map((r) => r.label).join(', ')}`);
   const userLevel = ['codex', 'windsurf'].filter((id) => agents.enabled(cfg).includes(id));
   if (hooks.mcp && userLevel.length) console.log(`  ${userLevel.join(' / ')} users: run  ${cli.human(s.root())} setup ${userLevel.join(' ')}  on your own machine`);
+  if (hooks.git) console.log('  git hooks: commit warning + auto-lock of fix:/feat: commits (this machine)');
+  const noGithub = cfg.team.filter((m) => !m.github && m.role !== 'reviewer');
+  if (noGithub.length) {
+    console.log(c.yellow(`\n! No GitHub username for ${noGithub.map((m) => m.name).join(', ')}. Pull requests need their approval to change a lock they own,`));
+    console.log(c.yellow('  and GitHub approvals are matched by username. Add it:'));
+    for (const m of noGithub) console.log(c.yellow(`    ${cli.human(s.root())} team add --name "${m.name}" --github <username>${m.emails[0] ? ` --email ${m.emails[0]}` : ''} --role ${m.role}`));
+  }
   console.log('\nCommit .fixlock/ and the generated files above so the whole team gets them.');
   const run = cli.human(s.root());
   if (cfg.launcher === 'fixlock') console.log(`Every developer installs the fixlock command once:  pipx install fixlock  (or uv tool install fixlock)${hooks.git ? '  &&  fixlock install-hook' : ''}`);
-  else if (fs.existsSync(path.join(s.root(), 'package.json'))) console.log('Every developer runs once:  npm i -D @abinandhmj/fixlock' + (hooks.git ? '  &&  npx fixlock install-hook' : ''));
+  else if (fs.existsSync(path.join(s.root(), 'package.json'))) console.log(`Every developer runs once:  ${cli.installedIn(s.root()) ? 'npm install' : 'npm i -D @abinandhmj/fixlock'}${hooks.git ? '  &&  npx fixlock install-hook' : ''}`);
   else console.log(`Nothing to install: hooks and assistants run fixlock through npx (Node.js 18+).${hooks.git ? `  Each developer runs once:  ${run} install-hook` : ''}`);
   console.log(`Find the fixes you already have:  ${run} discover`);
   console.log(`Lock a fix:  ${run} mark <file> <start>-<end> -m "why" --issue linear:ENG-12`);
@@ -258,7 +266,8 @@ function report(cfg, reg, findings, { base, staged, appr, strict }) {
     for (const l of f.missing) console.log(c.dim(`    - ${l.trim()}`));
     if (f.copies) console.log(c.dim(`    this code appeared ${f.copies.expected} times in the file; only ${f.copies.found} identical copies are left`));
     if (f.renamed && f.renamed.length) console.log(c.dim(`    renamed (logic kept): ${f.renamed.map(([a, b]) => `${a} → ${b}`).join(', ')}`));
-    if (f.status === 'blocked') console.log(`    → needs approval from ${f.approvers.map(team.handle).join(' or ')}${staged ? ' when you open the PR' : ' on the PR'}, or restore these lines.`);
+    if (f.status === 'blocked') console.log(`    → needs approval from ${f.approvers.map(team.handle).join(' or ') || 'nobody on the team (no owner or lead)'}${staged ? ' when you open the PR' : ' on the PR'}, or restore these lines.`);
+    if (f.status === 'blocked' && !staged && f.unapprovable) console.log(c.yellow(`    ! ${f.unapprovable}`));
     if (f.tracker) console.log(c.dim(`    tracker: ${f.tracker}`));
   }
   const b = findings.filter((f) => f.status === 'blocked').length;
