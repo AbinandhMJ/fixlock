@@ -128,6 +128,6 @@ pip install fixlock
 GITHUB_TOKEN=… fixlock check --base origin/main --pr "$PR_NUMBER" --markdown fixlock.md
 ```
 
-Pin the version (`pip install "fixlock==0.8.*"`) so a new release doesn't change your CI unannounced.
+Pin the version (`pip install "fixlock==0.7.*"`) so a new release doesn't change your CI unannounced.
 
 For GitLab, see the [GitLab example](https://github.com/AbinandhMJ/fixlock/blob/main/examples/ci/gitlab-ci.yml). GitLab and Bitbucket approvals aren't supported yet; the check still works there, but locks can only be cleared by the owner opening the PR or by restoring the lines.
