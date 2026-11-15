@@ -55,6 +55,8 @@ try {
 
   // init in a Python repo: every generated file uses the scoped command
   const py = repo('py', { 'app.py': 'def f(x):\n    if x is None:\n        return 0\n    return x\n' });
+  const identity = (dir) => { execFileSync('git', ['-C', dir, 'config', 'user.email', 'a@b.c']); execFileSync('git', ['-C', dir, 'config', 'user.name', 'A']); }; // CI runners have none
+  identity(py);
   const run = (...args) => execFileSync(process.execPath, [path.join(__dirname, '..', 'bin', 'fixlock.js'), ...args], { cwd: py, encoding: 'utf8', env: { ...process.env, NO_COLOR: '1', FIXLOCK_GITHUB_LOGIN: '', GIT_AUTHOR_NAME: 'A', GIT_AUTHOR_EMAIL: 'a@b.c', GIT_COMMITTER_NAME: 'A', GIT_COMMITTER_EMAIL: 'a@b.c' } });
   const out = run('init', '--yes');
   ok(/Nothing to install/.test(out) && !/npm i -D/.test(out), 'init in a Python repo: no "npm i -D" instruction', out);
@@ -64,10 +66,11 @@ try {
   ok(hooks().includes(`${scoped} hook claude`), 'Claude Code hook uses the scoped command', hooks().join('\n'));
   const gitHook = (n) => { try { return fs.readFileSync(path.join(py, '.git', 'hooks', n), 'utf8'); } catch { return ''; } };
   ok(gitHook('pre-commit').includes(`${scoped} check --staged`) && gitHook('post-commit').includes(`${scoped} autolock`), 'init --yes installs the git hooks (commit warning + auto-lock), like the interactive default');
-  ok(/No GitHub username for \S/.test(out) && /team add --name "[^"]+" --github <username>.* --role lead/.test(out), 'init --yes without a GitHub username says how to add it', out);
+  ok(/No GitHub username for A\b/.test(out) && /team add --name "A" --github <username> --email a@b\.c --role lead/.test(out), 'init --yes without a GitHub username says how to add it', out);
 
   // init --yes with the GitHub CLI logged in: the lead gets their username; --no-git-hooks skips hooks
   const py2 = repo('py2', { 'app.py': 'x = 1\n' });
+  identity(py2);
   const out2 = execFileSync(process.execPath, [path.join(__dirname, '..', 'bin', 'fixlock.js'), 'init', '--yes', '--no-git-hooks'], { cwd: py2, encoding: 'utf8', env: { ...process.env, NO_COLOR: '1', FIXLOCK_GITHUB_LOGIN: 'octocat', GIT_AUTHOR_NAME: 'A', GIT_AUTHOR_EMAIL: 'a@b.c', GIT_COMMITTER_NAME: 'A', GIT_COMMITTER_EMAIL: 'a@b.c' } });
   const team2 = JSON.parse(fs.readFileSync(path.join(py2, '.fixlock', 'config.json'), 'utf8')).team;
   ok(team2[0].github === 'octocat' && !/No GitHub username/.test(out2), 'init --yes takes the GitHub username from the GitHub CLI', JSON.stringify(team2));
