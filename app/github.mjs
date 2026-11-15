@@ -16,6 +16,7 @@ function same(a, b) {
 
 /** Is `signature` (the X-Hub-Signature-256 header) right for this raw body? */
 export async function verifySignature(secret, body, signature) {
+  secret = String(secret || '').trim(); // a pasted secret often carries a trailing newline or space
   if (!secret || !signature || !signature.startsWith('sha256=')) return false;
   const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   const mac = new Uint8Array(await crypto.subtle.sign('HMAC', key, enc.encode(body)));
