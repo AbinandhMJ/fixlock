@@ -1,0 +1,848 @@
+{
+  "generated": "2026-11-15",
+  "seconds": 142,
+  "repos": 11,
+  "summary": {
+    "structural": {
+      "caught": 32,
+      "warned": 0,
+      "falseAlarms": 0,
+      "controlWarned": 0,
+      "cases": 33
+    },
+    "text": {
+      "caught": 32,
+      "warned": 0,
+      "falseAlarms": 33,
+      "controlWarned": 0,
+      "cases": 33
+    }
+  },
+  "cases": [
+    {
+      "id": "express-1",
+      "repo": "express",
+      "lang": "JavaScript",
+      "url": "https://github.com/expressjs/express",
+      "head": "43fca52d28a422c8be48fd489cbd4f2d6152bab6",
+      "file": "lib/response.js",
+      "fix": {
+        "sha": "9a34acf03cb818ff3f8bc40e44176e277a25cbb9",
+        "subject": "preserve ETag generation with Transfer-Encoding (#7459)"
+      },
+      "changed": {
+        "added": 6,
+        "removed": 4
+      },
+      "locks": 2,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "express-2",
+      "repo": "express",
+      "lang": "JavaScript",
+      "url": "https://github.com/expressjs/express",
+      "head": "43fca52d28a422c8be48fd489cbd4f2d6152bab6",
+      "file": "lib/response.js",
+      "fix": {
+        "sha": "f275e87dff1aaef86080e6931888de4968585fd8",
+        "subject": "Fix handling of undefined when \"json escape\" is enabled"
+      },
+      "changed": {
+        "added": 1,
+        "removed": 1
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "express-3",
+      "repo": "express",
+      "lang": "JavaScript",
+      "url": "https://github.com/expressjs/express",
+      "head": "43fca52d28a422c8be48fd489cbd4f2d6152bab6",
+      "file": "lib/response.js",
+      "fix": {
+        "sha": "5855339455a7f60774bef4166829e742a5056fa8",
+        "subject": "Fix behavior of null/undefined as \"maxAge\" in res.cookie"
+      },
+      "changed": {
+        "added": 7,
+        "removed": 3
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "ky-1",
+      "repo": "ky",
+      "lang": "TypeScript",
+      "url": "https://github.com/sindresorhus/ky",
+      "head": "3541888878c4d303a8bc2ad61815f4e048f55a5d",
+      "file": "source/core/Ky.ts",
+      "fix": {
+        "sha": "224034d10df5cd47db23adb3aa78efe26274fc1f",
+        "subject": "Fix headers set to `undefined` in `init` hooks being sent as the string `\"undefined\"`"
+      },
+      "changed": {
+        "added": 1,
+        "removed": 1
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "ky-2",
+      "repo": "ky",
+      "lang": "TypeScript",
+      "url": "https://github.com/sindresorhus/ky",
+      "head": "3541888878c4d303a8bc2ad61815f4e048f55a5d",
+      "file": "source/utils/merge.ts",
+      "fix": {
+        "sha": "d6e049a690c7562a72e22d0b1eb57a2d4d19745e",
+        "subject": "Resolve retry replacements without parent retry options"
+      },
+      "changed": {
+        "added": 4,
+        "removed": 1
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "ky-3",
+      "repo": "ky",
+      "lang": "TypeScript",
+      "url": "https://github.com/sindresorhus/ky",
+      "head": "3541888878c4d303a8bc2ad61815f4e048f55a5d",
+      "file": "source/core/constants.ts",
+      "fix": {
+        "sha": "06ebf18e1927b3772726037bda5a78d4b7eb6dba",
+        "subject": "Handle unsupported streaming uploads gracefully"
+      },
+      "changed": {
+        "added": 3,
+        "removed": 7
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "requests-1",
+      "repo": "requests",
+      "lang": "Python",
+      "url": "https://github.com/psf/requests",
+      "head": "3c7baaa05ab4aa49cc819ce3a819d260de19c157",
+      "file": "src/requests/utils.py",
+      "fix": {
+        "sha": "5b4b64c3467fd7a3c03f91ee641aaa348b6bed3b",
+        "subject": "Add more tests to prevent regression of CVE 2024 47081"
+      },
+      "changed": {
+        "added": 1,
+        "removed": 8
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "intact",
+        "text": "intact"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "requests-2",
+      "repo": "requests",
+      "lang": "Python",
+      "url": "https://github.com/psf/requests",
+      "head": "3c7baaa05ab4aa49cc819ce3a819d260de19c157",
+      "file": "src/requests/sessions.py",
+      "fix": {
+        "sha": "ef439eb779c1eba7cbdeeeb302b11e1e061b4b7d",
+        "subject": "Prevent Response self-reference in redirect history (#7328)"
+      },
+      "changed": {
+        "added": 1,
+        "removed": 2
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "requests-3",
+      "repo": "requests",
+      "lang": "Python",
+      "url": "https://github.com/psf/requests",
+      "head": "3c7baaa05ab4aa49cc819ce3a819d260de19c157",
+      "file": "src/requests/_internal_utils.py",
+      "fix": {
+        "sha": "bc7dd0fc4d56e808bcdd85ac2d797b3107c89259",
+        "subject": "Fix cosmetic header validity parsing regex (#7308)"
+      },
+      "changed": {
+        "added": 4,
+        "removed": 4
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "cobra-1",
+      "repo": "cobra",
+      "lang": "Go",
+      "url": "https://github.com/spf13/cobra",
+      "head": "adbc8813901bba65827259daa8e22ff94ec1f30e",
+      "file": "completions.go",
+      "fix": {
+        "sha": "a97f9fd47b290016526c8af2dac0531fea5cd773",
+        "subject": "fix CompletionFunc implementation (#2234)"
+      },
+      "changed": {
+        "added": 1,
+        "removed": 1
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "cobra-2",
+      "repo": "cobra",
+      "lang": "Go",
+      "url": "https://github.com/spf13/cobra",
+      "head": "adbc8813901bba65827259daa8e22ff94ec1f30e",
+      "file": "doc/yaml_docs.go",
+      "fix": {
+        "sha": "7790bf97fd40e285913066cf65387ad281cd6c2e",
+        "subject": "correct command path in see_also for YAML doc (#1771)"
+      },
+      "changed": {
+        "added": 1,
+        "removed": 1
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "cobra-3",
+      "repo": "cobra",
+      "lang": "Go",
+      "url": "https://github.com/spf13/cobra",
+      "head": "adbc8813901bba65827259daa8e22ff94ec1f30e",
+      "file": "command.go",
+      "fix": {
+        "sha": "19e54c4a2b8a78c9d54b2bed61b1a6c5e1bfcf6f",
+        "subject": "Update error message for missing required flags (#580)"
+      },
+      "changed": {
+        "added": 1,
+        "removed": 1
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "gson-1",
+      "repo": "gson",
+      "lang": "Java",
+      "url": "https://github.com/google/gson",
+      "head": "d938a10f7564f596603dd4e958bc9249fb2225b5",
+      "file": "gson/src/main/java/com/google/gson/stream/JsonReader.java",
+      "fix": {
+        "sha": "6bf8bf6cbf4d4f5f72f69262be890a5a5e28259d",
+        "subject": "Include location info in NumberFormatException from JsonReader (#3000)"
+      },
+      "changed": {
+        "added": 27,
+        "removed": 3
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "gson-2",
+      "repo": "gson",
+      "lang": "Java",
+      "url": "https://github.com/google/gson",
+      "head": "d938a10f7564f596603dd4e958bc9249fb2225b5",
+      "file": "gson/src/main/java/com/google/gson/internal/LinkedTreeMap.java",
+      "fix": {
+        "sha": "9eb61b30acdfd1c8497eee7de9bec3a7448ff41e",
+        "subject": "Bump Error Prone to 2.49.0 and fix new warnings (#3030)"
+      },
+      "changed": {
+        "added": 9,
+        "removed": 19
+      },
+      "locks": 2,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "gson-3",
+      "repo": "gson",
+      "lang": "Java",
+      "url": "https://github.com/google/gson",
+      "head": "d938a10f7564f596603dd4e958bc9249fb2225b5",
+      "file": "gson/src/main/java/com/google/gson/stream/JsonReader.java",
+      "fix": {
+        "sha": "004e7a4949e08b430e3c8996998ee5a17ff9423a",
+        "subject": "peekNumber rejects some numerals like 2^64 + \"0\" (#3034)"
+      },
+      "changed": {
+        "added": 1,
+        "removed": 1
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "okhttp-1",
+      "repo": "okhttp",
+      "lang": "Kotlin",
+      "url": "https://github.com/square/okhttp",
+      "head": "b6e74e58c01f5d787e3f628dda4a99e04d26f079",
+      "file": "okhttp-dnsoverhttps/src/main/kotlin/okhttp3/dnsoverhttps/DnsOverHttps.kt",
+      "fix": {
+        "sha": "25e213cac2d9edd182b0943770209408cad497c4",
+        "subject": "translate invalid hostname IllegalArgumentException to UnknownHostException in lookup (#9837)"
+      },
+      "changed": {
+        "added": 9,
+        "removed": 1
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "okhttp-2",
+      "repo": "okhttp",
+      "lang": "Kotlin",
+      "url": "https://github.com/square/okhttp",
+      "head": "b6e74e58c01f5d787e3f628dda4a99e04d26f079",
+      "file": "okhttp/src/commonJvmAndroid/kotlin/okhttp3/Cache.kt",
+      "fix": {
+        "sha": "21ad1aa6aa4d5de7f5f52956f0841a5c304ab849",
+        "subject": "guard null fields in Entry.writeTo() to fix NPE (#8962) (#9345)"
+      },
+      "changed": {
+        "added": 2,
+        "removed": 2
+      },
+      "locks": 2,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "okhttp-3",
+      "repo": "okhttp",
+      "lang": "Kotlin",
+      "url": "https://github.com/square/okhttp",
+      "head": "b6e74e58c01f5d787e3f628dda4a99e04d26f079",
+      "file": "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/platform/Platform.kt",
+      "fix": {
+        "sha": "a66e3d2277932963c75b0cb7502bf181f7863178",
+        "subject": "Handle null requestedServerNames in Platform.getHandshakeServerNames (#9523) (#9778)"
+      },
+      "changed": {
+        "added": 1,
+        "removed": 1
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "ripgrep-1",
+      "repo": "ripgrep",
+      "lang": "Rust",
+      "url": "https://github.com/BurntSushi/ripgrep",
+      "head": "178cc027e283fd965cb72d0a7395b219eada170c",
+      "file": "crates/regex/src/literal.rs",
+      "fix": {
+        "sha": "9d738ad0c009e6632d75fa3d36051e5ae7f7cce6",
+        "subject": "fix inner literal extraction that resulted in false negatives"
+      },
+      "changed": {
+        "added": 21,
+        "removed": 8
+      },
+      "locks": 2,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "ripgrep-2",
+      "repo": "ripgrep",
+      "lang": "Rust",
+      "url": "https://github.com/BurntSushi/ripgrep",
+      "head": "178cc027e283fd965cb72d0a7395b219eada170c",
+      "file": "crates/core/messages.rs",
+      "fix": {
+        "sha": "c8e4a84519ede79b330f9a9e2b072110d5bd0c8c",
+        "subject": "prefix all non-fatal error messages with 'rg: '"
+      },
+      "changed": {
+        "added": 11,
+        "removed": 3
+      },
+      "locks": 2,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "ripgrep-3",
+      "repo": "ripgrep",
+      "lang": "Rust",
+      "url": "https://github.com/BurntSushi/ripgrep",
+      "head": "178cc027e283fd965cb72d0a7395b219eada170c",
+      "file": "crates/searcher/src/searcher/glue.rs",
+      "fix": {
+        "sha": "4ab1862dc04783b6615807d4b4511388c6b30364",
+        "subject": "fix case where \"bytes searched\" could be wrong"
+      },
+      "changed": {
+        "added": 10,
+        "removed": 1
+      },
+      "locks": 2,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "rack-1",
+      "repo": "rack",
+      "lang": "Ruby",
+      "url": "https://github.com/rack/rack",
+      "head": "da90464e3fa93e3cb49dc2d4ede798e6c6b70b4f",
+      "file": "lib/rack/mock_request.rb",
+      "fix": {
+        "sha": "ed25abcde2a64a937efa1e59f1a0bb53d7ccecb8",
+        "subject": "Fix encoding setting for non-binary IO-like objects in MockRequest#env_for"
+      },
+      "changed": {
+        "added": 4,
+        "removed": 14
+      },
+      "locks": 2,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "rack-2",
+      "repo": "rack",
+      "lang": "Ruby",
+      "url": "https://github.com/rack/rack",
+      "head": "da90464e3fa93e3cb49dc2d4ede798e6c6b70b4f",
+      "file": "lib/rack/static.rb",
+      "fix": {
+        "sha": "6d434bbccdc2ffc3086dbce3930c3816945a35ec",
+        "subject": "Fix root prefix bug in Rack::Static"
+      },
+      "changed": {
+        "added": 4,
+        "removed": 1
+      },
+      "locks": 2,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "rack-3",
+      "repo": "rack",
+      "lang": "Ruby",
+      "url": "https://github.com/rack/rack",
+      "head": "da90464e3fa93e3cb49dc2d4ede798e6c6b70b4f",
+      "file": "lib/rack/mock_response.rb",
+      "fix": {
+        "sha": "7d0fe1f01a4583f46bcafadddff29080f92c92ab",
+        "subject": "Fix handling of empty cookies in `Rack::MockResponse` (#2203)"
+      },
+      "changed": {
+        "added": 2,
+        "removed": 2
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "guzzle-1",
+      "repo": "guzzle",
+      "lang": "PHP",
+      "url": "https://github.com/guzzle/guzzle",
+      "head": "f8aca40edffeae0ec508b92f4594766083c6e203",
+      "file": "src/Handler/CurlHandler.php",
+      "fix": {
+        "sha": "ba8613b3d1e9717eb2d87cec44ba40527295e06c",
+        "subject": "Add configurable idle cURL handle retention (#3993)"
+      },
+      "changed": {
+        "added": 15,
+        "removed": 3
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "guzzle-2",
+      "repo": "guzzle",
+      "lang": "PHP",
+      "url": "https://github.com/guzzle/guzzle",
+      "head": "f8aca40edffeae0ec508b92f4594766083c6e203",
+      "file": "src/Handler/CurlFactory.php",
+      "fix": {
+        "sha": "501a06cd870cbbf4721a9d4de6e913e1224d8e51",
+        "subject": "Harden cURL handler bookkeeping against native handle ID reuse (#3919)"
+      },
+      "changed": {
+        "added": 15,
+        "removed": 4
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "guzzle-3",
+      "repo": "guzzle",
+      "lang": "PHP",
+      "url": "https://github.com/guzzle/guzzle",
+      "head": "f8aca40edffeae0ec508b92f4594766083c6e203",
+      "file": "src/Handler/StreamHandler.php",
+      "fix": {
+        "sha": "f8aaea46ef23a07d9f68549e1d8c8c20e5685f5a",
+        "subject": "Reject invalid TLS proxy transport names (#3666)"
+      },
+      "changed": {
+        "added": 2,
+        "removed": 1
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "Newtonsoft.Json-1",
+      "repo": "Newtonsoft.Json",
+      "lang": "C#",
+      "url": "https://github.com/JamesNK/Newtonsoft.Json",
+      "head": "52fa3aef1f2cadcd3a3f874251eddc98d3efbbaa",
+      "file": "Src/Newtonsoft.Json/Serialization/JsonSerializerInternalReader.cs",
+      "fix": {
+        "sha": "d498352622048735b37169e200808c64167d198d",
+        "subject": "Fix error message displayed when a property marked as DisallowNull is set to null (#3081)"
+      },
+      "changed": {
+        "added": 1,
+        "removed": 1
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "Newtonsoft.Json-2",
+      "repo": "Newtonsoft.Json",
+      "lang": "C#",
+      "url": "https://github.com/JamesNK/Newtonsoft.Json",
+      "head": "52fa3aef1f2cadcd3a3f874251eddc98d3efbbaa",
+      "file": "Src/Newtonsoft.Json/JsonTextReader.cs",
+      "fix": {
+        "sha": "55a7204f9b9546aa07145591d42046d509176ad4",
+        "subject": "Fix handling of empty constructor names (#2922)"
+      },
+      "changed": {
+        "added": 5,
+        "removed": 0
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "Newtonsoft.Json-3",
+      "repo": "Newtonsoft.Json",
+      "lang": "C#",
+      "url": "https://github.com/JamesNK/Newtonsoft.Json",
+      "head": "52fa3aef1f2cadcd3a3f874251eddc98d3efbbaa",
+      "file": "Src/Newtonsoft.Json/Linq/JTokenWriter.cs",
+      "fix": {
+        "sha": "57025815e564d36821acf778e2c00d02225aab35",
+        "subject": "Null String being reported as String rather than JTokenType.Null (#2796)"
+      },
+      "changed": {
+        "added": 6,
+        "removed": 0
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "Alamofire-1",
+      "repo": "Alamofire",
+      "lang": "Swift",
+      "url": "https://github.com/Alamofire/Alamofire",
+      "head": "dea4bab91767a971d6e112bc955c6a82295589b7",
+      "file": "Source/Core/DownloadRequest.swift",
+      "fix": {
+        "sha": "9a0e640817719b1d23939f1a304bb42938b85b22",
+        "subject": "Stabilize CI And Fix Bugs (#4030)"
+      },
+      "changed": {
+        "added": 10,
+        "removed": 3
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "Alamofire-2",
+      "repo": "Alamofire",
+      "lang": "Swift",
+      "url": "https://github.com/Alamofire/Alamofire",
+      "head": "dea4bab91767a971d6e112bc955c6a82295589b7",
+      "file": "Source/Core/DownloadRequest.swift",
+      "fix": {
+        "sha": "b2d6f41fd37f4cd25e4996f89fc46bb6d2b2857e",
+        "subject": "Prevent Duplicate Serializer Completion Calls (#3999)"
+      },
+      "changed": {
+        "added": 1,
+        "removed": 3
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    },
+    {
+      "id": "Alamofire-3",
+      "repo": "Alamofire",
+      "lang": "Swift",
+      "url": "https://github.com/Alamofire/Alamofire",
+      "head": "dea4bab91767a971d6e112bc955c6a82295589b7",
+      "file": "Source/Core/DownloadRequest.swift",
+      "fix": {
+        "sha": "9ec78dee16adf642cdcb23b8e304857e2e259758",
+        "subject": "More Atomic Locking (#3984)"
+      },
+      "changed": {
+        "added": 5,
+        "removed": 5
+      },
+      "locks": 1,
+      "regression": {
+        "structural": "changed",
+        "text": "changed"
+      },
+      "control": {
+        "structural": "intact",
+        "text": "changed"
+      }
+    }
+  ]
+}

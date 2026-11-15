@@ -36,6 +36,7 @@ export default defineConfig({
         { text: 'How it works', link: '/how-it-works' },
         { text: 'Supported languages', link: '/languages' },
         { text: 'Accuracy benchmark', link: '/benchmark' },
+        { text: 'Regression Bench', link: '/regression-bench' },
         { text: 'Getting started', link: '/getting-started' },
         { text: 'Python, Go, Java, .NET…', link: '/any-language' },
       ] },

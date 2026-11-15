@@ -30,33 +30,7 @@ const MAX_LOCKS = +opt('locks', 80);
 const env = { ...process.env, GIT_TERMINAL_PROMPT: '0', NO_COLOR: '1' };
 
 /* ---------------- corpus ---------------- */
-function checkout(r) {
-  const dir = path.join(CACHE, r.name);
-  const git = (...a) => execFileSync('git', a, { cwd: dir, encoding: 'utf8', env, stdio: ['ignore', 'pipe', 'pipe'] }).trim();
-  if (!fs.existsSync(path.join(dir, '.git'))) {
-    fs.mkdirSync(dir, { recursive: true });
-    git('init', '-q'); git('remote', 'add', 'origin', r.url);
-  }
-  let head = '';
-  try { head = git('rev-parse', 'HEAD'); } catch { /* fresh */ }
-  if (head !== r.sha) {
-    process.stderr.write(`  fetching ${r.name} @ ${r.sha.slice(0, 7)} (depth ${r.depth})…\n`);
-    git('fetch', '-q', '--depth', String(r.depth), 'origin', r.sha);
-    git('checkout', '-q', '-f', r.sha);
-  }
-  git('clean', '-qfdx', '-e', '.fixlock');
-  git('checkout', '-q', '-f', '.');
-  if (!fs.existsSync(path.join(dir, '.fixlock', 'config.json'))) {
-    execFileSync(process.execPath, [CLI, 'init', '--yes'], { cwd: dir, env, stdio: 'ignore' });
-    git('checkout', '-q', '-f', '.'); git('clean', '-qfd', '-e', '.fixlock');
-  }
-  return dir;
-}
-
-function discoverLocks(dir, r) {
-  const out = execFileSync(process.execPath, [CLI, 'discover', '--json', '--max', String(r.depth - 1)], { cwd: dir, env, encoding: 'utf8', maxBuffer: 64 << 20 });
-  return JSON.parse(out.slice(out.indexOf('{'))).found;
-}
+const { checkout, discoverLocks } = require('./corpus');
 
 /* ---------------- formatters ---------------- */
 const have = (cmd) => spawnSync(cmd, cmd === 'gofmt' ? ['-l'] : ['--version'], { encoding: 'utf8', input: '' }).status === 0;
@@ -178,6 +152,8 @@ title: Accuracy benchmark
 # Accuracy benchmark
 
 How often does fixlock get it wrong? We locked real bug fixes from real projects, edited each lock in ways that do and don't change what the code does, and checked every verdict.
+
+For real bug fixes undone in full, as an AI port from older code would do, see the [Regression Bench](regression-bench.md).
 
 ## Results
 

@@ -123,6 +123,7 @@ Examples: [GitHub Actions](examples/ci/github-actions.yml) · [Jenkins](examples
 ## Why trust it
 
 - **Measured accuracy.** On 764 real fixes locked in 11 open-source projects (JavaScript, TypeScript, Python, Go, Java, Kotlin, Rust, Ruby, PHP, C#, Swift), harmless edits (Prettier, Black, gofmt, comments, line wrapping) were flagged **0% of the time** (0 of 2,914), and **99.9%** of harmful edits (flipped conditions, changed values, deleted checks) were caught; the last one was still flagged as a rename. [See the benchmark](https://abinandhmj.github.io/fixlock/benchmark), and rerun it with `node bench/run.js`.
+- **Catches real undone fixes.** On the [Regression Bench](https://abinandhmj.github.io/fixlock/regression-bench), 33 real bug fixes from 11 projects were undone by reversing the fix's own diff: fixlock caught **32 of 33**, with **0 false alarms** on 33 harmless edits of the same lines. Git merged every one without a conflict.
 - **Zero runtime dependencies.** The whole tool is readable in [`src/`](src/).
 - **No telemetry.** The network is used only for GitHub approvals and your tracker, when you configure them.
 - **Read-only MCP server.** stdio only; it never edits files.
