@@ -18,11 +18,11 @@ Review relies on the reviewer remembering that a line fixed a bug months ago. Wi
 
 | | Tests | CODEOWNERS | Code review | fixlock |
 |---|:-:|:-:|:-:|:-:|
-| Catches a reverted fix with no test | | | if remembered | ✅ |
-| Warns the AI before it edits | | | | ✅ |
-| Line-level, with the reason | | | | ✅ |
-| Names who must approve | | ✅ | | ✅ |
-| Proves behaviour | ✅ | | | |
+| Catches a reverted fix with no test | | | if remembered | Yes |
+| Warns the AI before it edits | | | | Yes |
+| Line-level, with the reason | | | | Yes |
+| Names who must approve | | Yes | | Yes |
+| Proves behaviour | Yes | | | |
 
 ## Does it slow developers down?
 

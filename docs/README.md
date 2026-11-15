@@ -22,23 +22,17 @@ hero:
       link: /how-it-works
 
 features:
-  - icon: 🔒
-    title: Lock what's fixed
+  - title: Lock what's fixed
     details: Every fix and feature commit locks its own lines, with an owner and the reason it exists. Past fixes in your history can be locked in one command.
-  - icon: 🤖
-    title: AI checks before it edits
+  - title: AI checks before it edits
     details: Claude Code, Cursor, Copilot, Codex and any MCP client ask fixlock before changing existing code, and get "ok", "ask" or "block" with the reason.
-  - icon: 🛡️
-    title: Working code is protected too
+  - title: Working code is protected too
     details: Even code nobody locked is guarded. An AI rewrite of committed, working code asks the developer first.
-  - icon: ✅
-    title: The owner decides
+  - title: The owner decides
     details: A PR that changes a locked line is blocked until its owner or a lead approves. Git can't see this; fixlock can.
-  - icon: 🔁
-    title: Your tracker follows
+  - title: Your tracker follows
     details: Locking a fix closes its Linear, ClickUp or Notion issue. A PR that reverts it reopens the issue.
-  - icon: 🪶
-    title: Zero dependencies
+  - title: Zero dependencies
     details: Plain JavaScript you can read (on npm, or as a standalone binary on PyPI), no telemetry, a read-only MCP server, and local hooks that warn but never block.
 ---
 

@@ -63,18 +63,18 @@ npx fixlock setup claude-code   # or: cursor · copilot · codex · gemini · wi
 
 Using VS Code, Cursor or Windsurf? Install the **fixlock** extension ([guide](https://abinandhmj.github.io/fixlock/integrations/vscode)) to see locks in the editor, get warned as you type, and connect Copilot agent mode automatically.
 
-📖 **[Full docs](https://abinandhmj.github.io/fixlock/)**: [How it works](https://abinandhmj.github.io/fixlock/how-it-works) · [Getting started](https://abinandhmj.github.io/fixlock/getting-started) · [Team lead](https://abinandhmj.github.io/fixlock/team-lead-guide) · [Developer](https://abinandhmj.github.io/fixlock/developer-guide) · [AI assistants](https://abinandhmj.github.io/fixlock/integrations/) · [CI](https://abinandhmj.github.io/fixlock/ci-setup) · [Recipes](https://abinandhmj.github.io/fixlock/recipes) · [FAQ](https://abinandhmj.github.io/fixlock/faq) · [Commands](https://abinandhmj.github.io/fixlock/cli-reference)
+**[Full docs](https://abinandhmj.github.io/fixlock/)**: [How it works](https://abinandhmj.github.io/fixlock/how-it-works) · [Getting started](https://abinandhmj.github.io/fixlock/getting-started) · [Team lead](https://abinandhmj.github.io/fixlock/team-lead-guide) · [Developer](https://abinandhmj.github.io/fixlock/developer-guide) · [AI assistants](https://abinandhmj.github.io/fixlock/integrations/) · [CI](https://abinandhmj.github.io/fixlock/ci-setup) · [Recipes](https://abinandhmj.github.io/fixlock/recipes) · [FAQ](https://abinandhmj.github.io/fixlock/faq) · [Commands](https://abinandhmj.github.io/fixlock/cli-reference)
 
 ## AI assistants
 
 | Assistant | MCP check before edit | Rules file | Pre-edit hook | Guide |
 |---|:-:|---|:-:|---|
-| Claude Code | ✅ `.mcp.json` | `CLAUDE.md` | ✅ | [→](https://abinandhmj.github.io/fixlock/integrations/claude-code) |
-| Cursor | ✅ `.cursor/mcp.json` | `.cursor/rules/fixlock.mdc` | | [→](https://abinandhmj.github.io/fixlock/integrations/cursor) |
-| GitHub Copilot | ✅ `.vscode/mcp.json` | `.github/copilot-instructions.md` | | [→](https://abinandhmj.github.io/fixlock/integrations/copilot) |
-| OpenAI Codex | ✅ `~/.codex/config.toml` | `AGENTS.md` | | [→](https://abinandhmj.github.io/fixlock/integrations/codex) |
-| Gemini CLI | ✅ `.gemini/settings.json` | `GEMINI.md` | | |
-| Windsurf | ✅ user config | `.windsurf/rules/fixlock.md` | | |
+| Claude Code | Yes: `.mcp.json` | `CLAUDE.md` | Yes | [→](https://abinandhmj.github.io/fixlock/integrations/claude-code) |
+| Cursor | Yes: `.cursor/mcp.json` | `.cursor/rules/fixlock.mdc` | | [→](https://abinandhmj.github.io/fixlock/integrations/cursor) |
+| GitHub Copilot | Yes: `.vscode/mcp.json` | `.github/copilot-instructions.md` | | [→](https://abinandhmj.github.io/fixlock/integrations/copilot) |
+| OpenAI Codex | Yes: `~/.codex/config.toml` | `AGENTS.md` | | [→](https://abinandhmj.github.io/fixlock/integrations/codex) |
+| Gemini CLI | Yes: `.gemini/settings.json` | `GEMINI.md` | | |
+| Windsurf | Yes: user config | `.windsurf/rules/fixlock.md` | | |
 | Cline, Roo, Continue, Aider, Amazon Q, Junie | any MCP client | their native rules file | | [→](https://abinandhmj.github.io/fixlock/ai-tools) |
 
 The **MCP server** (`npx fixlock mcp`) gives every assistant four read-only tools:
