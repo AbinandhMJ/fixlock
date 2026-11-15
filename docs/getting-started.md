@@ -4,11 +4,13 @@ title: Getting started
 
 # Getting started
 
-About 10 minutes. You need Node.js 18 or newer, git, and a git repository.
+About 10 minutes. You need git, a git repository, and one of: Node.js 18+ (npm) or Python 3.8+ (pip).
 
 ## 1. Install
 
-In your project folder:
+Pick the one that fits your project. Both give you the same fixlock.
+
+**JavaScript / TypeScript project (npm)**: in your project folder:
 
 ```bash
 npm i -D @abinandhmj/fixlock
@@ -16,12 +18,18 @@ npm i -D @abinandhmj/fixlock
 
 Installing it as a dev dependency gives everyone the short `npx fixlock …` command. Without installing, use `npx @abinandhmj/fixlock …`.
 
-Not a JavaScript project? Skip this step: see [Python, Go, Java, .NET and other projects](any-language.md). fixlock reads [63 languages and formats](languages.md).
+**Any other project (pip, pipx or uv)**: a standalone binary, no Node.js needed:
+
+```bash
+pipx install fixlock        # or: uv tool install fixlock · pip install fixlock
+```
+
+Then run the commands on this page as `fixlock …` instead of `npx fixlock …`. Python, Go, Java, .NET and others: see [Using fixlock in any project](any-language.md). fixlock reads [63 languages and formats](languages.md).
 
 ## 2. Set up (team lead, once)
 
 ```bash
-npx fixlock init
+npx fixlock init            # pip / pipx: fixlock init
 ```
 
 It asks, in order:

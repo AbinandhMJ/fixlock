@@ -13,6 +13,13 @@ npm install
 npx fixlock install-hook
 ```
 
+Repo set up with the pip-installed command (`.fixlock/config.json` has `"launcher": "fixlock"`)? Use this instead, and drop the `npx` from the commands on this page:
+
+```bash
+pipx install fixlock
+fixlock install-hook
+```
+
 The hooks:
 - **before each commit**: warn you if you are changing locked lines or rewriting working code. They never block a commit.
 - **after each `fix:` / `feat:` commit**: lock the lines you just wrote, in a small follow-up commit.

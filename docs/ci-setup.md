@@ -114,11 +114,20 @@ Without a token, no approvals can be read, so every changed lock blocks.
 
 ## Other CI systems
 
-Any CI works if it can run Node and has the git history:
+Any CI works if it has the git history and can run Node or Python:
 
 ```bash
 git fetch origin main
 GITHUB_TOKEN=… npx fixlock check --base origin/main --pr "$PR_NUMBER" --markdown fixlock.md
 ```
+
+No Node.js in your CI image? Install the standalone binary with pip:
+
+```bash
+pip install fixlock
+GITHUB_TOKEN=… fixlock check --base origin/main --pr "$PR_NUMBER" --markdown fixlock.md
+```
+
+Pin the version (`pip install "fixlock==0.8.*"`) so a new release doesn't change your CI unannounced.
 
 For GitLab, see the [GitLab example](https://github.com/AbinandhMJ/fixlock/blob/main/examples/ci/gitlab-ci.yml). GitLab and Bitbucket approvals aren't supported yet; the check still works there, but locks can only be cleared by the owner opening the PR or by restoring the lines.

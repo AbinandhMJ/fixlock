@@ -72,9 +72,9 @@ export default defineConfig({
     socialLinks: [
       { icon: 'github', link: 'https://github.com/AbinandhMJ/fixlock' },
       { icon: 'npm', link: 'https://www.npmjs.com/package/@abinandhmj/fixlock' },
+      { icon: 'pypi', link: 'https://pypi.org/project/fixlock/', ariaLabel: 'PyPI' },
     ],
     search: { provider: 'local' },
     outline: { level: [2, 3] },
-    footer: { message: 'MIT licensed · npx @abinandhmj/fixlock init' },
   },
 })

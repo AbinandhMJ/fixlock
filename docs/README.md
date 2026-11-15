@@ -39,7 +39,7 @@ features:
     details: Locking a fix closes its Linear, ClickUp or Notion issue. A PR that reverts it reopens the issue.
   - icon: 🪶
     title: Zero dependencies
-    details: Plain Node.js you can read, no telemetry, a read-only MCP server, and local hooks that warn but never block.
+    details: Plain JavaScript you can read (on npm, or as a standalone binary on PyPI), no telemetry, a read-only MCP server, and local hooks that warn but never block.
 ---
 
 <div style="margin: 48px auto 0; max-width: 960px">
@@ -54,7 +54,10 @@ fixlock remembers for the whole team, and tells the AI before it makes the chang
 
 ```bash
 npx @abinandhmj/fixlock demo      # run that yourself, in a throwaway repo
+pipx run fixlock demo             # same, without Node.js
 ```
+
+Install it with `npm i -D @abinandhmj/fixlock`, or `pipx install fixlock` for a standalone binary with no Node.js needed.
 
 ## Start here
 

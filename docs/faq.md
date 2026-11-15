@@ -56,7 +56,11 @@ All of them. Locks are lines of text, so fixlock works for TypeScript, Java, Pyt
 
 ## Do teammates need to install anything?
 
-`npm install` (fixlock is a dev dependency) and, optionally, `npx fixlock install-hook` for the commit warning. Everything else (locks, rules files, assistant configs) is committed to the repo.
+In a JavaScript project, `npm install` (fixlock is a dev dependency) and, optionally, `npx fixlock install-hook` for the commit warning. In a repo set up with the pip-installed command, each developer runs `pipx install fixlock` once, then `fixlock install-hook`. Everything else (locks, rules files, assistant configs) is committed to the repo.
+
+## Do I need Node.js?
+
+No. `pipx install fixlock` (or `uv tool install fixlock`, `pip install fixlock`) installs a standalone binary for Linux, macOS and Windows on x64 and ARM. It's the same fixlock as the npm package, with the Node.js runtime built in. See [Using fixlock in any project](any-language.md).
 
 ## Is it free?
 
