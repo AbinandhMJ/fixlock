@@ -27,7 +27,7 @@ The check needs the full history. Fetch with `fetch-depth: 0` or fetch `main` ex
 
 ## GitHub Actions
 
-The simplest setup works in any repository (Python, Go, Java, .NET, PHP, Ruby, JS…), with no install step:
+The simplest setup uses the fixlock action, listed on GitHub Marketplace as [fixlock by Algotricz](https://github.com/marketplace/actions/fixlock-by-algotricz). It works in any repository (Python, Go, Java, .NET, PHP, Ruby, JS…), with no install step:
 
 ```yaml
 # .github/workflows/fixlock.yml
@@ -43,7 +43,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - uses: AbinandhMJ/fixlock@v0.7.0
+      - uses: AbinandhMJ/fixlock@v0.7.1
         # with:
         #   notify: true            # update linked tracker issues (set LINEAR_API_KEY etc. as env)
         #   args: --json            # extra `fixlock check` flags

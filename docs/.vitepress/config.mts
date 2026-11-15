@@ -73,6 +73,7 @@ export default defineConfig({
       { icon: 'github', link: 'https://github.com/AbinandhMJ/fixlock' },
       { icon: 'npm', link: 'https://www.npmjs.com/package/@abinandhmj/fixlock' },
       { icon: 'pypi', link: 'https://pypi.org/project/fixlock/', ariaLabel: 'PyPI' },
+      { icon: 'githubactions', link: 'https://github.com/marketplace/actions/fixlock-by-algotricz', ariaLabel: 'GitHub Marketplace' },
     ],
     search: { provider: 'local' },
     outline: { level: [2, 3] },
