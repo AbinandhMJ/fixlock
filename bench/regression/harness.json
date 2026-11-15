@@ -1,0 +1,469 @@
+{
+  "repo": "AbinandhMJ/regression-bench",
+  "built": "2026-11-15T15:11:00.933Z",
+  "cases": 33,
+  "prs": [
+    {
+      "branch": "change-01",
+      "case": "gson-3",
+      "kind": "control",
+      "file": "cases/gson-3/gson/src/main/java/com/google/gson/stream/JsonReader.java",
+      "number": 1
+    },
+    {
+      "branch": "change-02",
+      "case": "cobra-2",
+      "kind": "control",
+      "file": "cases/cobra-2/doc/yaml_docs.go",
+      "number": 2
+    },
+    {
+      "branch": "change-03",
+      "case": "ky-1",
+      "kind": "regression",
+      "file": "cases/ky-1/source/core/Ky.ts",
+      "number": 3
+    },
+    {
+      "branch": "change-04",
+      "case": "cobra-1",
+      "kind": "control",
+      "file": "cases/cobra-1/completions.go",
+      "number": 4
+    },
+    {
+      "branch": "change-05",
+      "case": "express-2",
+      "kind": "control",
+      "file": "cases/express-2/lib/response.js",
+      "number": 5
+    },
+    {
+      "branch": "change-06",
+      "case": "gson-2",
+      "kind": "regression",
+      "file": "cases/gson-2/gson/src/main/java/com/google/gson/internal/LinkedTreeMap.java",
+      "number": 6
+    },
+    {
+      "branch": "change-07",
+      "case": "cobra-3",
+      "kind": "regression",
+      "file": "cases/cobra-3/command.go",
+      "number": 7
+    },
+    {
+      "branch": "change-08",
+      "case": "Newtonsoft.Json-2",
+      "kind": "regression",
+      "file": "cases/Newtonsoft.Json-2/Src/Newtonsoft.Json/JsonTextReader.cs",
+      "number": 8
+    },
+    {
+      "branch": "change-09",
+      "case": "ripgrep-3",
+      "kind": "control",
+      "file": "cases/ripgrep-3/crates/searcher/src/searcher/glue.rs",
+      "number": 9
+    },
+    {
+      "branch": "change-10",
+      "case": "requests-3",
+      "kind": "control",
+      "file": "cases/requests-3/src/requests/_internal_utils.py",
+      "number": 10
+    },
+    {
+      "branch": "change-11",
+      "case": "gson-3",
+      "kind": "regression",
+      "file": "cases/gson-3/gson/src/main/java/com/google/gson/stream/JsonReader.java",
+      "number": 11
+    },
+    {
+      "branch": "change-12",
+      "case": "ky-2",
+      "kind": "regression",
+      "file": "cases/ky-2/source/utils/merge.ts",
+      "number": 12
+    },
+    {
+      "branch": "change-13",
+      "case": "Newtonsoft.Json-3",
+      "kind": "control",
+      "file": "cases/Newtonsoft.Json-3/Src/Newtonsoft.Json/Linq/JTokenWriter.cs",
+      "number": 13
+    },
+    {
+      "branch": "change-14",
+      "case": "okhttp-3",
+      "kind": "regression",
+      "file": "cases/okhttp-3/okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/platform/Platform.kt",
+      "number": 14
+    },
+    {
+      "branch": "change-15",
+      "case": "gson-1",
+      "kind": "regression",
+      "file": "cases/gson-1/gson/src/main/java/com/google/gson/stream/JsonReader.java",
+      "number": 15
+    },
+    {
+      "branch": "change-16",
+      "case": "Newtonsoft.Json-3",
+      "kind": "regression",
+      "file": "cases/Newtonsoft.Json-3/Src/Newtonsoft.Json/Linq/JTokenWriter.cs",
+      "number": 16
+    },
+    {
+      "branch": "change-17",
+      "case": "requests-3",
+      "kind": "regression",
+      "file": "cases/requests-3/src/requests/_internal_utils.py",
+      "number": 17
+    },
+    {
+      "branch": "change-18",
+      "case": "ripgrep-2",
+      "kind": "control",
+      "file": "cases/ripgrep-2/crates/core/messages.rs",
+      "number": 18
+    },
+    {
+      "branch": "change-19",
+      "case": "rack-2",
+      "kind": "regression",
+      "file": "cases/rack-2/lib/rack/static.rb",
+      "number": 19
+    },
+    {
+      "branch": "change-20",
+      "case": "Alamofire-1",
+      "kind": "control",
+      "file": "cases/Alamofire-1/Source/Core/DownloadRequest.swift",
+      "number": 20
+    },
+    {
+      "branch": "change-21",
+      "case": "ky-3",
+      "kind": "control",
+      "file": "cases/ky-3/source/core/constants.ts",
+      "number": 21
+    },
+    {
+      "branch": "change-22",
+      "case": "okhttp-1",
+      "kind": "control",
+      "file": "cases/okhttp-1/okhttp-dnsoverhttps/src/main/kotlin/okhttp3/dnsoverhttps/DnsOverHttps.kt",
+      "number": 22
+    },
+    {
+      "branch": "change-23",
+      "case": "ky-1",
+      "kind": "control",
+      "file": "cases/ky-1/source/core/Ky.ts",
+      "number": 23
+    },
+    {
+      "branch": "change-24",
+      "case": "rack-3",
+      "kind": "control",
+      "file": "cases/rack-3/lib/rack/mock_response.rb",
+      "number": 24
+    },
+    {
+      "branch": "change-25",
+      "case": "ky-3",
+      "kind": "regression",
+      "file": "cases/ky-3/source/core/constants.ts",
+      "number": 25
+    },
+    {
+      "branch": "change-26",
+      "case": "cobra-2",
+      "kind": "regression",
+      "file": "cases/cobra-2/doc/yaml_docs.go",
+      "number": 26
+    },
+    {
+      "branch": "change-27",
+      "case": "requests-2",
+      "kind": "regression",
+      "file": "cases/requests-2/src/requests/sessions.py",
+      "number": 27
+    },
+    {
+      "branch": "change-28",
+      "case": "rack-1",
+      "kind": "control",
+      "file": "cases/rack-1/lib/rack/mock_request.rb",
+      "number": 28
+    },
+    {
+      "branch": "change-29",
+      "case": "ripgrep-3",
+      "kind": "regression",
+      "file": "cases/ripgrep-3/crates/searcher/src/searcher/glue.rs",
+      "number": 29
+    },
+    {
+      "branch": "change-30",
+      "case": "ripgrep-2",
+      "kind": "regression",
+      "file": "cases/ripgrep-2/crates/core/messages.rs",
+      "number": 30
+    },
+    {
+      "branch": "change-31",
+      "case": "okhttp-3",
+      "kind": "control",
+      "file": "cases/okhttp-3/okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/platform/Platform.kt",
+      "number": 31
+    },
+    {
+      "branch": "change-32",
+      "case": "express-3",
+      "kind": "control",
+      "file": "cases/express-3/lib/response.js",
+      "number": 32
+    },
+    {
+      "branch": "change-33",
+      "case": "ripgrep-1",
+      "kind": "control",
+      "file": "cases/ripgrep-1/crates/regex/src/literal.rs",
+      "number": 33
+    },
+    {
+      "branch": "change-34",
+      "case": "Alamofire-3",
+      "kind": "control",
+      "file": "cases/Alamofire-3/Source/Core/DownloadRequest.swift",
+      "number": 34
+    },
+    {
+      "branch": "change-35",
+      "case": "Alamofire-2",
+      "kind": "regression",
+      "file": "cases/Alamofire-2/Source/Core/DownloadRequest.swift",
+      "number": 35
+    },
+    {
+      "branch": "change-36",
+      "case": "okhttp-2",
+      "kind": "control",
+      "file": "cases/okhttp-2/okhttp/src/commonJvmAndroid/kotlin/okhttp3/Cache.kt",
+      "number": 36
+    },
+    {
+      "branch": "change-37",
+      "case": "requests-2",
+      "kind": "control",
+      "file": "cases/requests-2/src/requests/sessions.py",
+      "number": 37
+    },
+    {
+      "branch": "change-38",
+      "case": "rack-1",
+      "kind": "regression",
+      "file": "cases/rack-1/lib/rack/mock_request.rb",
+      "number": 38
+    },
+    {
+      "branch": "change-39",
+      "case": "requests-1",
+      "kind": "control",
+      "file": "cases/requests-1/src/requests/utils.py",
+      "number": 39
+    },
+    {
+      "branch": "change-40",
+      "case": "ripgrep-1",
+      "kind": "regression",
+      "file": "cases/ripgrep-1/crates/regex/src/literal.rs",
+      "number": 40
+    },
+    {
+      "branch": "change-41",
+      "case": "Alamofire-1",
+      "kind": "regression",
+      "file": "cases/Alamofire-1/Source/Core/DownloadRequest.swift",
+      "number": 41
+    },
+    {
+      "branch": "change-42",
+      "case": "rack-3",
+      "kind": "regression",
+      "file": "cases/rack-3/lib/rack/mock_response.rb",
+      "number": 42
+    },
+    {
+      "branch": "change-43",
+      "case": "express-3",
+      "kind": "regression",
+      "file": "cases/express-3/lib/response.js",
+      "number": 43
+    },
+    {
+      "branch": "change-44",
+      "case": "ky-2",
+      "kind": "control",
+      "file": "cases/ky-2/source/utils/merge.ts",
+      "number": 44
+    },
+    {
+      "branch": "change-45",
+      "case": "Alamofire-3",
+      "kind": "regression",
+      "file": "cases/Alamofire-3/Source/Core/DownloadRequest.swift",
+      "number": 45
+    },
+    {
+      "branch": "change-46",
+      "case": "cobra-3",
+      "kind": "control",
+      "file": "cases/cobra-3/command.go",
+      "number": 46
+    },
+    {
+      "branch": "change-47",
+      "case": "guzzle-1",
+      "kind": "regression",
+      "file": "cases/guzzle-1/src/Handler/CurlHandler.php",
+      "number": 47
+    },
+    {
+      "branch": "change-48",
+      "case": "requests-1",
+      "kind": "regression",
+      "file": "cases/requests-1/src/requests/utils.py",
+      "number": 48
+    },
+    {
+      "branch": "change-49",
+      "case": "guzzle-1",
+      "kind": "control",
+      "file": "cases/guzzle-1/src/Handler/CurlHandler.php",
+      "number": 49
+    },
+    {
+      "branch": "change-50",
+      "case": "express-2",
+      "kind": "regression",
+      "file": "cases/express-2/lib/response.js",
+      "number": 50
+    },
+    {
+      "branch": "change-51",
+      "case": "guzzle-3",
+      "kind": "control",
+      "file": "cases/guzzle-3/src/Handler/StreamHandler.php",
+      "number": 51
+    },
+    {
+      "branch": "change-52",
+      "case": "okhttp-1",
+      "kind": "regression",
+      "file": "cases/okhttp-1/okhttp-dnsoverhttps/src/main/kotlin/okhttp3/dnsoverhttps/DnsOverHttps.kt",
+      "number": 52
+    },
+    {
+      "branch": "change-53",
+      "case": "gson-2",
+      "kind": "control",
+      "file": "cases/gson-2/gson/src/main/java/com/google/gson/internal/LinkedTreeMap.java",
+      "number": 53
+    },
+    {
+      "branch": "change-54",
+      "case": "express-1",
+      "kind": "control",
+      "file": "cases/express-1/lib/response.js",
+      "number": 54
+    },
+    {
+      "branch": "change-55",
+      "case": "guzzle-2",
+      "kind": "control",
+      "file": "cases/guzzle-2/src/Handler/CurlFactory.php",
+      "number": 55
+    },
+    {
+      "branch": "change-56",
+      "case": "guzzle-3",
+      "kind": "regression",
+      "file": "cases/guzzle-3/src/Handler/StreamHandler.php",
+      "number": 56
+    },
+    {
+      "branch": "change-57",
+      "case": "rack-2",
+      "kind": "control",
+      "file": "cases/rack-2/lib/rack/static.rb",
+      "number": 57
+    },
+    {
+      "branch": "change-58",
+      "case": "guzzle-2",
+      "kind": "regression",
+      "file": "cases/guzzle-2/src/Handler/CurlFactory.php",
+      "number": 58
+    },
+    {
+      "branch": "change-59",
+      "case": "Newtonsoft.Json-1",
+      "kind": "regression",
+      "file": "cases/Newtonsoft.Json-1/Src/Newtonsoft.Json/Serialization/JsonSerializerInternalReader.cs",
+      "number": 59
+    },
+    {
+      "branch": "change-60",
+      "case": "okhttp-2",
+      "kind": "regression",
+      "file": "cases/okhttp-2/okhttp/src/commonJvmAndroid/kotlin/okhttp3/Cache.kt",
+      "number": 60
+    },
+    {
+      "branch": "change-61",
+      "case": "gson-1",
+      "kind": "control",
+      "file": "cases/gson-1/gson/src/main/java/com/google/gson/stream/JsonReader.java",
+      "number": 61
+    },
+    {
+      "branch": "change-62",
+      "case": "Newtonsoft.Json-1",
+      "kind": "control",
+      "file": "cases/Newtonsoft.Json-1/Src/Newtonsoft.Json/Serialization/JsonSerializerInternalReader.cs",
+      "number": 62
+    },
+    {
+      "branch": "change-63",
+      "case": "express-1",
+      "kind": "regression",
+      "file": "cases/express-1/lib/response.js",
+      "number": 63
+    },
+    {
+      "branch": "change-64",
+      "case": "Alamofire-2",
+      "kind": "control",
+      "file": "cases/Alamofire-2/Source/Core/DownloadRequest.swift",
+      "number": 64
+    },
+    {
+      "branch": "change-65",
+      "case": "cobra-1",
+      "kind": "regression",
+      "file": "cases/cobra-1/completions.go",
+      "number": 65
+    },
+    {
+      "branch": "change-66",
+      "case": "Newtonsoft.Json-2",
+      "kind": "control",
+      "file": "cases/Newtonsoft.Json-2/Src/Newtonsoft.Json/JsonTextReader.cs",
+      "number": 66
+    }
+  ]
+}
