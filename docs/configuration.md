@@ -68,6 +68,10 @@ Tool ids to write rules files for: `claude-code`, `codex`, `cursor`, `copilot`, 
 | `featurePattern` | `^feat(\(.+\))?!?:` | Regex for feature commit messages |
 | `ignore` | lock files, `.md`, `.json`, images, `.fixlock/` | Files never auto-locked |
 
+## `launcher`
+
+How hooks, MCP configs and AI rules start fixlock. Unset (the default): the project's installed npm package, or `npx -y @abinandhmj/fixlock@<version>`. `"fixlock"`: the native `fixlock` command (installed with `pipx install fixlock`, `uv tool install fixlock` or `pip install fixlock`). `fixlock init` sets it when you run it from the native command. Every developer then needs `fixlock` on their PATH. Set `FIXLOCK_LAUNCHER` to override it on one machine.
+
 ## `matching`
 
 How locks are compared with the current code.

@@ -24,6 +24,7 @@ async function cmdInit(args) {
   const cfg = s.loadConfig();
   const useDefaults = args.yes || (!process.stdin.isTTY && !args.interactive);
   const hooks = useDefaults ? init.defaults(cfg) : await init.interactive(cfg);
+  if (!cfg.launcher && cli.defaultLauncher(s.root())) cfg.launcher = cli.defaultLauncher(s.root()); // pip/pipx/binary install
   s.saveConfig(cfg);
   s.saveRegistry(s.loadRegistry());
   if (hooks.claude) init.installClaudeHook();
@@ -44,7 +45,8 @@ async function cmdInit(args) {
   if (hooks.mcp && userLevel.length) console.log(`  ${userLevel.join(' / ')} users: run  ${cli.human(s.root())} setup ${userLevel.join(' ')}  on your own machine`);
   console.log('\nCommit .fixlock/ and the generated files above so the whole team gets them.');
   const run = cli.human(s.root());
-  if (fs.existsSync(path.join(s.root(), 'package.json'))) console.log('Every developer runs once:  npm i -D @abinandhmj/fixlock' + (hooks.git ? '  &&  npx fixlock install-hook' : ''));
+  if (cfg.launcher === 'fixlock') console.log(`Every developer installs the fixlock command once:  pipx install fixlock  (or uv tool install fixlock)${hooks.git ? '  &&  fixlock install-hook' : ''}`);
+  else if (fs.existsSync(path.join(s.root(), 'package.json'))) console.log('Every developer runs once:  npm i -D @abinandhmj/fixlock' + (hooks.git ? '  &&  npx fixlock install-hook' : ''));
   else console.log(`Nothing to install: hooks and assistants run fixlock through npx (Node.js 18+).${hooks.git ? `  Each developer runs once:  ${run} install-hook` : ''}`);
   console.log(`Find the fixes you already have:  ${run} discover`);
   console.log(`Lock a fix:  ${run} mark <file> <start>-<end> -m "why" --issue linear:ENG-12`);

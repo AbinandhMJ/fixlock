@@ -28,6 +28,38 @@ jobs:
         shell: bash
         run: npm pack --dry-run 2>&1 | tee pack.txt && ! grep -E "docs/|test/|\.vitepress" pack.txt
 
+  python-package:
+    # the PyPI wheel: standalone binary, installed with pip, used on a Python repo with no Node.js on PATH
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Build binary and wheels
+        run: |
+          mkdir -p dist/bin
+          bun build bin/fixlock.js --compile --minify --target=bun-linux-x64-baseline --outfile dist/bin/fixlock-bun-linux-x64-baseline
+          v=$(node -p "require('./package.json').version")
+          python python/build_wheels.py --version "$v" --bins dist/bin --out dist/wheels --only bun-linux-x64-baseline
+          python -m pip install -q twine && python -m twine check dist/wheels/*
+          python -m venv /tmp/venv && /tmp/venv/bin/pip install -q --no-index --find-links dist/wheels "fixlock==$v"
+      - name: Use it without Node.js
+        run: |
+          export PATH=/tmp/venv/bin:/usr/bin:/bin
+          test "$(command -v fixlock)" = /tmp/venv/bin/fixlock
+          cd "$(mktemp -d)" && git init -q -b main && git config user.email a@b.c && git config user.name A
+          printf 'def pay(amount):\n    if amount <= 0:\n        raise ValueError("bad")\n    return amount\n' > pay.py
+          git add -A && git commit -qm init
+          fixlock init --yes && grep -q '"launcher": "fixlock"' .fixlock/config.json && grep -q '"fixlock hook claude"' .claude/settings.json
+          fixlock mark pay.py 2-3 -m "never charge zero" && git add -A && git commit -qm lock
+          sed -i 's/<= 0/< 0/' pay.py && git add pay.py
+          ! fixlock check --staged --strict
+          python -m fixlock --version
+
   docs:
     runs-on: ubuntu-latest
     steps:

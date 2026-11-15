@@ -44,7 +44,7 @@ npx fixlock init                         # team, rules, AI assistants, hooks
 npx fixlock autolock --all --dry-run     # see which past fixes it would lock
 ```
 
-**Any language.** Structural matching reads [63 languages and formats](https://abinandhmj.github.io/fixlock/languages): TypeScript, Python, Java, Kotlin, Go, Rust, C#, Swift, PHP, Ruby, SQL, Terraform, YAML, Angular/Vue/Svelte templates and more. Not a JavaScript project? Run `npx @abinandhmj/fixlock init` with nothing to install, and use the [GitHub Action or pre-commit hook](https://abinandhmj.github.io/fixlock/any-language).
+**Any language.** Structural matching reads [63 languages and formats](https://abinandhmj.github.io/fixlock/languages): TypeScript, Python, Java, Kotlin, Go, Rust, C#, Swift, PHP, Ruby, SQL, Terraform, YAML, Angular/Vue/Svelte templates and more. Not a JavaScript project? `pipx install fixlock` gets a standalone binary with no Node.js needed (or run `npx @abinandhmj/fixlock init`), and use the [GitHub Action or pre-commit hook](https://abinandhmj.github.io/fixlock/any-language).
 
 Already have fixes in your history? `npx fixlock discover` finds and ranks them so you're protected from day one.
 

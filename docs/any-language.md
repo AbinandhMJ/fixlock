@@ -4,11 +4,25 @@ title: Python, Go, Java, .NET and other projects
 
 # Using fixlock in any project
 
-fixlock isn't only for JavaScript. It locks code in [63 languages and formats](languages.md), and every other file still works with text matching. It's distributed through npm, but your project doesn't need to be a Node project: Node.js 18+ is only needed as a tool on the machine that runs fixlock, the way you might have it for Prettier or a language server.
+fixlock isn't only for JavaScript. It locks code in [63 languages and formats](languages.md), and every other file still works with text matching. Your project doesn't need to be a Node project. Install fixlock as a standalone command from PyPI (no Node.js at all), or run it through npm if Node.js 18+ is already on the machine.
 
-## Set up
+## Install with pip, pipx or uv
 
-In your repository (any language):
+The `fixlock` package on PyPI is a self-contained binary for Linux (glibc and musl), macOS and Windows, on x64 and ARM. Nothing else is needed: no Node.js, no runtime.
+
+```bash
+pipx install fixlock        # or: uv tool install fixlock · pip install fixlock
+fixlock init
+fixlock discover
+```
+
+When you run `init` from the pip-installed command, fixlock records `"launcher": "fixlock"` in `.fixlock/config.json`. The hooks, MCP configs and rules files then call `fixlock …` directly, so every developer on the team installs it once with `pipx install fixlock`. See [`launcher`](configuration.md#launcher) to switch a repo between the two.
+
+`python -m fixlock` works too. On a platform without a prebuilt binary, pip installs a small fallback that runs fixlock through `npx`.
+
+## Set up with npx
+
+In your repository (any language), with Node.js 18+ on the machine:
 
 ```bash
 npx @abinandhmj/fixlock init
@@ -88,6 +102,20 @@ repos:
 ```
 
 pre-commit installs fixlock in its own environment. If Node.js is already on the machine, add `default_language_version: { node: system }` to skip downloading it.
+
+No Node.js at all? Use the PyPI package instead:
+
+```yaml
+repos:
+  - repo: local
+    hooks:
+      - id: fixlock
+        name: fixlock
+        entry: fixlock check --staged
+        language: python
+        additional_dependencies: [fixlock]
+        pass_filenames: false
+```
 
 Not using pre-commit? `npx @abinandhmj/fixlock install-hook` installs plain git hooks that do the same.
 
