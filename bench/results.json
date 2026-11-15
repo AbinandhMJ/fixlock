@@ -1,7 +1,7 @@
 {
-  "fixlock": "0.5.0+2df0144",
+  "fixlock": "0.6.0+bdadb1b",
   "date": "2026-11-14",
-  "seconds": 49,
+  "seconds": 233,
   "repos": [
     {
       "name": "express",
@@ -9,10 +9,10 @@
       "sha": "43fca52d28a422c8be48fd489cbd4f2d6152bab6",
       "lang": "JavaScript",
       "discovered": 46,
-      "locks": 33,
+      "locks": 35,
       "skipped": {
-        "language": 3,
-        "locate": 7,
+        "language": 0,
+        "locate": 8,
         "baseline": 3
       }
     },
@@ -21,12 +21,12 @@
       "url": "https://github.com/sindresorhus/ky.git",
       "sha": "3541888878c4d303a8bc2ad61815f4e048f55a5d",
       "lang": "TypeScript",
-      "discovered": 154,
+      "discovered": 168,
       "locks": 80,
       "skipped": {
         "language": 0,
-        "locate": 7,
-        "baseline": 21
+        "locate": 9,
+        "baseline": 17
       }
     },
     {
@@ -34,12 +34,12 @@
       "url": "https://github.com/psf/requests.git",
       "sha": "3c7baaa05ab4aa49cc819ce3a819d260de19c157",
       "lang": "Python",
-      "discovered": 54,
-      "locks": 36,
+      "discovered": 61,
+      "locks": 31,
       "skipped": {
-        "language": 6,
+        "language": 7,
         "locate": 6,
-        "baseline": 6
+        "baseline": 17
       }
     },
     {
@@ -47,49 +47,147 @@
       "url": "https://github.com/spf13/cobra.git",
       "sha": "adbc8813901bba65827259daa8e22ff94ec1f30e",
       "lang": "Go",
-      "discovered": 132,
+      "discovered": 135,
       "locks": 80,
       "skipped": {
-        "language": 4,
+        "language": 1,
         "locate": 9,
-        "baseline": 36
+        "baseline": 38
+      }
+    },
+    {
+      "name": "gson",
+      "url": "https://github.com/google/gson.git",
+      "sha": "d938a10f7564f596603dd4e958bc9249fb2225b5",
+      "lang": "Java",
+      "discovered": 167,
+      "locks": 80,
+      "skipped": {
+        "language": 0,
+        "locate": 3,
+        "baseline": 7
+      }
+    },
+    {
+      "name": "okhttp",
+      "url": "https://github.com/square/okhttp.git",
+      "sha": "b6e74e58c01f5d787e3f628dda4a99e04d26f079",
+      "lang": "Kotlin",
+      "discovered": 143,
+      "locks": 80,
+      "skipped": {
+        "language": 3,
+        "locate": 16,
+        "baseline": 2
+      }
+    },
+    {
+      "name": "ripgrep",
+      "url": "https://github.com/BurntSushi/ripgrep.git",
+      "sha": "178cc027e283fd965cb72d0a7395b219eada170c",
+      "lang": "Rust",
+      "discovered": 74,
+      "locks": 58,
+      "skipped": {
+        "language": 0,
+        "locate": 5,
+        "baseline": 11
+      }
+    },
+    {
+      "name": "rack",
+      "url": "https://github.com/rack/rack.git",
+      "sha": "da90464e3fa93e3cb49dc2d4ede798e6c6b70b4f",
+      "lang": "Ruby",
+      "discovered": 128,
+      "locks": 80,
+      "skipped": {
+        "language": 2,
+        "locate": 10,
+        "baseline": 2
+      }
+    },
+    {
+      "name": "guzzle",
+      "url": "https://github.com/guzzle/guzzle.git",
+      "sha": "f8aca40edffeae0ec508b92f4594766083c6e203",
+      "lang": "PHP",
+      "discovered": 277,
+      "locks": 80,
+      "skipped": {
+        "language": 0,
+        "locate": 3,
+        "baseline": 0
+      }
+    },
+    {
+      "name": "Newtonsoft.Json",
+      "url": "https://github.com/JamesNK/Newtonsoft.Json.git",
+      "sha": "52fa3aef1f2cadcd3a3f874251eddc98d3efbbaa",
+      "lang": "C#",
+      "discovered": 291,
+      "locks": 80,
+      "skipped": {
+        "language": 0,
+        "locate": 2,
+        "baseline": 0
+      }
+    },
+    {
+      "name": "Alamofire",
+      "url": "https://github.com/Alamofire/Alamofire.git",
+      "sha": "dea4bab91767a971d6e112bc955c6a82295589b7",
+      "lang": "Swift",
+      "discovered": 171,
+      "locks": 80,
+      "skipped": {
+        "language": 7,
+        "locate": 2,
+        "baseline": 5
       }
     }
   ],
   "summary": {
-    "locks": 229,
-    "edits": 1812,
+    "locks": 764,
+    "edits": 5271,
     "falsePositives": {
-      "text": 637,
+      "text": 1622,
       "structural": 0,
-      "of": 1084
+      "of": 2914
     },
     "renames": {
-      "textBlocked": 173,
-      "structuralBlocked": 8,
-      "structuralWarned": 165,
-      "of": 173
+      "textBlocked": 510,
+      "structuralBlocked": 15,
+      "structuralWarned": 495,
+      "of": 511
     },
     "detection": {
-      "text": 517,
-      "structural": 552,
-      "structuralWarnedOnly": 3,
-      "of": 555
+      "text": 1704,
+      "structural": 1845,
+      "structuralWarnedOnly": 1,
+      "of": 1846
     }
   },
   "rows": [
     {
       "kind": "benign",
       "name": "add comments",
-      "n": 229,
+      "n": 764,
       "langs": [
+        "C#",
         "Go",
+        "Java",
         "JavaScript",
+        "Kotlin",
+        "PHP",
         "Python",
+        "Ruby",
+        "Rust",
+        "Swift",
         "TypeScript"
       ],
       "text": {
-        "changed": 209,
+        "changed": 686,
         "renamed": 0
       },
       "structural": {
@@ -101,15 +199,22 @@
     {
       "kind": "benign",
       "name": "wrap long line",
-      "n": 147,
+      "n": 520,
       "langs": [
+        "C#",
         "Go",
+        "Java",
         "JavaScript",
+        "Kotlin",
+        "PHP",
         "Python",
+        "Ruby",
+        "Rust",
+        "Swift",
         "TypeScript"
       ],
       "text": {
-        "changed": 136,
+        "changed": 476,
         "renamed": 0
       },
       "structural": {
@@ -121,10 +226,18 @@
     {
       "kind": "benign",
       "name": "reindent",
-      "n": 190,
+      "n": 729,
       "langs": [
+        "C#",
         "Go",
+        "Java",
         "JavaScript",
+        "Kotlin",
+        "PHP",
+        "Python",
+        "Ruby",
+        "Rust",
+        "Swift",
         "TypeScript"
       ],
       "text": {
@@ -146,7 +259,7 @@
         "TypeScript"
       ],
       "text": {
-        "changed": 102,
+        "changed": 103,
         "renamed": 0
       },
       "structural": {
@@ -164,7 +277,7 @@
         "TypeScript"
       ],
       "text": {
-        "changed": 58,
+        "changed": 60,
         "renamed": 0
       },
       "structural": {
@@ -176,20 +289,27 @@
     {
       "kind": "rename",
       "name": "rename a local variable",
-      "n": 173,
+      "n": 511,
       "langs": [
+        "C#",
         "Go",
+        "Java",
         "JavaScript",
+        "Kotlin",
+        "PHP",
         "Python",
+        "Ruby",
+        "Rust",
+        "Swift",
         "TypeScript"
       ],
       "text": {
-        "changed": 173,
+        "changed": 510,
         "renamed": 0
       },
       "structural": {
-        "changed": 8,
-        "renamed": 165
+        "changed": 15,
+        "renamed": 495
       },
       "misses": [
         {
@@ -213,17 +333,6 @@
           "verdict": "changed",
           "before": "\t\t\t&& !userProvidedContentType",
           "after": "\t\t\t&& ((supportsFormData && this.#options.body instanceof globalThis.FormData) || this.#options.body instanceof URLSearchParams)\n\t\t\t&& !userProvidedContentTypeRenamed\n\t\t) {\n\t\t\tthis.#options.headers.delete('content-type');\n\t\t}"
-        },
-        {
-          "repo": "ky",
-          "file": "source/core/Ky.ts",
-          "lines": [
-            101,
-            110
-          ],
-          "verdict": "changed",
-          "before": "const createTextDecoder = (contentType: string): TextDecoder => {\n\tconst match = /;\\s*charset\\s*=\\s*(?:\"([^\"]+)\"|([^;,\\s]+))/i.exec(contentType);\n\tconst charset = match?.[1] ?? match?.[2];\n\tif (charset) {\n\t\ttry {\n\t\t\treturn new TextDecoder(charset);\n\t\t} catch {}\n\treturn new TextDecoder();",
-          "after": "\nconst createTextDecoder = (contentType: string): TextDecoder => {\n\tconst match = /;\\s*charsetRenamed\\s*=\\s*(?:\"([^\"]+)\"|([^;,\\s]+))/i.exec(contentType);\n\tconst charsetRenamed = match?.[1] ?? match?.[2];\n\tif (charsetRenamed) {\n\t\ttry {\n\t\t\treturn new TextDecoder(charsetRenamed);\n\t\t} catch {}\n\t}\n\n\treturn new TextDecoder();\n};\n\nconst isJsonContentType = (contentType: string): boolean => {"
         },
         {
           "repo": "ky",
@@ -279,25 +388,43 @@
           "verdict": "changed",
           "before": "\t\tuseline = use",
           "after": "\t} else {\n\t\tuselineRenamed = use\n\t}\n\tif c.DisableFlagsInUseLine {\n\t\treturn uselineRenamed"
+        },
+        {
+          "repo": "gson",
+          "file": "gson/src/main/java/com/google/gson/internal/GsonTypes.java",
+          "lines": [
+            405,
+            405
+          ],
+          "verdict": "changed",
+          "before": "            if (!argsChanged) {",
+          "after": "          if (!equal(resolvedTypeArgument, args[t])) {\n            if (!argsChangedRenamed) {\n              args = args.clone();\n              argsChangedRenamed = true;\n            }"
         }
       ]
     },
     {
       "kind": "harmful",
       "name": "flip comparison",
-      "n": 79,
+      "n": 244,
       "langs": [
+        "C#",
         "Go",
+        "Java",
         "JavaScript",
+        "Kotlin",
+        "PHP",
         "Python",
+        "Ruby",
+        "Rust",
+        "Swift",
         "TypeScript"
       ],
       "text": {
-        "changed": 72,
+        "changed": 223,
         "renamed": 0
       },
       "structural": {
-        "changed": 79,
+        "changed": 244,
         "renamed": 0
       },
       "misses": []
@@ -305,19 +432,26 @@
     {
       "kind": "harmful",
       "name": "drop negation",
-      "n": 38,
+      "n": 144,
       "langs": [
+        "C#",
         "Go",
+        "Java",
         "JavaScript",
+        "Kotlin",
+        "PHP",
         "Python",
+        "Ruby",
+        "Rust",
+        "Swift",
         "TypeScript"
       ],
       "text": {
-        "changed": 36,
+        "changed": 132,
         "renamed": 0
       },
       "structural": {
-        "changed": 38,
+        "changed": 144,
         "renamed": 0
       },
       "misses": []
@@ -325,67 +459,52 @@
     {
       "kind": "harmful",
       "name": "delete a line",
-      "n": 189,
+      "n": 649,
       "langs": [
+        "C#",
         "Go",
+        "Java",
         "JavaScript",
+        "Kotlin",
+        "PHP",
         "Python",
+        "Ruby",
+        "Rust",
+        "Swift",
         "TypeScript"
       ],
       "text": {
-        "changed": 176,
+        "changed": 595,
         "renamed": 0
       },
       "structural": {
-        "changed": 186,
-        "renamed": 3
+        "changed": 648,
+        "renamed": 1
       },
       "misses": [
         {
-          "repo": "ky",
-          "file": "source/core/Ky.ts",
+          "repo": "gson",
+          "file": "metrics/src/main/java/com/google/gson/metrics/ParseBenchmark.java",
           "lines": [
-            1055,
-            1055
+            367,
+            367
           ],
           "verdict": "renamed",
-          "before": "\t\t\t\tthis.#assignRequest(this.#withManagedSignal(result));",
-          "after": "\t\t\tif (isRequest(result)) {\n\t\t\t} else if (isResponse(result)) {\n\t\t\t\tthis.#hookResponses.add(result);\n\t\t\t\treturn result;\n\t\t\t}"
-        },
-        {
-          "repo": "ky",
-          "file": "source/core/Ky.ts",
-          "lines": [
-            1222,
-            1222
-          ],
-          "verdict": "renamed",
-          "before": "\t\tconst nonRequestOptions = findUnknownOptions(this.#options);",
-          "after": "\n\t\tthis.#retryLimit = normalizeRetryOptions(this.#options.retry).limit;\n\t\t// Reattach the managed signal because Node.js can garbage-collect the abort controller used by Request.clone().\n\t\tconst retryRequest = this.#retryLimit > 0 ? this.#withManagedSignal(this.request.clone()) : undefined;\n\t\tconst request = this.#wrapRequestWithUploadProgress(this.request);"
-        },
-        {
-          "repo": "requests",
-          "file": "src/requests/models.py",
-          "lines": [
-            946,
-            947
-          ],
-          "verdict": "renamed",
-          "before": "                except SSLError as e:\n                    raise RequestsSSLError(e)",
-          "after": "                    raise ConnectionError(e)\n                    raise RequestsSSLError(e)\n            else:\n                # Standard file-like object.\n                while True:\n                    chunk = self.raw.read(chunk_size)"
+          "before": "    @JsonProperty boolean default_profile_image;",
+          "after": "    @JsonProperty String profile_background_image_url;\n    @JsonProperty int friends_count;\n    @JsonProperty int statuses_count;\n    @JsonProperty String screen_name;\n    @JsonProperty boolean following;"
         }
       ]
     },
     {
       "kind": "benign",
       "name": "swap quote style",
-      "n": 38,
+      "n": 41,
       "langs": [
         "JavaScript",
         "TypeScript"
       ],
       "text": {
-        "changed": 38,
+        "changed": 41,
         "renamed": 0
       },
       "structural": {
@@ -397,19 +516,26 @@
     {
       "kind": "harmful",
       "name": "swap and/or",
-      "n": 47,
+      "n": 158,
       "langs": [
+        "C#",
         "Go",
+        "Java",
         "JavaScript",
+        "Kotlin",
+        "PHP",
         "Python",
+        "Ruby",
+        "Rust",
+        "Swift",
         "TypeScript"
       ],
       "text": {
-        "changed": 45,
+        "changed": 150,
         "renamed": 0
       },
       "structural": {
-        "changed": 47,
+        "changed": 158,
         "renamed": 0
       },
       "misses": []
@@ -417,19 +543,26 @@
     {
       "kind": "harmful",
       "name": "change string",
-      "n": 75,
+      "n": 245,
       "langs": [
+        "C#",
         "Go",
+        "Java",
         "JavaScript",
+        "Kotlin",
+        "PHP",
         "Python",
+        "Ruby",
+        "Rust",
+        "Swift",
         "TypeScript"
       ],
       "text": {
-        "changed": 73,
+        "changed": 230,
         "renamed": 0
       },
       "structural": {
-        "changed": 75,
+        "changed": 245,
         "renamed": 0
       },
       "misses": []
@@ -437,11 +570,18 @@
     {
       "kind": "benign",
       "name": "blank lines",
-      "n": 99,
+      "n": 300,
       "langs": [
+        "C#",
         "Go",
+        "Java",
         "JavaScript",
+        "Kotlin",
+        "PHP",
         "Python",
+        "Ruby",
+        "Rust",
+        "Swift",
         "TypeScript"
       ],
       "text": {
@@ -457,19 +597,26 @@
     {
       "kind": "harmful",
       "name": "change number",
-      "n": 40,
+      "n": 104,
       "langs": [
+        "C#",
         "Go",
+        "Java",
         "JavaScript",
+        "Kotlin",
+        "PHP",
         "Python",
+        "Ruby",
+        "Rust",
+        "Swift",
         "TypeScript"
       ],
       "text": {
-        "changed": 36,
+        "changed": 95,
         "renamed": 0
       },
       "structural": {
-        "changed": 40,
+        "changed": 104,
         "renamed": 0
       },
       "misses": []
@@ -477,19 +624,25 @@
     {
       "kind": "harmful",
       "name": "change field",
-      "n": 87,
+      "n": 302,
       "langs": [
+        "C#",
         "Go",
+        "Java",
         "JavaScript",
+        "Kotlin",
         "Python",
+        "Ruby",
+        "Rust",
+        "Swift",
         "TypeScript"
       ],
       "text": {
-        "changed": 79,
+        "changed": 279,
         "renamed": 0
       },
       "structural": {
-        "changed": 87,
+        "changed": 302,
         "renamed": 0
       },
       "misses": []
@@ -497,13 +650,17 @@
     {
       "kind": "benign",
       "name": "drop semicolons",
-      "n": 73,
+      "n": 264,
       "langs": [
+        "C#",
+        "Java",
         "JavaScript",
+        "PHP",
+        "Rust",
         "TypeScript"
       ],
       "text": {
-        "changed": 71,
+        "changed": 241,
         "renamed": 0
       },
       "structural": {
@@ -515,12 +672,12 @@
     {
       "kind": "formatter",
       "name": "black (line length 40)",
-      "n": 33,
+      "n": 28,
       "langs": [
         "Python"
       ],
       "text": {
-        "changed": 19,
+        "changed": 15,
         "renamed": 0
       },
       "structural": {
@@ -532,12 +689,12 @@
     {
       "kind": "formatter",
       "name": "black (line length 120)",
-      "n": 31,
+      "n": 26,
       "langs": [
         "Python"
       ],
       "text": {
-        "changed": 4,
+        "changed": 0,
         "renamed": 0
       },
       "structural": {
@@ -549,7 +706,7 @@
     {
       "kind": "formatter",
       "name": "gofmt (after re-indenting with spaces)",
-      "n": 22,
+      "n": 20,
       "langs": [
         "Go"
       ],

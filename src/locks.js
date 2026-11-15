@@ -25,9 +25,16 @@ function repoRel(root, file) {
  * the locked copy isn't hidden by another copy elsewhere in the file.
  */
 function withCopies(lock, content) {
-  const n = structural.count(lock.snippet, content, lock.file);
-  if (n > 1) lock.copies = n; else delete lock.copies;
+  const { copies, siblings } = structural.shape(lock.snippet, content, lock.file);
+  if (copies > 1) lock.copies = copies; else delete lock.copies;
+  if (siblings > 0) lock.siblings = siblings; else delete lock.siblings;
   return lock;
+}
+
+/** Locks made before `siblings` was recorded: count look-alikes in a known-good version of the file. */
+function siblingsFrom(lock, goodContent) {
+  if (lock.siblings !== undefined || goodContent === null || goodContent === undefined) return lock.siblings || 0;
+  return structural.shape(lock.snippet, goodContent, lock.file).siblings;
 }
 
 /** Line numbers (1-based) where a lock's snippet lines currently sit in `lines`. */
@@ -78,7 +85,8 @@ function verifyLock(lock, content, opts = {}) {
   if (content === null || content === undefined) return { status: 'changed', engine: 'text', missing: lock.snippet, renames: [], reformatted: false };
   const missing = missingLines(lock, content);
   if (opts.mode !== 'text') {
-    const r = structural.verify(lock.snippet, content, opts.file || lock.file, { copies: lock.copies });
+    const siblings = opts.siblings !== undefined ? opts.siblings : siblingsFrom(lock, opts.before);
+    const r = structural.verify(lock.snippet, content, opts.file || lock.file, { copies: lock.copies, siblings });
     if (r.status === 'changed' && lock.copies > 1 && r.found > 0) {
       return { status: 'changed', engine: r.engine, missing: lock.snippet, renames: [], reformatted: false, copies: { expected: lock.copies, found: r.found } };
     }
@@ -109,7 +117,7 @@ function affected(reg, root, change, opts = {}) {
   for (const lock of locks) {
     const at = locate(lock, lines);
     if (change.after !== undefined) {
-      const v = verifyLock(lock, change.after, { mode: opts.mode, file: rel });
+      const v = verifyLock(lock, change.after, { mode: opts.mode, file: rel, before }); // before = the file as it is now
       const removed = v.status === 'changed' ? v.missing : [];
       const renames = v.status === 'renamed' ? v.renames : [];
       const touched = change.touched ? at.filter((n) => n >= change.touched[0] && n <= change.touched[1]) : [];
@@ -132,4 +140,4 @@ function spanLines(content, i, needle) {
   return [start, start + content.slice(a, b).split('\n').length - 1];
 }
 
-module.exports = { repoRel, realish, spanLines, norm, trivial, locate, missingLines, verifyLock, withCopies, affected, toPosix };
+module.exports = { repoRel, realish, spanLines, norm, trivial, locate, missingLines, verifyLock, withCopies, siblingsFrom, affected, toPosix };

@@ -4,7 +4,27 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
-_No changes yet._
+### Added
+- **63 languages and formats** for structural matching ([list](https://abinandhmj.github.io/fixlock/languages)), from one table in `src/languages.js`: Java, Kotlin, Scala, Groovy/Gradle, C#, F#, Go, Rust, Swift, Dart, C/C++/Objective-C, PHP, Ruby, Elixir, Python, Lua, Haskell, Clojure/Lisp, Erlang, R, Julia, Perl, SQL, Terraform, YAML, TOML, Dockerfile, Makefile, shell, PowerShell, CSS/SCSS/Less, GraphQL, Protobuf and more.
+  - **Templates**: HTML, Angular, Vue, Svelte, Astro, Django/Jinja, Twig, Liquid, Handlebars, EJS, ERB, Razor, Blade, JSP, Thymeleaf and Go templates are read as tags, attributes and `{{ }}` expressions, with `<script>` and `<style>` in their own language.
+  - **Indentation is logic** in Python, YAML, Nim, CoffeeScript and Sass: moving a line in or out of a block is caught.
+  - **Case-insensitive** languages (SQL, Fortran, Pascal, Ada, VB, PowerShell, CMake, Dockerfile) ignore keyword case.
+  - Language rules for raw/verbatim strings (Rust, C++, C#, Python, Lua), Rust lifetimes, nested block comments, template comments, shell `${#x}`, `url(http://…)` in CSS.
+- **Works in any project**, not just JavaScript:
+  - Hooks, MCP configs and AI rules run fixlock with the scoped package (`npx -y @abinandhmj/fixlock@<minor>`) when the repo doesn't install it, and never with the bare name `fixlock`.
+  - **GitHub Action**: `uses: AbinandhMJ/fixlock@v0.7.0`, with no install step and a PR comment.
+  - **pre-commit** hooks: `fixlock` (warns) and `fixlock-strict` (blocks).
+  - `fixlock languages [file]` shows the supported languages and how a file is read.
+  - Docs: [Python, Go, Java, .NET and other projects](https://abinandhmj.github.io/fixlock/any-language).
+- `fixlock discover` recognizes fixes and tests across ecosystems: Go, Rust, Swift, Kotlin, Java, C#, PHP, Ruby and SQL guards, template conditions, access checks; test files from `src/test/`, `*Tests.cs`, `_spec.rb`, `*_test.dart`… It skips lockfiles, vendored, generated and build files.
+- Accuracy benchmark extended to **11 repositories in 11 languages** (adds Java, Kotlin, Rust, Ruby, PHP, C#, Swift): 764 locks, 5,271 edits. 0.0% of harmless edits flagged (text matching: 55.7%), 99.9% of harmful edits caught (text: 92.3%).
+
+### Fixed
+- Breaking a lock is no longer excused as a "rename" when a look-alike block (the same code with other names) exists elsewhere in the file: locks record `siblings`; older locks count them in the base version.
+- Ruby, Perl and Crystal regex literals: a `#` inside `/…/` was read as a comment.
+- `CONSTANT_CASE` names (constants, enum values) are fixed: `ADMIN` → `USER` is a change, not a rename.
+- Hooks silently did nothing in repos without fixlock in `node_modules` (`npx --no-install`). Re-running `install-hook` / `install-claude-hook` / `init` replaces old entries.
+- `check --staged --strict` said "the commit is allowed".
 
 ## [0.6.0] - 2026-11-14
 

@@ -1,0 +1,27 @@
+# fixlock for the pre-commit framework (https://pre-commit.com), for any language:
+#
+#   repos:
+#     - repo: https://github.com/AbinandhMJ/fixlock
+#       rev: v0.7.0
+#       hooks:
+#         - id: fixlock          # warns about changed locked fixes, never blocks the commit
+#         # - id: fixlock-strict # or: block the commit until the change is approved in CI
+#
+# pre-commit installs fixlock in its own environment (needs Node.js 18+); nothing goes in your repo.
+- id: fixlock
+  name: fixlock (locked fixes)
+  description: Warn when staged changes alter a locked bug fix or finished feature.
+  entry: fixlock check --staged
+  language: node
+  pass_filenames: false
+  always_run: true
+  verbose: true
+  stages: [pre-commit]
+- id: fixlock-strict
+  name: fixlock (locked fixes, strict)
+  description: Block the commit when staged changes alter a locked bug fix or finished feature.
+  entry: fixlock check --staged --strict
+  language: node
+  pass_filenames: false
+  always_run: true
+  stages: [pre-commit]

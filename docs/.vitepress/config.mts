@@ -34,8 +34,10 @@ export default defineConfig({
         { text: 'Overview', link: '/' },
         { text: 'See it in action', link: '/demo' },
         { text: 'How it works', link: '/how-it-works' },
+        { text: 'Supported languages', link: '/languages' },
         { text: 'Accuracy benchmark', link: '/benchmark' },
         { text: 'Getting started', link: '/getting-started' },
+        { text: 'Python, Go, Java, .NET…', link: '/any-language' },
       ] },
       { text: 'Guides', items: [
         { text: 'Team lead guide', link: '/team-lead-guide' },

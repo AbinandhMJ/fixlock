@@ -44,6 +44,8 @@ npx fixlock init                         # team, rules, AI assistants, hooks
 npx fixlock autolock --all --dry-run     # see which past fixes it would lock
 ```
 
+**Any language.** Structural matching reads [63 languages and formats](https://abinandhmj.github.io/fixlock/languages): TypeScript, Python, Java, Kotlin, Go, Rust, C#, Swift, PHP, Ruby, SQL, Terraform, YAML, Angular/Vue/Svelte templates and more. Not a JavaScript project? Run `npx @abinandhmj/fixlock init` with nothing to install, and use the [GitHub Action or pre-commit hook](https://abinandhmj.github.io/fixlock/any-language).
+
 Already have fixes in your history? `npx fixlock discover` finds and ranks them so you're protected from day one.
 
 Then connect your assistant:
@@ -112,7 +114,7 @@ Examples: [GitHub Actions](examples/ci/github-actions.yml) · [Jenkins](examples
 
 ## Why trust it
 
-- **Measured accuracy.** On 229 real fixes locked in Express, ky, Requests and Cobra, harmless edits (Prettier, Black, gofmt, comments, line wrapping) were flagged **0% of the time**, and **99.5%** of harmful edits (flipped conditions, changed values, deleted checks) were caught. [See the benchmark](https://abinandhmj.github.io/fixlock/benchmark), and rerun it with `node bench/run.js`.
+- **Measured accuracy.** On 764 real fixes locked in 11 open-source projects (JavaScript, TypeScript, Python, Go, Java, Kotlin, Rust, Ruby, PHP, C#, Swift), harmless edits (Prettier, Black, gofmt, comments, line wrapping) were flagged **0% of the time** (0 of 2,914), and **99.9%** of harmful edits (flipped conditions, changed values, deleted checks) were caught; the last one was still flagged as a rename. [See the benchmark](https://abinandhmj.github.io/fixlock/benchmark), and rerun it with `node bench/run.js`.
 - **Zero runtime dependencies.** The whole tool is readable in [`src/`](src/).
 - **No telemetry.** The network is used only for GitHub approvals and your tracker, when you configure them.
 - **Read-only MCP server.** stdio only; it never edits files.
@@ -127,7 +129,7 @@ Team roles and owner/lead approval policies · generated `CODEOWNERS` · `CHANGE
 
 ## Limitations
 
-- Structural matching covers JS/TS, Python, Java, Go, C#, Kotlin, Rust, C/C++, Swift, PHP and similar languages. Other files (Markdown, JSON, …) are matched as text. A consistent rename of variables inside a lock is reported as a warning, not ignored; field and key renames count as changes. In very short locks, or when the old name is still used nearby, a rename counts as a change.
+- Structural matching covers [63 languages and formats](https://abinandhmj.github.io/fixlock/languages); other files (Markdown, plain text…) are matched as text. A consistent rename of variables inside a lock is reported as a warning, not ignored; field and key renames count as changes. In very short locks, or when the old name is still used nearby, a rename counts as a change.
 - Only Claude Code can intercept an edit before it happens. Other assistants check through MCP or their rules file, so a model that ignores both is caught at commit time and in CI.
 - Approvals are read from GitHub; GitLab and Bitbucket are on the roadmap.
 

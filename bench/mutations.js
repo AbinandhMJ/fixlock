@@ -6,13 +6,14 @@
 // Each mutation gets the file's lines, the lock's [first, last] line range (0-based, inclusive) and
 // the language family, and returns the new file text, or null when it doesn't apply to this lock.
 const S = require('../src/structural');
+const LANG = require('../src/languages');
 
 // A line counts as code when a token starts on it; comment lines and the inside of block comments or
 // doc strings don't, so edits never land there (they'd be meaningless as "harmful" edits).
 const codeCache = new WeakMap();
 let current = null; // [lines, fam] of the mutation being applied
 function codeLines(lines, fam) {
-  if (!codeCache.has(lines)) codeCache.set(lines, new Set(S.tokenize(lines.join('\n'), fam).filter((t) => t.k !== 'str').map((t) => t.line - 1)));
+  if (!codeCache.has(lines)) codeCache.set(lines, new Set(S.tokenize(lines.join('\n'), fam).filter((t) => t.k !== 'str' && t.v !== S.INDENT && t.v !== S.DEDENT).map((t) => t.line - 1)));
   return codeCache.get(lines);
 }
 const isCodeLine = (lines, i) => current && codeLines(current[0], current[1]).has(i);
@@ -23,11 +24,17 @@ function tokenStarts(lines, fam) {
   return startCache.get(lines);
 }
 // Lines holding a regex literal: quote and bracket edits there would change the regex itself.
-const hasRegex = (lines, i) => current && current[1] === 'c' && S.tokenize(lines[i], 'c').some((t) => t.k === 'str' && t.v.startsWith('/'));
+const hasRegex = (lines, i) => current && LANG.spec(current[1]).regex && S.tokenize(lines[i], current[1]).some((t) => t.k === 'str' && t.v.startsWith('/'));
 const isComment = (l, i, lines) => (lines && i !== undefined ? !isCodeLine(lines, i) : /^\s*(\/\/|\/?\*|#)/.test(l));
 const indentOf = (l) => l.match(/^\s*/)[0];
 const join = (lines) => lines.join('\n');
-const commentFor = (fam) => (fam === 'hash' ? '#' : '//');
+/** A comment in the file's own syntax: line comment if the language has one, else a block comment. */
+function commentFor(fam) {
+  const sp = LANG.spec(fam);
+  if (sp.line.length) return (t) => `${sp.line[0]} ${t}`;
+  const [o, c] = sp.block[0];
+  return (t) => `${o} ${t} ${c}`;
+}
 
 /** Replace the first match of `re` in a code (non-comment) line of the range, outside trailing comments. */
 function inRange(lines, [a, b], re, fn, opts = {}) {
@@ -50,11 +57,11 @@ const benign = {
   'add comments': (lines, [a, b], fam) => {
     const out = lines.slice();
     const c = commentFor(fam);
-    out.splice(b + 1, 0, `${indentOf(lines[b])}${c} reviewed: keep this`);
+    out.splice(b + 1, 0, `${indentOf(lines[b])}${c('reviewed: keep this')}`);
     let first = a; while (first <= b && isComment(out[first], first, lines)) first++;
     if (first > b) return null;
-    out[first] = `${out[first]}  ${c} important`;
-    out.splice(a, 0, `${indentOf(lines[a])}${c} NOTE: see the linked issue`);
+    out[first] = `${out[first]}  ${c('important')}`;
+    out.splice(a, 0, `${indentOf(lines[a])}${c('NOTE: see the linked issue')}`);
     return join(out);
   },
   'blank lines': (lines, [a, b], fam) => {
@@ -96,9 +103,10 @@ const benign = {
     return n ? join(out) : null;
   },
   'reindent': (lines, [a, b], fam) => {
-    if (fam === 'hash') return null; // indentation is meaningful in Python
-    const out = lines.slice();
-    for (let i = a; i <= b; i++) out[i] = out[i].replace(/^(\s*)/, (s) => s.replace(/\t/g, '    ') + '  ');
+    if (LANG.spec(fam).indent) return null; // indentation is meaningful (Python, YAML…)
+    const out = lines.slice(); const starts = tokenStarts(lines, fam);
+    // only lines where code starts: re-indenting the inside of a multi-line string changes the string
+    for (let i = a; i <= b; i++) if (starts.has(i) || !lines[i].trim()) out[i] = out[i].replace(/^(\s*)/, (s) => s.replace(/\t/g, '    ') + '  ');
     return join(out);
   },
 };
@@ -134,8 +142,8 @@ const harmful = {
     }
     return null;
   },
-  'swap and/or': (lines, range, fam) => inRange(lines, range, fam === 'hash' ? /\b(and|or)\b/ : /&&|\|\|/, (m) => ({ '&&': '||', '||': '&&', and: 'or', or: 'and' })[m[0]]),
-  'drop negation': (lines, range, fam) => inRange(lines, range, fam === 'hash' ? /\bnot\s+/ : /!(?![=])/, () => ''),
+  'swap and/or': (lines, range) => inRange(lines, range, /&&|\|\||\band\b|\bor\b/, (m) => ({ '&&': '||', '||': '&&', and: 'or', or: 'and' })[m[0]]),
+  'drop negation': (lines, range) => inRange(lines, range, /\bnot\s+|(?<![<!])!(?![=!-])/, () => ''),
   'change number': (lines, range) => inRange(lines, range, /(?<![\w.$])\d+(?![\w.])/, (m) => String(+m[0] + 1)),
   'change string': (lines, range) => inRange(lines, range, /(["'])([^"'\\\n]+)\1/, (m) => `${m[1]}${m[2]}_x${m[1]}`),
   'change field': (lines, range) => inRange(lines, range, /(?<!\.)\.([a-zA-Z_]\w{2,})\b(?!\s*\()/, (m) => `.${m[1]}Other`),

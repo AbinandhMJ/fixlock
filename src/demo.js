@@ -122,7 +122,7 @@ function run(opts = {}) {
     say();
     say(`Try it on your repo:  ${c.lime('npx @abinandhmj/fixlock init')}`);
     say(`Docs:                 ${c.cyan('https://abinandhmj.github.io/fixlock/')}`);
-    if (opts.keep) say(c.dim(`\nDemo repo kept at ${dir}. Explore it: cd "${dir}" && npx fixlock list`));
+    if (opts.keep) say(c.dim(`\nDemo repo kept at ${dir}. Explore it: cd "${dir}" && npx @abinandhmj/fixlock list`));
     return { dir, verdict: verdict && verdict.level, ciBlocked: ci.code === 1, ciApproved: ok.code === 0, autolocked: /auto-locked/.test(al.out), stagedWarned: /Heads up/.test(st.out) };
   } finally {
     if (!opts.keep) try { fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch { /* temp dir */ }

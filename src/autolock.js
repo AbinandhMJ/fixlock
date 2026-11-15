@@ -17,7 +17,12 @@ const DEFAULTS = {
   ignore: ['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', '.fixlock/', 'CHANGELOG.md', '.md', '.json', '.lock', '.svg', '.png', '.jpg',
     // files fixlock or AI tools generate: never lock these
     '.github/CODEOWNERS', '.github/pull_request_template.md', '.claude/', '.cursor/', '.vscode/', '.windsurf/', '.clinerules', '.roo/',
-    '.continue/', '.amazonq/', '.junie/', '.gemini/', '.codex/', '.aider.conf.yml', '.git/'],
+    '.continue/', '.amazonq/', '.junie/', '.gemini/', '.codex/', '.aider.conf.yml', '.git/',
+    // lockfiles, vendored and generated code, build output: nobody fixes bugs there by hand
+    'go.sum', '.lockb', 'gradle.lockfile', 'node_modules/', 'vendor/', 'third_party/', 'Pods/', 'dist/', 'build/', 'target/', 'out/',
+    '.next/', '.nuxt/', '.svelte-kit/', '__pycache__/', '.venv/', 'bin/Debug/', 'obj/', '.min.js', '.min.css', '.map', '.snap', '__snapshots__/',
+    '.g.dart', '.freezed.dart', '.pb.go', '_pb2.py', '_pb2_grpc.py', '.pb.cc', '.pb.h', '.pb.swift', '_generated.', '.generated.', '.designer.cs', '.Designer.cs',
+    'generated/', 'Generated/', '.gen.go', '_gen.go', '.d.ts.map'],
 };
 
 function options(cfg) { return { ...DEFAULTS, ...(cfg.autoLock || {}) }; }

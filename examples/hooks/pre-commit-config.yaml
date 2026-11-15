@@ -1,0 +1,9 @@
+# .pre-commit-config.yaml (pre-commit.com), for any language
+default_language_version:
+  node: system              # use the machine's Node.js 18+ instead of downloading one
+repos:
+  - repo: https://github.com/AbinandhMJ/fixlock
+    rev: v0.7.0
+    hooks:
+      - id: fixlock          # warns, never blocks
+      # - id: fixlock-strict # blocks the commit

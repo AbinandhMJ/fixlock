@@ -2,5 +2,12 @@
   { "name": "express", "lang": "JavaScript", "url": "https://github.com/expressjs/express.git", "sha": "43fca52d28a422c8be48fd489cbd4f2d6152bab6", "depth": 600 },
   { "name": "ky", "lang": "TypeScript", "url": "https://github.com/sindresorhus/ky.git", "sha": "3541888878c4d303a8bc2ad61815f4e048f55a5d", "depth": 400 },
   { "name": "requests", "lang": "Python", "url": "https://github.com/psf/requests.git", "sha": "3c7baaa05ab4aa49cc819ce3a819d260de19c157", "depth": 800 },
-  { "name": "cobra", "lang": "Go", "url": "https://github.com/spf13/cobra.git", "sha": "adbc8813901bba65827259daa8e22ff94ec1f30e", "depth": 600 }
+  { "name": "cobra", "lang": "Go", "url": "https://github.com/spf13/cobra.git", "sha": "adbc8813901bba65827259daa8e22ff94ec1f30e", "depth": 600 },
+  { "name": "gson", "lang": "Java", "url": "https://github.com/google/gson.git", "sha": "d938a10f7564f596603dd4e958bc9249fb2225b5", "depth": 600 },
+  { "name": "okhttp", "lang": "Kotlin", "url": "https://github.com/square/okhttp.git", "sha": "b6e74e58c01f5d787e3f628dda4a99e04d26f079", "depth": 500 },
+  { "name": "ripgrep", "lang": "Rust", "url": "https://github.com/BurntSushi/ripgrep.git", "sha": "178cc027e283fd965cb72d0a7395b219eada170c", "depth": 600 },
+  { "name": "rack", "lang": "Ruby", "url": "https://github.com/rack/rack.git", "sha": "da90464e3fa93e3cb49dc2d4ede798e6c6b70b4f", "depth": 600 },
+  { "name": "guzzle", "lang": "PHP", "url": "https://github.com/guzzle/guzzle.git", "sha": "f8aca40edffeae0ec508b92f4594766083c6e203", "depth": 600 },
+  { "name": "Newtonsoft.Json", "lang": "C#", "url": "https://github.com/JamesNK/Newtonsoft.Json.git", "sha": "52fa3aef1f2cadcd3a3f874251eddc98d3efbbaa", "depth": 600 },
+  { "name": "Alamofire", "lang": "Swift", "url": "https://github.com/Alamofire/Alamofire.git", "sha": "dea4bab91767a971d6e112bc955c6a82295589b7", "depth": 600 }
 ]

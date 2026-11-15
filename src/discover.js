@@ -21,17 +21,21 @@ const CAME_BACK = /\b(regress(ion|ed)?|came back|re-?fix(ed)?|still broken|broke
 const ISSUE_REF = /(#\d+\b|\b[A-Z][A-Z0-9]+-\d+\b|\bCU-[a-z0-9]+\b)/g;
 // Things that look like issue keys but aren't.
 const NOT_ISSUES = /^(UTF|ISO|SHA|RFC|ES|HTTP|TLS|SSL|AES|MD|RSA|ECMA|IEEE|UTC|GMT|X|Y|V|H|P|IPV|WCAG|OWASP|PEP|JSR|ECDSA|BASE|INT|UINT|FLOAT|COVID)-/i;
-const TEST_FILE = /(^|\/)(tests?|spec|__tests__)\/|\.(test|spec)\.[a-z]+$|_test\.(go|py|rb)$|(^|\/)test_[^/]+\.py$/i;
+// Test files, across ecosystems: test/ tests/ spec/ __tests__/ src/test/ e2e/ cypress/, *.test.* *.spec.*,
+// *_test.go|py|rb|exs|dart|cc|cpp, test_*.py, conftest.py, *Test(s).java|kt|cs|php|swift|scala, *Spec.*, *IT.java, *_spec.rb
+const TEST_FILE = /(^|\/)(tests?|spec|specs|__tests__|e2e|cypress|playwright|src\/test|[\w.]+\.Tests?)\/|\.(test|spec|e2e|cy)\.[a-z]+$|_(test|spec|unittest)\.[a-z]+$|(^|\/)(test_[^/]+|conftest)\.py$|(Tests?|Spec|Suite|IT)\.(java|kt|kts|cs|php|swift|scala|groovy|m|mm|dart)$/;
 
 // Code that typically exists because of a bug: checks, error handling, bounds, explicit conversions.
 const GUARDS = [
-  { re: /(===?|!==?)\s*(null|undefined|nil|None)\b|\bis (not )?None\b|\?\.|\?\?|(\(|\|\||&&)\s*!\s*[\w$.]+\s*(\)|\|\||&&)|\bif not \w+|\.isEmpty\(\)|\bOptional\b/, label: 'null/empty check' },
-  { re: /\b(try|catch|except|rescue|finally)\b|\.catch\(/, label: 'error handling' },
-  { re: /\b(throw|raise)\b|\breturn\s+(res\.status\(4\d\d|Err\(|errors?\.New|fmt\.Errorf)/, label: 'rejects bad input' },
-  { re: /(\.length|\blen\()\s*[<>=]=?|\b(Math\.(max|min)|clamp|bounds)\b|[<>]=?\s*0\b/, label: 'bounds check' },
-  { re: /\bparseInt\([^,)]+,\s*10\)|\bNumber\.isFinite\b|\bisNaN\b|\btoFixed\(|\bMath\.round\b|\bDecimal\b|\bBigInt\b/, label: 'numeric safety' },
-  { re: /\b(timezone|tz|utc|UTC|toISOString|Intl\.|locale|encodeURIComponent|escape|sanitize|trim\(\))\b/, label: 'format/encoding handling' },
-  { re: /\b(mutex|semaphore|debounce|throttle|idempot\w*|race|inFlight|isLocked|already(Sent|Charged|Processed|Running))\b/i, label: 'ordering/concurrency' },
+  { re: /(===?|!==?)\s*(null|undefined|nil|None|NULL)\b|\b(null|nil)\s*(===?|!==?)|\bis (not )?(None|null)\b|\?\.|\?\?|\?:|(\(|\|\||&&)\s*!\s*[\w$.]+\s*(\)|\|\||&&)|\bif not \w+|\.isEmpty\(\)|\bOptional\b|\.(is_none|is_some|is_empty|nil\?|blank\?|present\?|empty\?)\b|\bif let\b|\bguard let\b|\bisset\(|\bempty\(|\bis_null\(|IsNullOrEmpty|IsNullOrWhiteSpace|requireNonNull|\bIS (NOT )?NULL\b|\bCOALESCE\(|\bis_nil\b|\bunless \w+/i, label: 'null/empty check' },
+  { re: /\b(try|catch|except|rescue|finally|recover)\b|\.catch\(|\berr\s*!=\s*nil\b|\.map_err\(|\bResult<|\?\s*;|\btry\?|\{:error,|\bon_error\b|\bset -e\b|\|\|\s*(exit|return)\b/, label: 'error handling' },
+  { re: /\b(throw|raise|panic|abort)\b|\breturn\s+(res\.status\(4\d\d|Err\(|errors?\.New|fmt\.Errorf|http\.Error|BadRequest|NotFound|Forbidden|Unauthorized)|\bStatus(BadRequest|Forbidden|Unauthorized|NotFound)\b|\b(BAD_REQUEST|FORBIDDEN|UNAUTHORIZED)\b|\bexit [1-9]\b|ArgumentException|IllegalArgumentException|ValidationError|ValueError/, label: 'rejects bad input' },
+  { re: /(\.length|\.Length|\.Count\b|\.count\b|\.size\(\)|\.len\(\)|\b(len|count|size|length|strlen|sizeof)\([^()]*\))\s*[<>=!]=?|\b(Math\.(max|min)|clamp|bounds|saturating_\w+|checked_\w+|min\(|max\()|[<>]=?\s*0\b/, label: 'bounds check' },
+  { re: /\bparseInt\([^,)]+,\s*10\)|\bNumber\.isFinite\b|\bisNaN\b|\btoFixed\(|\bMath\.round\b|\bDecimal\b|\bBigInt\b|\bBigDecimal\b|\bRoundingMode\b|\bround\(|\bdecimal\.|\bmath\.isclose\b|\bf64::EPSILON\b/, label: 'numeric safety' },
+  { re: /\b(timezone|tz|utc|UTC|toISOString|Intl\.|locale|encodeURIComponent|escape|sanitize|trim\(\)|strip\(\)|normalize|ZoneId|ZonedDateTime|DateTimeOffset|time\.UTC|charset|encoding)\b/i, label: 'format/encoding handling' },
+  { re: /\b(mutex|semaphore|debounce|throttle|idempot\w*|race|inFlight|isLocked|already(Sent|Charged|Processed|Running)|synchronized|Mutex|RwLock|Arc<|atomic|Lock\(\)|lock\s*\(|@Transactional|FOR UPDATE|BEGIN TRANSACTION|SELECT .* FOR SHARE|once\.Do)\b/i, label: 'ordering/concurrency' },
+  { re: /\b(authorize|authorized|permission|isAdmin|is_admin|hasRole|has_role|can\?|@PreAuthorize|\[Authorize|csrf|xsrf|verify_token|login_required|requireAuth|ensureAuthenticated|canActivate|rate.?limit|sql.?injection|parameterized|prepare\()\b/i, label: 'access/security check' },
+  { re: /\*ngIf|\bv-if\b|\{#if\b|\{%-?\s*if\b|\bth:if\b|@if\s*\(|\bx-if\b|\bng-if\b|:disabled|\[disabled\]|\bdisabled=/, label: 'template condition' },
 ];
 
 const S = require('./structural');
@@ -190,4 +194,4 @@ function parseSelection(input, n) {
   return [...picked].sort((x, y) => x - y);
 }
 
-module.exports = { history, scoreCommits, guardsIn, discover, toLocks, parseSelection, confidence };
+module.exports = { TEST_FILE, history, scoreCommits, guardsIn, discover, toLocks, parseSelection, confidence };

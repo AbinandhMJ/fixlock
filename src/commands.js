@@ -13,6 +13,7 @@ const changelog = require('./changelog');
 const auto = require('./autolock');
 const stable = require('./stable');
 const discovery = require('./discover');
+const cli = require('./cli');
 
 const tty = process.stdout.isTTY && !process.env.NO_COLOR;
 const paint = (code) => (t) => (tty ? `\x1b[${code}m${t}\x1b[0m` : t);
@@ -40,11 +41,13 @@ async function cmdInit(args) {
   if (hooks.claude) console.log('  Claude Code hook: .claude/settings.json');
   if (mcpDone.length) console.log(`  MCP server connected for: ${mcpDone.map((r) => r.label).join(', ')}`);
   const userLevel = ['codex', 'windsurf'].filter((id) => agents.enabled(cfg).includes(id));
-  if (hooks.mcp && userLevel.length) console.log(`  ${userLevel.join(' / ')} users: run  npx fixlock setup ${userLevel.join(' ')}  on your own machine`);
+  if (hooks.mcp && userLevel.length) console.log(`  ${userLevel.join(' / ')} users: run  ${cli.human(s.root())} setup ${userLevel.join(' ')}  on your own machine`);
   console.log('\nCommit .fixlock/ and the generated files above so the whole team gets them.');
-  console.log('Every developer runs once:  npm i -D @abinandhmj/fixlock' + (hooks.git ? '  &&  npx fixlock install-hook' : ''));
-  console.log('Find the fixes you already have:  npx fixlock discover');
-  console.log('Lock a fix:  npx fixlock mark <file> <start>-<end> -m "why" --issue linear:ENG-12');
+  const run = cli.human(s.root());
+  if (fs.existsSync(path.join(s.root(), 'package.json'))) console.log('Every developer runs once:  npm i -D @abinandhmj/fixlock' + (hooks.git ? '  &&  npx fixlock install-hook' : ''));
+  else console.log(`Nothing to install: hooks and assistants run fixlock through npx (Node.js 18+).${hooks.git ? `  Each developer runs once:  ${run} install-hook` : ''}`);
+  console.log(`Find the fixes you already have:  ${run} discover`);
+  console.log(`Lock a fix:  ${run} mark <file> <start>-<end> -m "why" --issue linear:ENG-12`);
 }
 
 function cmdTeam(args) {
@@ -186,10 +189,18 @@ async function cmdCheck(args) {
   if (!staged) { try { for (const ch of g.changedFiles(base)) if (ch.status === 'R') renames[ch.from] = ch.file; } catch { /* no base */ } }
 
   const match = cfg.matching || {};
+  // Locks that don't record their look-alike siblings: count them in the base version of the file.
+  const goodRef = staged ? 'HEAD' : base;
+  const good = new Map();
+  const goodContent = (file) => {
+    if (!good.has(file)) good.set(file, g.git(['show', `${goodRef}:${file}`], { allowFail: true }));
+    return good.get(file);
+  };
   for (const lock of reg.locks) {
     const target = renames[lock.file] || lock.file;
     const content = read(target);
-    const v = L.verifyLock(lock, content, { mode: match.mode, file: target });
+    const before = lock.siblings === undefined && content !== null ? goodContent(lock.file) : undefined;
+    const v = L.verifyLock(lock, content, { mode: match.mode, file: target, before });
     if (v.status === 'changed') findings.push({ kind: 'lock', lock, file: target, missing: v.missing, renamed: [], copies: v.copies || null, deleted: content === null });
     else if (v.status === 'renamed' && match.renames !== 'allow') findings.push({ kind: 'lock', lock, file: target, missing: [], renamed: v.renames, deleted: false });
   }
@@ -253,12 +264,12 @@ async function cmdCheck(args) {
   }
 
   if (args.json) console.log(JSON.stringify({ base, staged, ok: !blocking.length, approvals: appr.source, findings: findings.map(({ lock, approvers, ...f }) => ({ ...f, lock: lock && lock.id, approvers: approvers && approvers.map(team.handle) })) }, null, 2));
-  else report(cfg, reg, findings, { base, staged, appr });
+  else report(cfg, reg, findings, { base, staged, appr, strict: !!args.strict });
   if (args.markdown) fs.writeFileSync(args.markdown, toMarkdown(cfg, findings, base));
   process.exitCode = blocking.length && !staged ? 1 : (blocking.length && args.strict ? 1 : 0);
 }
 
-function report(cfg, reg, findings, { base, staged, appr }) {
+function report(cfg, reg, findings, { base, staged, appr, strict }) {
   console.log(c.bold(`fixlock check  (${staged ? 'staged changes' : 'base ' + base}, ${reg.locks.length} locks)\n`));
   if (!findings.length) return console.log(c.green('✔ Clean — every locked fix and feature is intact, no working code rewritten.'));
   if (appr.error) console.log(c.yellow(`! Could not read PR approvals: ${appr.error}\n`));
@@ -277,7 +288,8 @@ function report(cfg, reg, findings, { base, staged, appr }) {
   }
   const b = findings.filter((f) => f.status === 'blocked').length;
   if (b && !staged) console.log(c.red(`\n✖ ${b} locked change(s) without approval.`));
-  if (b && staged) console.log(c.yellow(`\n! Heads up: ${b} locked change(s). The commit is allowed, but CI will ask for approval.`));
+  if (b && staged && strict) console.log(c.red(`\n✖ ${b} locked change(s): commit blocked (--strict). Restore the lines, or commit without the strict hook and get approval in the PR.`));
+  else if (b && staged) console.log(c.yellow(`\n! Heads up: ${b} locked change(s). The commit is allowed, but CI will ask for approval.`));
   if (findings.some((f) => f.kind === 'stable')) console.log(c.yellow(`${b ? '' : '\n'}! Existing working code is being rewritten — make sure that was intended and the team knows.`));
 }
 
@@ -305,11 +317,11 @@ function cmdSetup(args) {
   if (!names) {
     const T = require('./setup').TARGETS;
     console.log(c.bold('Connect an AI assistant to fixlock:\n'));
-    for (const [id, t] of Object.entries(T)) console.log(`  npx fixlock setup ${id.padEnd(12)} ${t.label}${t.scope === 'user' ? c.dim('  (writes your user config)') : ''}`);
-    console.log(`  npx fixlock setup all          every project-level one above`);
+    for (const [id, t] of Object.entries(T)) console.log(`  ${cli.human(s.root())} setup ${id.padEnd(12)} ${t.label}${t.scope === 'user' ? c.dim('  (writes your user config)') : ''}`);
+    console.log(`  ${cli.human(s.root())} setup all          every project-level one above`);
     return;
   }
-  if (!s.configExists()) throw new Error('fixlock is not set up in this repo yet. Run: npx fixlock init');
+  if (!s.configExists()) throw new Error(`fixlock is not set up in this repo yet. Run: ${cli.human(process.cwd())} init`);
   const { results, cmd } = require('./setup').setup(names, { includeUser: !!args.user });
   for (const r of results) {
     console.log(c.green(`✔ ${r.label}`));
@@ -349,6 +361,21 @@ async function cmdAutolock(args) {
     g.git(['add', '--', ...files]);
     g.git(['commit', '--no-verify', '-q', '-m', `chore(fixlock): lock ${locks.map((l) => l.id).join(', ')}`], { env: { ...process.env, FIXLOCK_IN_HOOK: '1' } });
     console.log(c.dim(`  committed: chore(fixlock): lock ${locks.map((l) => l.id).join(', ')}`));
+  }
+}
+
+/* ---------------- languages ---------------- */
+function cmdLanguages(args) {
+  const langs = require('./languages').list();
+  if (args.json) { console.log(JSON.stringify(langs, null, 2)); return; }
+  console.log(c.bold(`Structural matching: ${langs.length} languages and formats`) + c.dim('  (other files are matched as text)\n'));
+  for (const l of langs) {
+    const notes = [l.markup && 'templates', l.indent && 'indentation-aware', l.fold && 'case-insensitive'].filter(Boolean).join(', ');
+    console.log(`  ${l.id.padEnd(11)} ${l.files.join(' ')}${notes ? c.dim(`  (${notes})`) : ''}`);
+  }
+  if (args._[0]) {
+    const id = require('./languages').detect(args._[0]);
+    console.log(`\n${args._[0]} → ${id ? c.green(id) : c.yellow('text matching')}`);
   }
 }
 
@@ -437,7 +464,7 @@ function cmdTools(args) {
     if (found[t.id]) console.log(c.dim(`                       detected: ${found[t.id].join('; ')}`));
   }
   const missing = Object.keys(found).filter((id) => !on.has(id));
-  if (missing.length) console.log(c.yellow(`\nFound on this machine/repo but not enabled: ${missing.join(', ')}\n→ npx fixlock tools add ${missing.join(' ')}`));
+  if (missing.length) console.log(c.yellow(`\nFound on this machine/repo but not enabled: ${missing.join(', ')}\n→ ${cli.human(s.root())} tools add ${missing.join(' ')}`));
 }
 
 function writeCodeowners(quiet) {
@@ -466,6 +493,7 @@ module.exports = {
   tools: cmdTools,
   autolock: cmdAutolock,
   discover: cmdDiscover,
+  languages: cmdLanguages,
   detect: () => cmdTools({ _: ['list'] }),
   changelog: () => { console.log(c.green(`✔ ${path.relative(process.cwd(), changelog.update()) || 'CHANGELOG.md'} updated`)); },
   release: (args) => { const r = changelog.release(args._[0]); syncAgentFiles(true); console.log(c.green(`✔ ${r.version} (${r.date}) written to CHANGELOG.md`) + c.dim('  — commit it, then tag: git tag v' + r.version.replace(/^v/, ''))); },
