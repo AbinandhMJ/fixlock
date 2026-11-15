@@ -6,6 +6,8 @@ title: Accuracy benchmark
 
 How often does fixlock get it wrong? We locked real bug fixes from real projects, edited each lock in ways that do and don't change what the code does, and checked every verdict.
 
+For real bug fixes undone in full, as an AI port from older code would do, see the [Regression Bench](regression-bench.md).
+
 ## Results
 
 | | Text matching (≤ 0.5) | Structural matching (0.6+) |
