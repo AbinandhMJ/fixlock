@@ -55,6 +55,7 @@ export default defineConfig({
       ] },
       { text: 'Setup', items: [
         { text: 'CI setup', link: '/ci-setup' },
+        { text: 'GitHub App', link: '/github-app' },
         { text: 'Issue trackers', link: '/trackers' },
         { text: 'Examples', link: '/examples' },
       ] },

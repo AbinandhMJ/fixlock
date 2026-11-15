@@ -27,6 +27,9 @@ The check needs the full history. Fetch with `fetch-depth: 0` or fetch `main` ex
 
 ## GitHub Actions
 
+Prefer no workflow file at all? The [fixlock GitHub App](github-app.md) runs the same check on every pull request.
+
+
 The simplest setup uses the fixlock action, listed on GitHub Marketplace as [fixlock by Algotricz](https://github.com/marketplace/actions/fixlock-by-algotricz). It works in any repository (Python, Go, Java, .NET, PHP, Ruby, JS…), with no install step:
 
 ```yaml

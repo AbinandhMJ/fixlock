@@ -1,5 +1,4 @@
 'use strict';
-const g = require('./git');
 
 const lc = (s) => String(s || '').trim().toLowerCase();
 
@@ -12,7 +11,7 @@ function find(cfg, who) {
 
 /** The person running fixlock: FIXLOCK_USER (github/email) or git user.email. */
 function current(cfg) {
-  const id = process.env.FIXLOCK_USER || g.userEmail();
+  const id = process.env.FIXLOCK_USER || require('./git').userEmail();
   return find(cfg, id) || { name: id || 'unknown', github: null, emails: id ? [id] : [], role: 'developer', unknown: true };
 }
 

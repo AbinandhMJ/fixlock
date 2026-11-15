@@ -38,9 +38,7 @@ async function prApprovers(prArg) {
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'User-Agent': 'fixlock' },
     });
     if (!res.ok) throw new Error(`GitHub API ${res.status}`);
-    const latest = {};
-    for (const r of await res.json()) if (r.user && r.state !== 'COMMENTED') latest[r.user.login.toLowerCase()] = r.state;
-    return { approvers: new Set(Object.keys(latest).filter((u) => latest[u] === 'APPROVED')), source: `github ${slug}#${pr}`, pr, slug };
+    return { approvers: require('./evaluate').approvedBy(await res.json()), source: `github ${slug}#${pr}`, pr, slug };
   } catch (e) {
     return { approvers: new Set(), source: 'github', error: e.message };
   }

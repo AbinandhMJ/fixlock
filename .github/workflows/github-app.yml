@@ -1,0 +1,40 @@
+# Tests and deploys the fixlock GitHub App (app/) to Cloudflare Workers.
+# Deploys only when the repo has these secrets (Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN   (Cloudflare → My Profile → API Tokens → "Edit Cloudflare Workers" template)
+#   CLOUDFLARE_ACCOUNT_ID  (Cloudflare dashboard → Workers & Pages → Account ID)
+# The app's own secrets (APP_ID, PRIVATE_KEY, WEBHOOK_SECRET) live in Cloudflare, set once with
+# `npx wrangler secret put …`; deploying never touches them. See docs/github-app.md.
+name: GitHub App
+on:
+  push:
+    branches: [main]
+    paths: ['app/**', 'src/**', 'test/app.js', '.github/workflows/github-app.yml']
+  pull_request:
+    paths: ['app/**', 'src/**', 'test/app.js', '.github/workflows/github-app.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: github-app-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - run: node test/app.js
+      - name: Bundle check
+        working-directory: app
+        run: npx --yes wrangler@4 deploy --dry-run --outdir dist
+      - name: Deploy to Cloudflare Workers
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        working-directory: app
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "No CLOUDFLARE_API_TOKEN secret: skipping deploy."; exit 0; fi
+          npx --yes wrangler@4 deploy
