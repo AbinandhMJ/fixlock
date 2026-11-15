@@ -97,6 +97,7 @@ function pullRequest(n = 7, head = 'h1', author = 'abi') {
   const sign = (body, secret = 'shh') => 'sha256=' + crypto.createHmac('sha256', secret).update(body).digest('hex');
   ok(await verifySignature('shh', '{"a":1}', sign('{"a":1}')), 'valid signature accepted');
   ok(!(await verifySignature('shh', '{"a":1}', sign('{"a":2}'))), 'signature for another body rejected');
+  ok(await verifySignature('shh\n', '{"a":1}', sign('{"a":1}')) && await verifySignature('  shh ', '{"a":1}', sign('{"a":1}')), 'secret with a stray newline or spaces still matches');
 
   const gh = fakeGitHub();
   global.fetch = gh.handler;
@@ -118,6 +119,12 @@ function pullRequest(n = 7, head = 'h1', author = 'abi') {
   ok((await worker.fetch(new Request('https://app.test/'), env, { waitUntil() {} })).status === 200, 'GET / answers (health check)');
   ok((await send('pull_request', { action: 'opened' }, { secret: 'wrong' })).status === 401, 'bad signature → 401, nothing done');
   ok((await send('ping', { zen: 'hi' })).status === 200, 'ping → 200');
+  const r401 = await send('ping', {}, { secret: 'other' });
+  ok(r401.status === 401 && /don't match/.test(await r401.text()), 'mismatched secret: 401 that says the secrets differ');
+  const noSecret = await worker.fetch(new Request('https://app.test/webhook', { method: 'POST', body: '{}', headers: { 'x-github-event': 'ping', 'x-hub-signature-256': sign('{}') } }), { ...env, WEBHOOK_SECRET: '' }, { waitUntil() {} });
+  ok(noSecret.status === 500 && /not set/.test(await noSecret.text()), 'secret missing on the Worker: 500 that says so');
+  const noHeader = await worker.fetch(new Request('https://app.test/webhook', { method: 'POST', body: '{}', headers: { 'x-github-event': 'ping' } }), env, { waitUntil() {} });
+  ok(noHeader.status === 401 && /set a webhook secret on the GitHub App/.test(await noHeader.text()), 'no signature header: 401 that says the app has no secret');
   ok(gh.st.checkRuns.length === 0, 'no check runs yet');
 
   // 1. PR that doesn't touch the locked file → success, no comment

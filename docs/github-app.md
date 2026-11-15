@@ -96,7 +96,9 @@ The repository's **GitHub App** workflow tests the app on every PR. When `CLOUDF
 
 **No check appears.** On the app's settings page, open **Advanced → Recent Deliveries**. Each delivery should get a `202` response.
 
-- `401 Bad signature`: the webhook secret in GitHub and in the Worker don't match.
+- `401 Bad signature: … don't match`: the webhook secret on the GitHub App and the Worker's `WEBHOOK_SECRET` are different. Set the same new value in both: **Change secret** on the app's General tab, then `npx wrangler secret put WEBHOOK_SECRET` in `app/`. Paste the value itself, not the app's *client* secret from the Credentials tab.
+- `401 No X-Hub-Signature-256 header`: the GitHub App has no webhook secret. Set one under **Change secret**.
+- `500 WEBHOOK_SECRET is not set`: run `npx wrangler secret put WEBHOOK_SECRET` from the `app/` folder, so it goes to the `fixlock-app` Worker. `npx wrangler secret list` shows which secrets it has.
 - No deliveries at all: check that the app is subscribed to the Pull request event and installed on the repository.
 
 **The check says "could not check this pull request".** The error is in the check's details. A malformed `.fixlock/registry.json` or `config.json` is the usual cause. Run `npx wrangler tail` in `app/` to see the Worker's logs live.

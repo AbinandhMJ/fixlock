@@ -42,8 +42,16 @@ export default {
     if (request.method !== 'POST' || (url.pathname !== '/' && url.pathname !== '/webhook')) return new Response('Not found\n', { status: 404 });
 
     const body = await request.text();
-    if (!(await verifySignature(env.WEBHOOK_SECRET, body, request.headers.get('x-hub-signature-256')))) {
-      return new Response('Bad signature\n', { status: 401 });
+    // Say exactly what's wrong: GitHub shows this text under the delivery's Response tab.
+    if (!String(env.WEBHOOK_SECRET || '').trim()) {
+      console.error('fixlock: WEBHOOK_SECRET is not set on this Worker');
+      return new Response('WEBHOOK_SECRET is not set on this Worker. Run: npx wrangler secret put WEBHOOK_SECRET\n', { status: 500 });
+    }
+    const signature = request.headers.get('x-hub-signature-256');
+    if (!signature) return new Response('No X-Hub-Signature-256 header: set a webhook secret on the GitHub App\n', { status: 401 });
+    if (!(await verifySignature(env.WEBHOOK_SECRET, body, signature))) {
+      console.warn(`fixlock: signature mismatch (${request.headers.get('x-github-event')}, ${body.length} bytes)`);
+      return new Response("Bad signature: the GitHub App's webhook secret and this Worker's WEBHOOK_SECRET don't match\n", { status: 401 });
     }
     const event = request.headers.get('x-github-event');
     if (event === 'ping') return new Response('pong\n');
