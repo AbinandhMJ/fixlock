@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.1
+
+- Bundles fixlock 0.7.1.
+- CodeLens, hovers and the lock picker use VS Code's own lock and warning icons instead of emojis, so they follow your theme.
+
 ## 0.7.0
 
 - Bundles fixlock 0.7: structural matching for 63 languages and formats, including Angular, Vue, Svelte, Razor, Blade and Jinja templates, SQL, Terraform and YAML.
