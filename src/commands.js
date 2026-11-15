@@ -5,6 +5,7 @@ const g = require('./git');
 const s = require('./store');
 const team = require('./team');
 const L = require('./locks');
+const E = require('./evaluate');
 const init = require('./init');
 const trackers = require('./trackers');
 const { prApprovers } = require('./approvals');
@@ -190,31 +191,14 @@ async function cmdCheck(args) {
   const renames = {};
   if (!staged) { try { for (const ch of g.changedFiles(base)) if (ch.status === 'R') renames[ch.from] = ch.file; } catch { /* no base */ } }
 
-  const match = cfg.matching || {};
   // Locks that don't record their look-alike siblings: count them in the base version of the file.
   const goodRef = staged ? 'HEAD' : base;
-  const good = new Map();
-  const goodContent = (file) => {
-    if (!good.has(file)) good.set(file, g.git(['show', `${goodRef}:${file}`], { allowFail: true }));
-    return good.get(file);
-  };
-  for (const lock of reg.locks) {
-    const target = renames[lock.file] || lock.file;
-    const content = read(target);
-    const before = lock.siblings === undefined && content !== null ? goodContent(lock.file) : undefined;
-    const v = L.verifyLock(lock, content, { mode: match.mode, file: target, before });
-    if (v.status === 'changed') findings.push({ kind: 'lock', lock, file: target, missing: v.missing, renamed: [], copies: v.copies || null, deleted: content === null });
-    else if (v.status === 'renamed' && match.renames !== 'allow') findings.push({ kind: 'lock', lock, file: target, missing: [], renamed: v.renames, deleted: false });
-  }
+  const good = (file) => g.git(['show', `${goodRef}:${file}`], { allowFail: true });
+  findings.push(...await E.lockFindings(cfg, reg, { read, good, renames }));
 
   // Changes inside protected paths: warnings only.
   if (!staged && cfg.protectedPaths.length) {
-    try {
-      for (const ch of g.changedFiles(base)) {
-        const hit = cfg.protectedPaths.find((pp) => ch.file.startsWith(pp) || ch.from.startsWith(pp));
-        if (hit) findings.push({ kind: 'path', file: ch.file, msg: `${ch.file} changed (protected path ${hit})` });
-      }
-    } catch { /* no base */ }
+    try { findings.push(...E.pathFindings(cfg, g.changedFiles(base))); } catch { /* no base */ }
   }
 
   // Working-code guard: committed lines by others (or your own older ones) deleted/rewritten. Warning only.
@@ -243,21 +227,10 @@ async function cmdCheck(args) {
   }
 
   // Approvals: owner / lead approval on the PR clears a lock finding.
-  const renameWarnOnly = (f) => f.renamed && f.renamed.length && (match.renames || 'warn') === 'warn';
-  const needApproval = findings.filter((f) => f.kind === 'lock' && !renameWarnOnly(f) && (cfg.policies[f.lock.type] || cfg.policies.bug).approval !== 'none');
   let appr = { approvers: new Set(), source: 'none' };
-  if (!staged && needApproval.length) appr = await prApprovers(args.pr);
+  if (!staged && E.needingApproval(cfg, findings).length) appr = await prApprovers(args.pr);
   const author = staged ? '' : (prAuthor() || '').toLowerCase(); // no PR exists yet at commit time
-  for (const f of findings.filter((x) => x.kind === 'lock')) {
-    const pol = cfg.policies[f.lock.type] || cfg.policies.bug;
-    f.approvers = team.approvers(cfg, f.lock);
-    const gh = f.approvers.map((a) => (a.github || '').toLowerCase()).filter(Boolean);
-    if (pol.approval === 'none' || renameWarnOnly(f)) f.status = 'warn';
-    else if (gh.some((u) => appr.approvers.has(u))) f.status = 'approved';
-    else if (author && gh.includes(author)) f.status = 'approved';
-    else f.status = 'blocked';
-  }
-  const blocking = findings.filter((f) => f.status === 'blocked');
+  const blocking = E.applyApprovals(cfg, findings, { approvers: appr.approvers, author });
 
   // Tracker: reopen the linked issue for each blocked regression.
   if (args.notify && blocking.length) {
@@ -267,7 +240,7 @@ async function cmdCheck(args) {
 
   if (args.json) console.log(JSON.stringify({ base, staged, ok: !blocking.length, approvals: appr.source, findings: findings.map(({ lock, approvers, ...f }) => ({ ...f, lock: lock && lock.id, approvers: approvers && approvers.map(team.handle) })) }, null, 2));
   else report(cfg, reg, findings, { base, staged, appr, strict: !!args.strict });
-  if (args.markdown) fs.writeFileSync(args.markdown, toMarkdown(cfg, findings, base));
+  if (args.markdown) fs.writeFileSync(args.markdown, E.toMarkdown(cfg, findings, base));
   process.exitCode = blocking.length && !staged ? 1 : (blocking.length && args.strict ? 1 : 0);
 }
 
@@ -293,24 +266,6 @@ function report(cfg, reg, findings, { base, staged, appr, strict }) {
   if (b && staged && strict) console.log(c.red(`\n✖ ${b} locked change(s): commit blocked (--strict). Restore the lines, or commit without the strict hook and get approval in the PR.`));
   else if (b && staged) console.log(c.yellow(`\n! Heads up: ${b} locked change(s). The commit is allowed, but CI will ask for approval.`));
   if (findings.some((f) => f.kind === 'stable')) console.log(c.yellow(`${b ? '' : '\n'}! Existing working code is being rewritten — make sure that was intended and the team knows.`));
-}
-
-function toMarkdown(cfg, findings, base) {
-  if (!findings.length) return `### fixlock: all clear\nEvery locked fix and feature is intact (base \`${base}\`).\n`;
-  const blocked = findings.filter((f) => f.status === 'blocked');
-  let md = `### fixlock: ${blocked.length ? `${blocked.length} locked change(s) need approval` : 'review notes'}\n\n`;
-  for (const f of findings) {
-    if (f.kind === 'path') { md += `- **Warning:** ${f.msg}\n`; continue; }
-    if (f.kind === 'stable') { md += `- **Rewrite of working code:** ${f.msg}. Check this was intended.\n`; continue; }
-    const label = { blocked: 'Needs approval', approved: 'Approved', warn: 'Changed' }[f.status];
-    md += `- **${label}: ${f.lock.id}** ${f.lock.title} (${f.lock.type}) — \`${f.file}\`\n`;
-    if (f.lock.reason && f.lock.reason !== f.lock.title) md += `  - Why it exists: ${f.lock.reason}\n`;
-    if (f.missing.length) md += `  - Removed/rewritten: ${f.missing.map((l) => '`' + l.trim().replace(/`/g, "'") + '`').join(', ')}\n`;
-    if (f.renamed && f.renamed.length) md += `  - Renamed inside the lock (logic kept): ${f.renamed.map(([a, b]) => '`' + a + '` → `' + b + '`').join(', ')}\n`;
-    if (f.status === 'blocked') md += `  - **Approve this PR as ${f.approvers.map(team.handle).join(' or ')}** to accept the change, or restore the lines.\n`;
-    if (f.tracker) md += `  - Tracker: ${f.tracker}\n`;
-  }
-  return md;
 }
 
 /* ---------------- setup (AI assistants) ---------------- */

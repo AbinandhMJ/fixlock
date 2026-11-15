@@ -4,6 +4,14 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+### Added
+- **GitHub App** (`app/`): install it on a repository and every pull request gets the **fixlock** check and one sticky comment, with no workflow file. It runs on Cloudflare Workers, reads the code through GitHub's API, and takes locks and policies from the base branch, so a PR can't approve itself by editing them. Re-runs on new commits, reviews and the check's Re-run button. See [GitHub App](https://abinandhmj.github.io/fixlock/github-app).
+
+### Changed
+- `fixlock check`'s core (`src/evaluate.js`) works on file contents in memory and is shared by the CLI and the GitHub App, so both judge a PR the same way.
+
+## [0.7.1] - 2026-11-15
+
 ### Changed
 - The GitHub Action is listed on GitHub Marketplace as **fixlock by Algotricz**. `uses: AbinandhMJ/fixlock@…` is unchanged.
 

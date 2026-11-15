@@ -1,0 +1,14 @@
+# fixlock GitHub App on Cloudflare Workers.
+#   npx wrangler login
+#   npx wrangler secret put APP_ID          (the App ID from the GitHub App's settings page)
+#   npx wrangler secret put PRIVATE_KEY     (paste the whole .pem file)
+#   npx wrangler secret put WEBHOOK_SECRET  (the webhook secret you set on the GitHub App)
+#   npx wrangler deploy
+# See docs/github-app.md.
+name = "fixlock-app"
+main = "worker.mjs"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+[observability]
+enabled = true

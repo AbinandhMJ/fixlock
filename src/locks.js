@@ -1,5 +1,4 @@
 'use strict';
-const fs = require('fs');
 const path = require('path');
 const structural = require('./structural');
 
@@ -10,7 +9,7 @@ const toPosix = (f) => f.split(path.sep).join('/');
 /** Real path, following symlinks and Windows 8.3 short names; works for files that don't exist yet. */
 function realish(p) {
   const abs = path.resolve(p);
-  try { return fs.realpathSync.native(abs); } catch { /* not there yet */ }
+  try { return require('fs').realpathSync.native(abs); } catch { /* not there yet */ }
   const parent = path.dirname(abs);
   return parent === abs ? abs : path.join(realish(parent), path.basename(abs));
 }
@@ -111,6 +110,7 @@ function affected(reg, root, change, opts = {}) {
   const { rel, locks } = locksForFile(reg, root, change.file);
   if (!locks.length) return [];
   const abs = path.join(root, rel);
+  const fs = require('fs');
   const before = change.before ?? (fs.existsSync(abs) ? fs.readFileSync(abs, 'utf8') : '');
   const lines = before.split('\n');
   const out = [];
