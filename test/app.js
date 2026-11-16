@@ -54,7 +54,11 @@ function fakeGitHub() {
     if (!auth.startsWith('Bearer inst-')) return json({ message: 'no installation token' }, 401);
     if ((m = p.match(/^\/repos\/([^/]+\/[^/]+)\/contents\/(.+)$/))) {
       const k = `${m[1]}@${url.searchParams.get('ref')}:${decodeURIComponent(m[2])}`;
-      return k in st.files ? new Response(st.files[k]) : json({ message: 'Not Found' }, 404);
+      if (k in st.files) return new Response(st.files[k]);
+      const dir = `${k}/`;
+      const inDir = Object.keys(st.files).filter((f) => f.startsWith(dir) && !f.slice(dir.length).includes('/'));
+      if (inDir.length) return json(inDir.map((f) => ({ name: f.slice(dir.length), path: f.split(':').slice(1).join(':'), type: 'file' })));
+      return json({ message: 'Not Found' }, 404);
     }
     const page = (list) => { const n = +(url.searchParams.get('page') || 1); return json(list.slice((n - 1) * 100, n * 100)); };
     if ((m = p.match(/\/pulls\/(\d+)\/files$/))) return page(st.prFiles);
@@ -212,6 +216,24 @@ function pullRequest(n = 7, head = 'h1', author = 'abi') {
   gh.st.prs['7'] = { ...pullRequest(7, 'h3'), state: 'closed' };
   await send('pull_request_review', { action: 'submitted', installation: { id: 99 }, repository: { full_name: 'acme/shop' }, pull_request: { number: 7 } });
   ok(gh.st.checkRuns.length === n, 'labels, title edits, other events and closed PRs are ignored');
+
+  // 12. The repo runs the fixlock Action: the App stays quiet (one check, one comment per PR)
+  setFiles('acme/both@w0', { ...base, '.github/workflows/ci.yml': 'jobs: {}', '.github/workflows/fixlock.yml': 'jobs:\n  fixlock:\n    steps:\n      - uses: AbinandhMJ/fixlock@v0.7.1\n' });
+  setFiles('acme/both@w1', { ...base, 'pay.py': PAY_REVERTED });
+  gh.st.prFiles = [{ filename: 'pay.py', status: 'modified' }];
+  const before12 = [gh.st.checkRuns.length, gh.st.comments.length];
+  await send('pull_request', { action: 'opened', installation: { id: 99 }, repository: { full_name: 'acme/both' }, pull_request: { ...pullRequest(9, 'w1'), base: { ref: 'main', sha: 'w0', repo: { full_name: 'acme/both' } }, head: { ref: 'f', sha: 'w1', repo: { full_name: 'acme/both' } } } });
+  ok(gh.st.checkRuns.length === before12[0] && gh.st.comments.length === before12[1], 'repo already running the fixlock Action: the App posts no check and no comment');
+  setFiles('acme/other2@v0', { ...base, '.github/workflows/ci.yml': 'jobs:\n  t:\n    steps:\n      - uses: actions/checkout@v4\n' });
+  setFiles('acme/other2@v1', { ...base, 'pay.py': PAY_REVERTED });
+  await send('pull_request', { action: 'opened', installation: { id: 99 }, repository: { full_name: 'acme/other2' }, pull_request: { ...pullRequest(10, 'v1'), base: { ref: 'main', sha: 'v0', repo: { full_name: 'acme/other2' } }, head: { ref: 'f', sha: 'v1', repo: { full_name: 'acme/other2' } } } });
+  ok(lastCheck().head_sha === 'v1' && lastCheck().conclusion === 'failure', 'other workflows in the repo: the App still checks');
+
+  // 13. Nobody can approve: the owner has no GitHub username → the comment says so and how to fix it
+  setFiles('acme/nogh@n0', { ...base, '.fixlock/config.json': JSON.stringify({ team: [{ name: 'Ravi', github: null, emails: ['ravi@example.com'], role: 'lead' }] }) });
+  setFiles('acme/nogh@n1', { ...base, 'pay.py': PAY_REVERTED });
+  await send('pull_request', { action: 'opened', installation: { id: 99 }, repository: { full_name: 'acme/nogh' }, pull_request: { ...pullRequest(11, 'n1'), base: { ref: 'main', sha: 'n0', repo: { full_name: 'acme/nogh' } }, head: { ref: 'f', sha: 'n1', repo: { full_name: 'acme/nogh' } } } });
+  ok(lastCheck().conclusion === 'failure' && /has no GitHub username/.test(lastCheck().output.summary) && /fixlock team add --name "Ravi" --github <username>/.test(lastCheck().output.summary), 'owner without a GitHub username: the check explains why nobody can approve and how to fix it');
 
   console.log(`GITHUB APP PASS (${passed} checks)`);
 })().catch((e) => { console.error(e); console.error('GITHUB APP FAIL'); process.exit(1); });

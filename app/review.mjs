@@ -7,6 +7,15 @@ export const CHECK_NAME = 'fixlock';
 export const MARKER = '<!-- fixlock-app -->';
 const DOCS = 'https://abinandhmj.github.io/fixlock/';
 
+const ACTION = /uses:\s*['"]?abinandhmj\/fixlock@/i;
+
+/** Does the repo already run the fixlock GitHub Action? Then the App stays out of the way. */
+export async function usesAction(gh, repo, ref) {
+  const files = (await gh.list(repo, '.github/workflows', ref)).filter((f) => f.type === 'file' && /\.ya?ml$/i.test(f.name));
+  for (const f of files) if (ACTION.test((await gh.file(repo, f.path, ref)) || '')) return f.path;
+  return null;
+}
+
 /**
  * gh: client() from github.mjs (installation token). pr: the pull_request object from the webhook.
  * Returns { conclusion, title, summary, findings }.
@@ -66,6 +75,11 @@ function parse(text, name) {
 /** Run the review and publish it: the check run, and the PR comment when there's something to say. */
 export async function publish(gh, pr) {
   const repo = pr.base.repo.full_name;
+  // One check and one comment per PR: if the fixlock Action runs here, it reports; the App doesn't.
+  try {
+    const workflow = await usesAction(gh, repo, pr.base.sha);
+    if (workflow) return { skipped: `the fixlock GitHub Action runs in ${workflow}` };
+  } catch (e) { console.error('fixlock: could not read workflows', e); }
   let result;
   try {
     result = await reviewPullRequest(gh, pr);

@@ -85,6 +85,15 @@ export function client(token, api = 'https://api.github.com') {
       }
       return out;
     },
+    /** A directory's entries at a commit ([{ name, path, type }]), or [] if it isn't there. */
+    async list(repo, path, ref) {
+      const p = path.split('/').map(encodeURIComponent).join('/');
+      const res = await request('GET', `/repos/${repo}/contents/${p}?ref=${encodeURIComponent(ref)}`);
+      if (res.status === 404) return [];
+      if (!res.ok) throw new Error(`GitHub GET contents ${path}: ${res.status}`);
+      const items = await res.json();
+      return Array.isArray(items) ? items : [];
+    },
     /** A file's text at a commit, or null if it isn't there. */
     async file(repo, path, ref) {
       const p = path.split('/').map(encodeURIComponent).join('/');

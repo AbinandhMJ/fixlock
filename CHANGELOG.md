@@ -4,7 +4,17 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+### Fixed
+- `init --yes` now installs this machine's git hooks (the commit warning and auto-lock of `fix:`/`feat:` commits), the same as the interactive defaults. `--no-git-hooks` skips them.
+- `init --yes` fills in the lead's GitHub username from the GitHub CLI (`gh`) when it's logged in. When it can't, `init` says so and prints the `fixlock team add` command, because PR approvals are matched by GitHub username.
+- A locked change that nobody can approve on GitHub (the approvers have no GitHub username, or there's no owner or lead) now says so, with the command to fix it, in `fixlock check` and in the PR comment, instead of only asking for an approval that can't happen.
+- The GitHub App stays out of repositories whose base branch runs the fixlock GitHub Action, so a PR no longer gets two fixlock checks and two comments.
+- Locks owned by someone who isn't on the team show that person (their git email) instead of "unknown".
+- The GitHub Action's PR comment carries the same fixlock footer as the App's.
+- After `init` in a project that already has fixlock as a dependency, the setup note says `npm install`, not `npm i -D @abinandhmj/fixlock`.
+
 ### Added
+- **Regression Bench** (`bench/regression/`): 33 real bug fixes from 11 projects, each undone by reversing its own diff, plus harmless controls. fixlock catches 32 with no false alarms; on the same pull requests, Cubic (AI review) caught 21. Includes a harness to run any code-review bot on the same cases. See [Regression Bench](https://abinandhmj.github.io/fixlock/regression-bench).
 - **GitHub App** (`app/`): install it on a repository and every pull request gets the **fixlock** check and one sticky comment, with no workflow file. It runs on Cloudflare Workers, reads the code through GitHub's API, and takes locks and policies from the base branch, so a PR can't approve itself by editing them. Re-runs on new commits, reviews and the check's Re-run button. See [GitHub App](https://abinandhmj.github.io/fixlock/github-app).
 
 ### Changed

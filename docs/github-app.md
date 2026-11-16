@@ -39,7 +39,7 @@ To make the check mandatory, add **fixlock** as a required status check in the b
 | Tracker sync (`--notify`) | Not yet | Yes |
 | GitLab, Bitbucket, Jenkins | No | Use the CLI in your CI |
 
-Both can run together. They report the same result.
+Pick one per repository. If the base branch has a workflow that uses the fixlock Action, the App stays out of that repository's pull requests, so each PR gets one fixlock check and one comment.
 
 ## Run your own copy
 
@@ -104,3 +104,7 @@ The repository's **GitHub App** workflow tests the app on every PR. When `CLOUDF
 **The check says "could not check this pull request".** The error is in the check's details. A malformed `.fixlock/registry.json` or `config.json` is the usual cause. Run `npx wrangler tail` in `app/` to see the Worker's logs live.
 
 **The check is neutral.** The base branch has no `.fixlock/config.json`. Run `fixlock init` and merge it.
+
+**No check, and the repository uses the fixlock Action.** That's intended: the Action reports, and the App stays quiet. Remove the Action's workflow to use the App instead.
+
+**"has no GitHub username".** The lock's owner (or the lead, depending on the policy) has no GitHub username in `.fixlock/config.json`, so no GitHub approval can match them. Add it with `fixlock team add --name "…" --github <username>` and merge that.

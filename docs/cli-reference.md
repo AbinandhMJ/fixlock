@@ -17,7 +17,8 @@ A 60-second walkthrough in a throwaway repo: a fix is auto-locked, an AI edit th
 
 ### `init`
 Interactive setup: team, AI tools, rules, working-code guard, auto-lock, tracker, hooks. Safe to run again to change answers.
-- `--yes`: no questions; uses defaults (you as lead, detected AI tools, Claude hook).
+- `--yes`: no questions; uses the defaults: you as lead (with your GitHub username, if the GitHub CLI `gh` is logged in), detected AI tools, the Claude Code hook, MCP configs, and this machine's git hooks (commit warning and auto-lock). If it can't find your GitHub username, it says how to add it.
+- `--no-git-hooks`: skip the git hooks (for CI or scripted setups).
 - `--interactive`: ask questions even when input is piped.
 
 ### `team [list | add | remove]`
