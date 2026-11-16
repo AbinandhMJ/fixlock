@@ -1,0 +1,55 @@
+# Release bot. On every push to main it either:
+#   - opens or updates the "chore(release): X.Y.Z" pull request (version bump, CHANGELOG, docs), or
+#   - when that pull request has just been merged, tags vX.Y.Z and starts the Release workflow on it,
+#     which publishes to npm, PyPI and GitHub Releases (release.yml, trusted publishing).
+# The next version comes from Conventional Commits; see scripts/release-bot.js.
+#
+# One-time repo setting: Settings → Actions → General → Workflow permissions →
+#   "Allow GitHub Actions to create and approve pull requests".
+# A pull request opened by this bot doesn't start other workflows (a GitHub rule for its token),
+# so CI doesn't run on it; it only changes version numbers and notes, and CI runs again on main.
+name: Release bot
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write        # push the release branch and the tag
+  pull-requests: write   # open and edit the release PR
+  actions: write         # start the Release workflow
+concurrency:
+  group: release-bot
+  cancel-in-progress: false
+jobs:
+  release-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0   # tags and history, to find the last release
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Release PR merged? Tag it and publish
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v=$(node -p "require('./package.json').version")
+          if git rev-parse -q --verify "refs/tags/v$v" >/dev/null; then
+            echo "v$v is already released."
+          elif grep -q "^## \[$v\] - " CHANGELOG.md; then
+            git tag "v$v" && git push origin "v$v"
+            # A tag pushed with this token doesn't start workflows, so start the Release workflow directly.
+            gh workflow run release.yml --ref "v$v"
+            echo "Tagged v$v and started the Release workflow."
+            echo "released=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::package.json is at $v, which isn't tagged and has no CHANGELOG section. Release through the release PR."
+            exit 1
+          fi
+      - name: Open or update the release PR
+        if: steps.release.outputs.released != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/release-bot.js pr

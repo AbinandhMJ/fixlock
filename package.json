@@ -13,7 +13,7 @@
     "node": ">=18"
   },
   "scripts": {
-    "test": "node test/e2e.js && node test/structural.js && node test/languages.js && node test/discover.js && node test/cli.js && node test/bench.js && node test/trackers.js && node test/mcp.js && node test/demo.js && node test/app.js && node test/regression.js",
+    "test": "node test/e2e.js && node test/structural.js && node test/languages.js && node test/discover.js && node test/cli.js && node test/bench.js && node test/trackers.js && node test/mcp.js && node test/demo.js && node test/app.js && node test/regression.js && node test/release.js",
     "prepublishOnly": "node test/e2e.js && node test/structural.js && node test/languages.js && node test/discover.js && node test/cli.js && node test/bench.js && node test/trackers.js && node test/mcp.js && node test/demo.js",
     "docs:dev": "node scripts/llms.js && vitepress dev docs",
     "docs:build": "node scripts/llms.js && vitepress build docs",

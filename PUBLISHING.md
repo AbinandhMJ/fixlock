@@ -21,13 +21,16 @@ That's all. The workflow already has `id-token: write` and runs on Node 24, whic
 Once a trusted release has gone out, you can tighten the package's **Publishing access** to "Require two-factor authentication and disallow tokens". Trusted publishing keeps working, and stolen tokens can't publish. Delete any old `NPM_TOKEN` secret and npm automation tokens.
 
 ## Each release
-1. Add the changes under a new version heading in `CHANGELOG.md`.
-2. Run:
-   ```bash
-   npm version minor        # or patch / major: bumps package.json + server.json version, commits, tags
-   git push --follow-tags
-   ```
-3. The workflow tests, publishes to npm with provenance and creates the GitHub release.
+
+The release bot (`.github/workflows/release-bot.yml`) does it:
+
+1. Merge pull requests with Conventional Commit titles (`fix:`, `feat:`, `perf:`; `feat!:` for breaking changes). Write user-facing notes under `## [Unreleased]` in `CHANGELOG.md` as you go; if you don't, the bot writes them from the commit subjects.
+2. After each merge, the bot keeps one pull request open, **chore(release): X.Y.Z**, with the next version (from the commits), the CHANGELOG section, `server.json`, and the Action's `@vX.Y.Z` in the docs. Edit the notes in that PR if they need work.
+3. Merge it when you want to release. The bot tags `vX.Y.Z` and starts the Release workflow, which tests, publishes to npm with provenance, publishes the wheels to PyPI, and creates the GitHub release.
+
+One-time setting for the bot: **Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests**.
+
+Releasing by hand still works: `npm version minor && git push --follow-tags`.
 
 ## MCP Registry
 After the npm release, publish the server listing (once per version):

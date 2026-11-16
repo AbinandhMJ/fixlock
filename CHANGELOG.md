@@ -14,6 +14,7 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 - After `init` in a project that already has fixlock as a dependency, the setup note says `npm install`, not `npm i -D @abinandhmj/fixlock`.
 
 ### Added
+- **Release bot**: after each merge it keeps a `chore(release): X.Y.Z` pull request open with the next version (from Conventional Commits), the CHANGELOG section and the docs' `@vX.Y.Z`. Merging it tags the release and publishes to npm, PyPI and GitHub Releases.
 - **Regression Bench** (`bench/regression/`): 33 real bug fixes from 11 projects, each undone by reversing its own diff, plus harmless controls. fixlock catches 32 with no false alarms; on the same pull requests, Cubic (AI review) caught 21. Includes a harness to run any code-review bot on the same cases. See [Regression Bench](https://abinandhmj.github.io/fixlock/regression-bench).
 - **GitHub App** (`app/`): install it on a repository and every pull request gets the **fixlock** check and one sticky comment, with no workflow file. It runs on Cloudflare Workers, reads the code through GitHub's API, and takes locks and policies from the base branch, so a PR can't approve itself by editing them. Re-runs on new commits, reviews and the check's Re-run button. See [GitHub App](https://abinandhmj.github.io/fixlock/github-app).
 
