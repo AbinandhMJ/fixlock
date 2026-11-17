@@ -7,6 +7,7 @@
 - **See what's locked.** Locked lines get a lock in the gutter, a subtle highlight and a CodeLens with the lock's id, title and owner.
 - **Know why before you change it.** Hover a locked line to see why it exists, the linked issue, and who has to approve a change.
 - **Get warned while you type.** If your edit (or your AI's) changes what locked code does, the lock turns amber and a warning appears in Problems. Reformatting, comments and line wrapping don't count. A variable rename shows as a gentle note.
+- **Catch AI edits outside the editor.** When an AI assistant in a terminal (Claude Code, Codex, Aider) or a script rewrites locked code on disk, even in a file you don't have open, you get an alert right away with **Show changes**, and it shows in Problems. No waiting for the PR.
 - **Lock a fix in two clicks.** Select the lines, right-click, choose **fixlock: Lock selected lines** (`Ctrl+Alt+L` / `Cmd+Alt+L`), and give a reason.
 - **Copilot checks before editing.** The extension offers fixlock's MCP tools to GitHub Copilot agent mode, so Copilot asks fixlock before changing locked code.
 - **Run the CI check locally.** Use **fixlock: Check branch against main** to see what CI will say before you push.
@@ -44,6 +45,7 @@ Want to see it first? Run **fixlock: Run the 60-second demo**.
 |---|---|---|
 | `fixlock.highlightLockedLines` | `true` | Gutter icon and background on locked lines |
 | `fixlock.codeLens` | `true` | Lock id, title and owner above locked code |
+| `fixlock.notifyOutsideEdits` | `true` | Alert when locked code is changed on disk outside the editor (AI assistants in a terminal, scripts) |
 | `fixlock.mcp.enabled` | `true` | Offer fixlock's MCP tools to Copilot agent mode. Turn off if you already set up `.vscode/mcp.json` with `fixlock setup copilot` |
 | `fixlock.baseBranch` | `origin/main` | Base for the branch check |
 | `fixlock.cliPath` | | Use a specific `bin/fixlock.js` |

@@ -1,15 +1,20 @@
 'use strict';
 // fixlock for VS Code (and Cursor, Windsurf, VSCodium…): shows locked fixes and features in the editor,
-// warns as soon as an edit changes one, lets you lock a selection, and gives Copilot agent mode the
-// fixlock MCP tools so it checks before editing.
+// warns as soon as an edit changes one (typed in the editor, or written to disk by an AI assistant in a
+// terminal), lets you lock a selection, and gives Copilot agent mode the fixlock MCP tools so it checks
+// before editing.
 const vscode = require('vscode');
 const path = require('path');
+const fs = require('fs');
 const { execFile } = require('child_process');
 const model = require('./model');
 
 const states = new Map(); // repo root -> { root, cfg, locks }
 let diagnostics; let decoIntact; let decoChanged; let status; let codeLensEmitter;
 const timers = new Map();
+const diskWatchers = new Map(); // repo root -> FileSystemWatcher for its locked files
+const diskStatus = new Map();   // "root::file" -> Map(lock id -> status), as last seen on disk
+const savedAt = new Map();      // uri -> time the editor last saved it (those writes aren't "outside")
 
 /* ---------------- state ---------------- */
 function rootFor(uri) {
@@ -54,17 +59,73 @@ function refreshEditor(editor) {
 function refreshDiagnostics(doc) {
   if (doc.uri.scheme !== 'file') return;
   const { items } = analyzeDoc(doc);
+  diagnostics.set(doc.uri, toDiagnostics(items, (r) => toRange(doc, r)));
+}
+
+function toDiagnostics(items, rangeOf) {
   const out = [];
   for (const it of items) {
     const d = model.diagnostic(it);
     if (!d) continue;
-    const range = it.range ? toRange(doc, it.range) : new vscode.Range(0, 0, 0, 0);
+    const range = it.range ? rangeOf(it.range) : new vscode.Range(0, 0, 0, 0);
     const diag = new vscode.Diagnostic(range, d.message, d.severity === 'info' ? vscode.DiagnosticSeverity.Information : vscode.DiagnosticSeverity.Warning);
     diag.source = 'fixlock';
     diag.code = it.lock.id;
     out.push(diag);
   }
-  diagnostics.set(doc.uri, out);
+  return out;
+}
+
+/* ---------------- changes written to disk outside the editor ---------------- */
+// AI assistants in a terminal (Claude Code, Codex, Aider…) and scripts write files directly, often files
+// that aren't open. Watch the files that have locks; when a lock goes from intact to changed on disk and
+// the editor didn't save that file, say so right away instead of at the PR.
+function readDisk(file) { try { return fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n'); } catch { return ''; } }
+
+function scanDisk(root, rel, notify) {
+  const state = stateFor(root);
+  if (!state) return;
+  const key = `${root}::${rel}`;
+  const file = path.join(root, ...rel.split('/'));
+  let items;
+  try { items = model.analyze(state, rel, readDisk(file)); } catch (e) { console.error('fixlock:', e); return; }
+  if (!diskStatus.has(key)) diskStatus.set(key, new Map());
+  const changed = model.newlyChanged(diskStatus.get(key), items);
+  const uri = vscode.Uri.file(file);
+  const open = vscode.workspace.textDocuments.find((d) => d.uri.fsPath === uri.fsPath);
+  if (!open) diagnostics.set(uri, toDiagnostics(items, ([a, b]) => new vscode.Range(Math.max(0, a - 1), 0, Math.max(0, b - 1), Number.MAX_SAFE_INTEGER)));
+  const editorSaved = Date.now() - (savedAt.get(uri.toString()) || 0) < 3000;
+  if (!notify || editorSaved || !cfg().get('notifyOutsideEdits', true)) return;
+  for (const it of changed) {
+    vscode.window.showWarningMessage(model.outsideEditMessage(it, rel), 'Show changes', 'Why is it locked?').then((pick) => {
+      if (pick === 'Show changes') vscode.commands.executeCommand('git.openChange', uri).then(undefined, () => vscode.commands.executeCommand('vscode.open', uri));
+      if (pick === 'Why is it locked?') cmdWhy(uri, it.range ? it.range[0] : 1);
+    });
+  }
+}
+
+function watchDisk(root) {
+  if (diskWatchers.has(root)) { diskWatchers.get(root).dispose(); diskWatchers.delete(root); }
+  const state = stateFor(root);
+  const files = state ? model.lockedFiles(state) : [];
+  if (!files.length) return;
+  for (const rel of files) scanDisk(root, rel, false); // remember how things are now; no alerts at startup
+  const pattern = new vscode.RelativePattern(root, files.length === 1 ? files[0] : `{${files.join(',')}}`);
+  const w = vscode.workspace.createFileSystemWatcher(pattern);
+  const onDisk = (uri) => {
+    const rel = model.relPath(root, uri.fsPath);
+    clearTimeout(timers.get(`disk:${uri.toString()}`));
+    timers.set(`disk:${uri.toString()}`, setTimeout(() => scanDisk(root, rel, true), 400)); // agents write in bursts
+  };
+  w.onDidChange(onDisk); w.onDidCreate(onDisk); w.onDidDelete(onDisk);
+  diskWatchers.set(root, w);
+}
+
+function watchAllDisks() {
+  for (const f of vscode.workspace.workspaceFolders || []) {
+    const root = model.findRoot(f.uri.fsPath);
+    if (root) watchDisk(root);
+  }
 }
 
 function updateStatus(items) {
@@ -293,7 +354,12 @@ function activate(context) {
   codeLensProvider.onDidChangeCodeLenses = codeLensEmitter.event;
 
   const watcher = vscode.workspace.createFileSystemWatcher('**/.fixlock/{registry,config}.json');
-  const reload = (uri) => { const r = model.findRoot(path.dirname(path.dirname(uri.fsPath))); if (r) states.delete(r); else states.clear(); refreshAll(); };
+  const reload = (uri) => {
+    const r = model.findRoot(path.dirname(path.dirname(uri.fsPath)));
+    if (r) states.delete(r); else states.clear();
+    refreshAll();
+    if (r) watchDisk(r); else watchAllDisks(); // the set of locked files may have changed
+  };
   watcher.onDidChange(reload); watcher.onDidCreate(reload); watcher.onDidDelete(reload);
 
   const mcpChanged = registerMcp(context);
@@ -307,7 +373,9 @@ function activate(context) {
     vscode.window.onDidChangeVisibleTextEditors((eds) => eds.forEach(refreshEditor)),
     vscode.workspace.onDidOpenTextDocument(refreshDiagnostics),
     vscode.workspace.onDidChangeTextDocument((e) => scheduleRefresh(e.document)),
-    vscode.workspace.onDidCloseTextDocument((d) => diagnostics.delete(d.uri)),
+    vscode.workspace.onDidCloseTextDocument((d) => { diagnostics.delete(d.uri); const r = rootFor(d.uri); if (r) scanDisk(r, model.relPath(r, d.uri.fsPath), false); }),
+    vscode.workspace.onDidSaveTextDocument((d) => savedAt.set(d.uri.toString(), Date.now())),
+    vscode.workspace.onDidChangeWorkspaceFolders(() => watchAllDisks()),
     vscode.workspace.onDidChangeConfiguration((e) => { if (e.affectsConfiguration('fixlock')) refreshAll(); }),
     vscode.commands.registerCommand('fixlock.markSelection', cmdMark),
     vscode.commands.registerCommand('fixlock.why', cmdWhy),
@@ -321,8 +389,13 @@ function activate(context) {
     vscode.commands.registerCommand('fixlock.refresh', () => { states.clear(); refreshAll(); }),
   );
   refreshAll();
+  watchAllDisks();
 }
 
-function deactivate() { for (const t of timers.values()) clearTimeout(t); }
+function deactivate() {
+  for (const t of timers.values()) clearTimeout(t);
+  for (const w of diskWatchers.values()) w.dispose();
+  diskWatchers.clear();
+}
 
 module.exports = { activate, deactivate };

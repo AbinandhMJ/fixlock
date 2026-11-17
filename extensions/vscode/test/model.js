@@ -20,13 +20,20 @@ const FILE = 'src/guard.ts';
 const ORIG = 'export function guard(user, res) {\n  if (!user || user.role !== "admin") {\n    return res.status(403).json({ error: "forbidden" });\n  }\n}\n';
 fs.mkdirSync(path.join(root, '.fixlock'), { recursive: true });
 fs.mkdirSync(path.join(root, 'src'), { recursive: true });
+fs.writeFileSync(path.join(root, 'src', 'pay.ts'), 'export function charge(amount) {\n  if (amount <= 0) {\n    throw new Error("amount must be positive");\n  }\n  return amount;\n}\n');
 fs.writeFileSync(path.join(root, FILE), ORIG);
+const PAY = 'src/pay.ts'; // locked, never opened in the editor: changed on disk by "an AI in a terminal"
+const PAY_OK = 'export function charge(amount) {\n  if (amount <= 0) {\n    throw new Error("amount must be positive");\n  }\n  return amount;\n}\n';
+const PAY_UNDONE = 'export function charge(amount) {\n  return amount;\n}\n';
 fs.writeFileSync(path.join(root, '.fixlock', 'config.json'), JSON.stringify({
   team: [{ name: 'Abi', github: 'abinandhmj', emails: ['abi@example.com'], role: 'lead' }],
 }));
 fs.writeFileSync(path.join(root, '.fixlock', 'registry.json'), JSON.stringify({ version: 2, locks: [{
   id: 'FIX-001', type: 'bug', title: 'admin guard', reason: 'only admins may reach this endpoint', file: FILE,
   snippet: ['  if (!user || user.role !== "admin") {', '    return res.status(403).json({ error: "forbidden" });'], owner: 'abinandhmj', issue: 'linear:ENG-7',
+}, {
+  id: 'FIX-002', type: 'bug', title: 'no zero charges', reason: 'zero charges crashed the ledger', file: PAY,
+  snippet: ['  if (amount <= 0) {', '    throw new Error("amount must be positive");'], owner: 'abinandhmj',
 }] }));
 
 /* ---------- model ---------- */
@@ -34,7 +41,7 @@ const model = require('../model');
 ok(model.findRoot(path.join(root, 'src')) === root, 'findRoot walks up to the .fixlock folder');
 ok(model.findRoot(os.tmpdir()) === null || model.findRoot(os.tmpdir()) !== root, 'findRoot returns null outside a fixlock repo');
 const state = model.loadState(root);
-ok(state.locks.length === 1 && state.cfg.policies.bug.onEdit === 'ask' && state.cfg.matching.mode === 'structural', 'loadState merges defaults');
+ok(state.locks.length === 2 && state.cfg.policies.bug.onEdit === 'ask' && state.cfg.matching.mode === 'structural', 'loadState merges defaults');
 let items = model.analyze(state, FILE, ORIG);
 ok(items.length === 1 && items[0].status === 'intact' && items[0].range.join('-') === '2-3', 'analyze: intact lock and its lines', JSON.stringify(items));
 ok(items[0].owner === '@abinandhmj' && items[0].approvers.includes('@abinandhmj'), 'analyze: owner and approvers');
@@ -63,6 +70,8 @@ class Emitter { constructor() { this.l = []; this.event = (f) => { this.l.push(f
 class Range { constructor(a, b, c, d) { this.start = { line: a, character: b }; this.end = { line: c, character: d }; } }
 class Uri { constructor(p) { this.fsPath = p; this.scheme = 'file'; } toString() { return 'file://' + this.fsPath; } static file(p) { return new Uri(p); } static joinPath(u, ...p) { return new Uri(path.join(u.fsPath, ...p)); } }
 const listeners = {};
+const watchers = [];
+const warnings = [];
 const on = (name) => (f) => { (listeners[name] = listeners[name] || []).push(f); return { dispose() {} }; };
 let text = ORIG;
 const doc = { uri: Uri.file(path.join(root, FILE)), getText: () => text, lineCount: 6, isDirty: false };
@@ -82,12 +91,14 @@ const vscodeMock = {
     createTextEditorDecorationType: (o) => ({ o, dispose() {} }),
     createStatusBarItem: () => ({ show() { this.shown = true; }, hide() { this.shown = false; }, dispose() {} }),
     onDidChangeActiveTextEditor: on('active'), onDidChangeVisibleTextEditors: on('visible'),
-    showInformationMessage: async () => undefined, showWarningMessage: async () => undefined, showErrorMessage: async () => undefined,
+    showInformationMessage: async () => undefined, showWarningMessage: async (m) => { warnings.push(m); }, showErrorMessage: async () => undefined,
   },
+  RelativePattern: class { constructor(base, pattern) { this.base = base; this.pattern = pattern; } },
   workspace: {
     isTrusted: true, workspaceFolders: [{ uri: Uri.file(root) }], textDocuments: [doc],
     getConfiguration: () => ({ get: (k, d) => d }),
-    createFileSystemWatcher: () => ({ onDidChange() {}, onDidCreate() {}, onDidDelete() {}, dispose() {} }),
+    createFileSystemWatcher: (pattern) => { const w = { pattern, h: {}, onDidChange(f) { w.h.change = f; }, onDidCreate(f) { w.h.create = f; }, onDidDelete(f) { w.h.del = f; }, dispose() { w.disposed = true; } }; watchers.push(w); return w; },
+    onDidSaveTextDocument: on('save'),
     onDidOpenTextDocument: on('open'), onDidChangeTextDocument: on('change'), onDidCloseTextDocument: on('close'),
     onDidChangeConfiguration: on('config'), onDidChangeWorkspaceFolders: on('folders'), onDidGrantWorkspaceTrust: on('trust'),
     getWorkspaceFolder: () => ({ uri: Uri.file(root) }),
@@ -150,7 +161,32 @@ setTimeout(async () => {
   ok(!threw2, 'activates on editors without the MCP API (older VS Code, some forks)', threw2 && threw2.stack);
   vscodeMock.lm = saved;
 
+  // Locked code changed on disk outside the editor (an AI assistant in a terminal, a script)
+  const disk = watchers.find((w) => w.pattern && w.pattern.base === root && !w.disposed);
+  ok(disk && /src\/pay\.ts/.test(disk.pattern.pattern) && /src\/guard\.ts/.test(disk.pattern.pattern), 'watches the locked files on disk', JSON.stringify(watchers.map((w) => w.pattern)));
+  const payUri = Uri.file(path.join(root, PAY));
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  fs.writeFileSync(path.join(root, PAY), PAY_UNDONE);
+  disk.h.change(payUri);
+  await wait(500);
+  ok(warnings.length === 1 && /FIX-002 "no zero charges" in src\/pay\.ts was just changed outside the editor/.test(warnings[0]) && /@abinandhmj must approve/.test(warnings[0]), 'AI edit on disk to a closed file → alert naming the lock and who must approve', JSON.stringify(warnings));
+  ok((diags.get(payUri.toString()) || []).length === 1, 'and a warning in Problems, though the file is not open');
+  disk.h.change(payUri);
+  await wait(500);
+  ok(warnings.length === 1, 'still changed: no second alert');
+  fs.writeFileSync(path.join(root, PAY), PAY_OK);
+  disk.h.change(payUri);
+  await wait(500);
+  ok(warnings.length === 1 && (diags.get(payUri.toString()) || []).length === 0, 'restored: no alert, Problems cleared');
+  fs.writeFileSync(path.join(root, PAY), PAY_UNDONE.replace('return amount', 'return  amount'));
+  listeners.save.forEach((f) => f({ uri: payUri }));
+  disk.h.change(payUri);
+  await wait(500);
+  ok(warnings.length === 1 && (diags.get(payUri.toString()) || []).length === 1, 'saved by the editor itself: Problems updated, no "outside the editor" alert');
+  fs.writeFileSync(path.join(root, PAY), PAY_OK);
+
   ext.deactivate();
+  ok(disk.disposed, 'watchers disposed on deactivate');
   fs.rmSync(tmp, { recursive: true, force: true });
   console.log(failures ? `\n${failures} failure(s)` : '\nVSCODE EXTENSION PASS');
   process.exit(failures ? 1 : 0);
