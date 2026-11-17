@@ -46,7 +46,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - uses: AbinandhMJ/fixlock@v0.7.1
+      - uses: AbinandhMJ/fixlock@v0.8.0
         # with:
         #   notify: true            # update linked tracker issues (set LINEAR_API_KEY etc. as env)
         #   args: --json            # extra `fixlock check` flags
