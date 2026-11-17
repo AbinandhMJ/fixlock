@@ -10,6 +10,8 @@
 //   feat:                                           → next minor
 //   fix: / perf:                                    → next patch
 //   anything else (docs:, test:, chore:, ci:)       → no release
+// Commits scoped to parts that ship on their own (vscode: the extension's store releases; app: the
+// GitHub App's Cloudflare deploy; bench: not shipped) don't release the npm/PyPI package.
 // The CHANGELOG's "Unreleased" section becomes the release's section. If nobody wrote one, the bot
 // writes it from the commit subjects.
 'use strict';
@@ -20,6 +22,7 @@ const { execFileSync } = require('child_process');
 const ROOT = path.join(__dirname, '..');
 const BRANCH = 'release-bot/next';
 const EMPTY = '_No changes yet._';
+const OWN_RELEASES = new Set(['vscode', 'app', 'bench']);
 // Files that show the Action's version to users (the CHANGELOG keeps its history as it is).
 const VERSION_REFS = ['action.yml', 'docs/any-language.md', 'docs/ci-setup.md', 'examples/ci/github-action.yml', 'python/README.md'];
 
@@ -34,7 +37,7 @@ function parse(subject, body = '') {
 
 /** The next version after `current` for these commits ([{ subject, body }]), or null for no release. */
 function nextVersion(current, commits) {
-  const parsed = commits.map((c) => parse(c.subject, c.body)).filter(Boolean);
+  const parsed = commits.map((c) => parse(c.subject, c.body)).filter((p) => p && !OWN_RELEASES.has(p.scope));
   const [major, minor, patch] = current.split('.').map(Number);
   if (parsed.some((p) => p.breaking)) return major === 0 ? `0.${minor + 1}.0` : `${major + 1}.0.0`;
   if (parsed.some((p) => p.type === 'feat')) return `${major}.${minor + 1}.0`;

@@ -16,10 +16,12 @@ ok(parse('Merge pull request #3 from x/y') === null && parse('update readme') ==
 ok(nextVersion('0.7.1', [c('docs: typo'), c('test: more'), c('chore: deps')]) === null, 'only docs/test/chore → no release');
 ok(nextVersion('0.7.1', [c('fix: crash'), c('docs: x')]) === '0.7.2', 'fix → patch');
 ok(nextVersion('0.7.1', [c('perf: faster')]) === '0.7.2', 'perf → patch');
-ok(nextVersion('0.7.1', [c('fix: a'), c('feat(app): b')]) === '0.8.0', 'feat → minor');
+ok(nextVersion('0.7.1', [c('fix: a'), c('feat(cli): b')]) === '0.8.0', 'feat → minor');
 ok(nextVersion('0.7.1', [c('feat!: drop node 16')]) === '0.8.0', 'breaking on 0.x → minor');
 ok(nextVersion('1.4.2', [c('feat: a'), c('fix!: b')]) === '2.0.0', 'breaking on 1.x → major');
 ok(nextVersion('1.4.2', [c('feat: a')]) === '1.5.0', 'feat on 1.x → minor');
+ok(nextVersion('0.8.0', [c('feat(vscode): disk alerts'), c('fix(app): webhook'), c('feat(bench): more cases')]) === null, 'extension, app and bench changes ship on their own: no npm release');
+ok(nextVersion('0.8.0', [c('feat(vscode): x'), c('fix(cli): y')]) === '0.8.1', 'a package change alongside them still releases');
 
 // CHANGELOG: curated Unreleased notes are kept as the release's section
 const curated = '# Changelog\n\nIntro.\n\n## [Unreleased]\n\n### Fixed\n- Hand-written note.\n\n## [0.7.1] - 2026-11-15\n\n### Changed\n- Old.\n';
