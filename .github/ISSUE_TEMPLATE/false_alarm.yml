@@ -1,0 +1,59 @@
+name: False alarm
+description: fixlock flagged a change that was fine (or missed one that wasn't)
+labels: [false-alarm]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting this. False alarms are the first thing we fix, and a small example is enough.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What went wrong?
+      options:
+        - It flagged a change that kept the fix (false alarm)
+        - It missed a change that undid the fix
+    validations: { required: true }
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where did you see it?
+      options:
+        - PR check (GitHub App)
+        - PR check (GitHub Action or CI)
+        - Commit warning (git hook)
+        - Claude Code hook
+        - MCP (Cursor, Copilot, Codex, other)
+        - VS Code extension
+        - fixlock check on the command line
+    validations: { required: true }
+  - type: input
+    id: language
+    attributes:
+      label: Language
+      placeholder: "e.g. TypeScript, Python, Go"
+    validations: { required: true }
+  - type: textarea
+    id: lock
+    attributes:
+      label: The locked lines
+      description: The lines from `fixlock why <file>:<line>`. Remove anything private; a minimal example is fine.
+      render: text
+    validations: { required: true }
+  - type: textarea
+    id: change
+    attributes:
+      label: The change
+      description: The same lines after the change (or the diff).
+      render: diff
+    validations: { required: true }
+  - type: textarea
+    id: output
+    attributes:
+      label: What fixlock said
+      description: The check output, PR comment or hook message.
+  - type: input
+    id: version
+    attributes:
+      label: fixlock version
+      placeholder: "fixlock --version"
