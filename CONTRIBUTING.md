@@ -29,9 +29,6 @@ Tests are plain Node scripts that build throwaway git repos: `test/e2e.js` (CLI,
 
 ## Releasing (maintainers)
 
-```bash
-npm version minor   # or patch / major — updates package.json, commits, tags
-git push --follow-tags
-```
+Use Conventional Commit titles for pull requests (`fix:`, `feat:`, `perf:`, `feat!:` for breaking changes) and add user-facing notes under `## [Unreleased]` in `CHANGELOG.md`.
 
-The Release workflow tests, publishes to npm with provenance and creates the GitHub release from `CHANGELOG.md`.
+The release bot keeps a **chore(release): X.Y.Z** pull request open with the next version and notes. Merging it tags the release and publishes to npm, PyPI and GitHub Releases. See [PUBLISHING.md](PUBLISHING.md).
