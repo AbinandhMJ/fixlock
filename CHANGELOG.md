@@ -4,6 +4,10 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+_No changes yet._
+
+## [0.8.0] - 2026-11-17
+
 ### Fixed
 - `init --yes` now installs this machine's git hooks (the commit warning and auto-lock of `fix:`/`feat:` commits), the same as the interactive defaults. `--no-git-hooks` skips them.
 - `init --yes` fills in the lead's GitHub username from the GitHub CLI (`gh`) when it's logged in. When it can't, `init` says so and prints the `fixlock team add` command, because PR approvals are matched by GitHub username.
