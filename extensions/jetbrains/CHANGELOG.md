@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.1
+
+- Ready for IntelliJ IDEA 2026.3 and later: no longer uses platform APIs that JetBrains has deprecated or scheduled for removal.
+
 ## 0.9.0
 
 - First release for JetBrains IDEs (IntelliJ IDEA, PyCharm, WebStorm, PhpStorm, GoLand, Rider, Android Studio and the rest).

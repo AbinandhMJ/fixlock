@@ -1,7 +1,7 @@
 package com.algotricz.fixlock
 
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.configurations.PathEnvironmentVariableUtil
+import com.intellij.util.EnvironmentUtil
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.openapi.util.SystemInfo
 import java.io.File
@@ -36,7 +36,11 @@ object FixlockCli {
 
     fun findOnPath(name: String): File? {
         val names = if (SystemInfo.isWindows) listOf("$name.cmd", "$name.exe", "$name.bat", name) else listOf(name)
-        for (n in names) PathEnvironmentVariableUtil.findInPath(n)?.let { return it }
+        // The shell's PATH (also when the IDE was started from the Dock or Start menu).
+        val path = EnvironmentUtil.getValue("PATH") ?: System.getenv("PATH") ?: return null
+        for (dir in path.split(File.pathSeparator).filter { it.isNotBlank() }) {
+            for (n in names) File(dir, n).takeIf { it.isFile && it.canExecute() }?.let { return it }
+        }
         return null
     }
 

@@ -44,6 +44,7 @@ intellijPlatform {
             create(IntelliJPlatformType.IntellijIdeaCommunity, providers.gradleProperty("platformVersion"))
             create(IntelliJPlatformType.PyCharmCommunity, providers.gradleProperty("platformVersion"))
             create(IntelliJPlatformType.WebStorm, providers.gradleProperty("platformVersion"))
+            create(IntelliJPlatformType.IntellijIdeaUltimate, "2026.3") // newest release: catches APIs scheduled for removal
             recommended()
         }
     }
