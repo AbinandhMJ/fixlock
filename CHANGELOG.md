@@ -4,6 +4,10 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+_No changes yet._
+
+## [0.9.0] - 2026-11-18
+
 ### Added
 - **One-click setup with the GitHub App**: install it and every repository without `.fixlock/` gets a **Set up fixlock** pull request with the team (you as lead, recent committers as developers) and the past fixes fixlock is surest about already locked. Merge it and the check is on. The dashboard has a **Set up** button that opens the same PR. Needs the App's Contents permission raised to Read and write.
 - **`fixlock quickstart`**: sets fixlock up in one command with no questions: the team (you as lead, with your GitHub username from the GitHub CLI), the past fixes it is surest about locked, AI assistants connected, this machine's hooks, and the PR check workflow. Run it again in a teammate's clone, or in a repository the GitHub App set up, and it keeps the existing settings and only connects that machine.
