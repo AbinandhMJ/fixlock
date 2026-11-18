@@ -113,6 +113,14 @@ try {
   ok(wf.includes(`AbinandhMJ/fixlock@v${require('../package.json').version}`) && /pull_request_review/.test(wf), 'quickstart adds the PR check workflow, pinned to this version', wf);
   ok(fs.existsSync(path.join(qs, '.git', 'hooks', 'pre-commit')) && fs.existsSync(path.join(qs, 'CLAUDE.md')) && fs.existsSync(path.join(qs, '.claude', 'settings.json')), 'quickstart: git hooks, AI rules and the Claude Code hook');
   ok(/fixlock is set up/.test(qout) && /git add -A && git commit/.test(qout) && !/synced/.test(qout), 'quickstart prints one summary ending with the commit command', qout);
+  // status --json: what editor plugins read
+  let sj = JSON.parse(qrun('status', '--json'));
+  ok(sj.setUp && sj.locks.length === 1 && sj.locks[0].status === 'intact' && sj.locks[0].file === 'pay.py' && sj.locks[0].range && sj.locks[0].range[0] === 2 && sj.locks[0].owner === '@abi' && sj.locks[0].policy === 'ask', 'status --json: each lock, its state, lines and owner', JSON.stringify(sj));
+  const edited = execFileSync(process.execPath, [path.join(__dirname, '..', 'bin', 'fixlock.js'), 'status', 'pay.py', '--stdin', '--json'], { cwd: qs, encoding: 'utf8', env: genv, input: 'def pay(amount):\n    return charge(amount)\n' });
+  sj = JSON.parse(edited);
+  ok(sj.locks[0].status === 'changed' && sj.locks[0].range === null && sj.locks[0].missing.some((l) => /amount <= 0/.test(l)), 'status --stdin checks unsaved text (the guard removed: changed)', edited);
+  const reformatted = execFileSync(process.execPath, [path.join(__dirname, '..', 'bin', 'fixlock.js'), 'status', 'pay.py', '--stdin', '--json'], { cwd: qs, encoding: 'utf8', env: genv, input: 'def pay(amount):\n    if amount<=0 :  # never charge zero\n        raise ValueError( "amount must be positive" )\n    return charge(amount)\n' });
+  ok(JSON.parse(reformatted).locks[0].status === 'intact', 'status --stdin uses structural matching (spacing and a comment: still intact)', reformatted);
   const qout2 = qrun('quickstart');
   ok(/Already set up/.test(qout2) && /a workflow already runs fixlock/.test(qout2) && JSON.parse(fs.readFileSync(path.join(qs, '.fixlock', 'registry.json'), 'utf8')).locks.length === 1, 'quickstart again: keeps the config, adds no duplicate lock or workflow', qout2);
   // A repo set up by the GitHub App: quickstart adds hooks and AI rules, but no workflow (the App checks PRs)

@@ -149,6 +149,52 @@ function cmdRemove(args) {
 }
 
 /** fixlock why <file>[:line] — what is locked here and who owns it. */
+/**
+ * Machine-readable state of the locks, for editor plugins (JetBrains, and anything else that can't load
+ * fixlock as a library): `fixlock status [file] [--stdin] --json`. With --stdin, the file's content is read
+ * from standard input, so an editor can check unsaved changes. Same structural matching as `check`.
+ */
+function cmdStatus(args) {
+  let root;
+  try { root = s.root(); } catch { root = null; }
+  const out = (o) => { if (args.json) process.stdout.write(JSON.stringify(o) + '\n'); return o; };
+  if (!root || !s.configExists()) {
+    if (args.json) return out({ version: 1, setUp: false, gitRepo: !!root });
+    console.log(root ? 'fixlock is not set up in this repository. Run: fixlock quickstart' : 'Not a git repository.');
+    return;
+  }
+  const cfg = s.loadConfig();
+  const reg = s.loadRegistry();
+  const only = args._[0] ? L.repoRel(root, path.resolve(process.cwd(), args._[0])) : null;
+  const stdin = args.stdin && only ? fs.readFileSync(0, 'utf8') : null;
+  const files = [...new Set(reg.locks.map((l) => l.file))].filter((f) => !only || f === only);
+  const locks = [];
+  for (const file of files) {
+    const abs = path.join(root, file);
+    const text = stdin !== null ? stdin : fs.existsSync(abs) ? fs.readFileSync(abs, 'utf8') : null;
+    const lines = text === null ? [] : text.split('\n');
+    for (const lock of reg.locks.filter((l) => l.file === file)) {
+      const v = L.verifyLock(lock, text, { mode: (cfg.matching || {}).mode, file });
+      const at = text === null ? [] : L.locate(lock, lines);
+      locks.push({
+        id: lock.id, type: lock.type, title: lock.title, reason: lock.reason || '', file, issue: lock.issue || null, test: lock.test || null,
+        owner: team.handle(team.find(cfg, lock.owner)) || lock.owner || '',
+        approvers: team.approvers(cfg, lock).map(team.handle).filter(Boolean),
+        policy: (cfg.policies[lock.type] || cfg.policies.bug || {}).onEdit || null,
+        status: text === null ? 'missing' : v.status,
+        range: at.length ? [Math.min(...at), Math.max(...at)] : null,
+        renames: v.renames || [], missing: v.missing || [],
+      });
+    }
+  }
+  if (args.json) return out({ version: 1, setUp: true, root, project: cfg.project || null, locks });
+  if (!locks.length) return console.log(only ? `No locks in ${only}.` : 'No locks yet. Run: fixlock discover');
+  for (const l of locks) {
+    const mark = l.status === 'intact' ? c.green('✔') : l.status === 'renamed' ? c.yellow('~') : c.red('✖');
+    console.log(`${mark} ${c.bold(l.id)} ${l.file}${l.range ? `:${l.range[0]}-${l.range[1]}` : ''}  ${l.title}  ${c.dim(`${l.status} · owner ${l.owner}`)}`);
+  }
+}
+
 function cmdWhy(args) {
   const target = args._[0];
   if (!target) throw new Error('Usage: fixlock why <file>[:line[-line]]');
@@ -556,7 +602,7 @@ function writeCodeowners(quiet) {
 }
 
 module.exports = {
-  init: cmdInit, quickstart: cmdQuickstart, team: cmdTeam, mark: cmdMark, list: cmdList, remove: cmdRemove, why: cmdWhy, check: cmdCheck,
+  init: cmdInit, quickstart: cmdQuickstart, team: cmdTeam, mark: cmdMark, list: cmdList, remove: cmdRemove, why: cmdWhy, status: cmdStatus, check: cmdCheck,
   sync: () => syncAgentFiles(false),
   tools: cmdTools,
   autolock: cmdAutolock,
