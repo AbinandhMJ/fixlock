@@ -73,7 +73,7 @@ class LockSelectionAction : FixlockAction() {
         FixlockProjectService.getInstance(project).runInConsole(root, listOf("mark", rel, "$start-$end", "-m", why, "--type", if (type == 1) "feature" else "bug"), "fixlock mark") {
             // Re-check the file so the new lock shows up.
             com.intellij.openapi.application.ApplicationManager.getApplication().executeOnPooledThread {
-                val text = com.intellij.openapi.application.ReadAction.compute<String, RuntimeException> { doc.text }
+                val text = com.intellij.openapi.application.ApplicationManager.getApplication().runReadAction(com.intellij.openapi.util.Computable { doc.text })
                 val locks = FixlockProjectService.getInstance(project).check(File(vf.path), text) ?: return@executeOnPooledThread
                 com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater { if (!editor.isDisposed) FixlockEditorListener.paint(editor, locks) }
             }
