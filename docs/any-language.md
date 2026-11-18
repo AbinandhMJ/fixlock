@@ -66,7 +66,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - uses: AbinandhMJ/fixlock@v0.8.0
+      - uses: AbinandhMJ/fixlock@v0.9.0
 ```
 
 It compares the PR with its base branch, posts a comment listing the affected locks and who must approve, and fails until they do. Inputs: `base`, `comment` (default `true`), `notify` (update your issue tracker), `args` (extra `fixlock check` flags), `github-token`. Then require the **fixlock** check on `main` in **Settings → Branches**.

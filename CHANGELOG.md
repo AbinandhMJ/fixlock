@@ -4,6 +4,10 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+_No changes yet._
+
+## [0.9.0] - 2026-11-18
+
 ### Added
 - **VS Code extension 0.8.0**: when an AI assistant in a terminal (Claude Code, Codex, Aider) or a script changes locked code on disk, even in a file that isn't open, the editor alerts you right away (with **Show changes**) and lists it in Problems, instead of waiting for the commit or the PR. Also published to Open VSX for Cursor, Windsurf and VSCodium.
 
