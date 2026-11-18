@@ -2,9 +2,61 @@
 // pull request, with nothing to install in the repository except its .fixlock/ folder.
 //
 // Secrets (wrangler secret put …): APP_ID, PRIVATE_KEY (the app's .pem), WEBHOOK_SECRET.
-// Optional var: GITHUB_API (GitHub Enterprise Server API URL).
+// Team dashboard (/dashboard), optional: CLIENT_ID, CLIENT_SECRET, SESSION_SECRET.
+// Optional vars: GITHUB_API / GITHUB_WEB (GitHub Enterprise Server API and web URLs).
 import { verifySignature, installationClient } from './github.mjs';
 import { publish, CHECK_NAME } from './review.mjs';
+import * as session from './session.mjs';
+import * as pages from './pages.mjs';
+import { visibleRepos, cachedSummary } from './dashboard.mjs';
+
+const SECURITY = {
+  'content-type': 'text/html; charset=utf-8',
+  'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
+  'x-content-type-options': 'nosniff',
+  'referrer-policy': 'same-origin',
+  'cache-control': 'private, no-store',
+};
+const html = (body, status = 200) => new Response(body, { status, headers: SECURITY });
+
+/** Run tasks with at most `n` at a time. */
+async function limit(n, items, fn) {
+  const out = new Array(items.length);
+  let i = 0;
+  await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => { while (i < items.length) { const k = i++; out[k] = await fn(items[k]); } }));
+  return out;
+}
+
+/** The team dashboard: /dashboard, /dashboard/<owner>/<repo>, /login, /auth/callback, /logout. */
+async function dashboard(request, env, url) {
+  const p = url.pathname;
+  if (p === '/logout') return session.logout();
+  if (!session.configured(env)) return html(pages.landing(false), 503);
+  if (p === '/login') return session.login(request, env, url.searchParams.get('next') || '/dashboard');
+  if (p === '/auth/callback') return session.callback(request, env);
+  const user = await session.currentUser(request, env);
+  if (!user) return html(pages.landing(true), 401);
+
+  let groups;
+  try { groups = await visibleRepos(env, user.token); } catch (e) {
+    if (/: 401/.test(e.message)) return session.login(request, env, p); // token expired or revoked: sign in again
+    throw e;
+  }
+  const fresh = url.searchParams.get('refresh') === '1';
+  const m = p.match(/^\/dashboard\/([^/]+)\/([^/]+)\/?$/);
+  if (m) {
+    const full = `${decodeURIComponent(m[1])}/${decodeURIComponent(m[2])}`.toLowerCase();
+    for (const g of groups) {
+      const repo = g.repos.find((r) => r.full_name.toLowerCase() === full);
+      if (repo) return html(pages.repoPage(user, await cachedSummary(env, g.installation, repo, fresh)));
+    }
+    return html(pages.layout('Not found', '<h1>Not found</h1><p>This repository doesn\'t exist, the fixlock GitHub App isn\'t installed on it, or you don\'t have access to it.</p>', user), 404);
+  }
+  if (p !== '/dashboard' && p !== '/dashboard/') return new Response('Not found\n', { status: 404 });
+  const withSummaries = [];
+  for (const g of groups) withSummaries.push({ account: g.account, summaries: await limit(4, g.repos, (r) => cachedSummary(env, g.installation, r, fresh)) });
+  return html(pages.overview(user, withSummaries));
+}
 
 const PR_ACTIONS = new Set(['opened', 'reopened', 'synchronize', 'ready_for_review']);
 const REVIEW_ACTIONS = new Set(['submitted', 'dismissed', 'edited']);
@@ -37,7 +89,13 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (request.method === 'GET') {
-      return new Response('fixlock GitHub App is running. https://abinandhmj.github.io/fixlock/github-app\n', { headers: { 'content-type': 'text/plain' } });
+      if (/^\/(dashboard|login|logout|auth\/callback)(\/|$)/.test(url.pathname)) {
+        try { return await dashboard(request, env, url); } catch (e) {
+          console.error('fixlock dashboard:', e);
+          return html(pages.layout('Error', `<h1>Something went wrong</h1><p>${pages.esc(String(e.message || e).slice(0, 300))}</p><p><a href="/dashboard">Try again</a></p>`), 500);
+        }
+      }
+      return new Response('fixlock GitHub App is running. Team dashboard: /dashboard · https://abinandhmj.github.io/fixlock/github-app\n', { headers: { 'content-type': 'text/plain' } });
     }
     if (request.method !== 'POST' || (url.pathname !== '/' && url.pathname !== '/webhook')) return new Response('Not found\n', { status: 404 });
 
