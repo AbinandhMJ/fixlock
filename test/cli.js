@@ -93,6 +93,31 @@ try {
   run('install-hook');
   const pre = fs.readFileSync(path.join(py, '.git', 'hooks', 'pre-commit'), 'utf8');
   ok(pre.includes(`${scoped} check --staged`), 'git pre-commit hook uses the scoped command', pre);
+  // quickstart: one command, no questions, in a GitHub repo with a past fix
+  const qs = path.join(tmp, 'qs');
+  fs.mkdirSync(qs);
+  const genv = { ...process.env, NO_COLOR: '1', FIXLOCK_GITHUB_LOGIN: 'abi', GIT_AUTHOR_NAME: 'Abi', GIT_AUTHOR_EMAIL: 'abi@x.com', GIT_COMMITTER_NAME: 'Abi', GIT_COMMITTER_EMAIL: 'abi@x.com' };
+  const gq = (...a) => execFileSync('git', a, { cwd: qs, env: genv, encoding: 'utf8' });
+  gq('init', '-q'); gq('config', 'user.email', 'abi@x.com'); gq('config', 'user.name', 'Abi'); gq('remote', 'add', 'origin', 'git@github.com:acme/shop.git');
+  fs.writeFileSync(path.join(qs, 'pay.py'), 'def pay(amount):\n    return charge(amount)\n');
+  gq('add', '.'); gq('commit', '-qm', 'init');
+  fs.writeFileSync(path.join(qs, 'pay.py'), 'def pay(amount):\n    if amount <= 0:\n        raise ValueError("amount must be positive")\n    return charge(amount)\n');
+  fs.mkdirSync(path.join(qs, 'tests')); fs.writeFileSync(path.join(qs, 'tests', 'test_pay.py'), 'def test_zero():\n    pass\n');
+  gq('add', '.'); gq('commit', '-qm', 'fix: zero charge crashed the ledger (#12)');
+  const qrun = (...a) => execFileSync(process.execPath, [path.join(__dirname, '..', 'bin', 'fixlock.js'), ...a], { cwd: qs, encoding: 'utf8', env: genv });
+  const qout = qrun('quickstart');
+  const qreg = JSON.parse(fs.readFileSync(path.join(qs, '.fixlock', 'registry.json'), 'utf8'));
+  ok(qreg.locks.length === 1 && qreg.locks[0].file === 'pay.py', 'quickstart locks the past fix it is sure about', qout);
+  ok(JSON.parse(fs.readFileSync(path.join(qs, '.fixlock', 'config.json'), 'utf8')).team[0].github === 'abi', 'quickstart: lead with GitHub username');
+  const wf = fs.readFileSync(path.join(qs, '.github', 'workflows', 'fixlock.yml'), 'utf8');
+  ok(wf.includes(`AbinandhMJ/fixlock@v${require('../package.json').version}`) && /pull_request_review/.test(wf), 'quickstart adds the PR check workflow, pinned to this version', wf);
+  ok(fs.existsSync(path.join(qs, '.git', 'hooks', 'pre-commit')) && fs.existsSync(path.join(qs, 'CLAUDE.md')) && fs.existsSync(path.join(qs, '.claude', 'settings.json')), 'quickstart: git hooks, AI rules and the Claude Code hook');
+  ok(/fixlock is set up/.test(qout) && /git add -A && git commit/.test(qout) && !/synced/.test(qout), 'quickstart prints one summary ending with the commit command', qout);
+  const qout2 = qrun('quickstart');
+  ok(/Already set up/.test(qout2) && /a workflow already runs fixlock/.test(qout2) && JSON.parse(fs.readFileSync(path.join(qs, '.fixlock', 'registry.json'), 'utf8')).locks.length === 1, 'quickstart again: keeps the config, adds no duplicate lock or workflow', qout2);
+  let notGit = '';
+  try { execFileSync(process.execPath, [path.join(__dirname, '..', 'bin', 'fixlock.js'), 'quickstart'], { cwd: fs.mkdtempSync(path.join(os.tmpdir(), 'nogit-')), encoding: 'utf8', stdio: 'pipe', env: genv }); } catch (e) { notGit = String(e.stderr); }
+  ok(/inside a git repository/.test(notGit), 'quickstart outside git: says to git init', notGit);
 } finally {
   fs.rmSync(tmp, { recursive: true, force: true });
 }
