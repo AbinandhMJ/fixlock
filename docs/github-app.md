@@ -7,7 +7,8 @@ title: GitHub App
 The fixlock GitHub App runs the same check as [CI](ci-setup.md) on every pull request, with no workflow file in the repository. Install it on a repo that has a `.fixlock/` folder, and each PR gets:
 
 - a **fixlock** check that fails when a locked fix or feature is changed without the owner's approval, and passes again as soon as they approve the PR;
-- one PR comment that explains which lock changed, why it exists and who must approve. The comment is edited in place as the PR changes, and clean PRs don't get one.
+- one PR comment that explains which lock changed, why it exists and who must approve. The comment is edited in place as the PR changes, and clean PRs don't get one;
+- a [team dashboard](dashboard.md) at `/dashboard` with every lock, blocked PR and recent catch across your repositories.
 
 It reads the code through GitHub's API. Nothing is checked out or stored, and the only code it reads is the files a PR changes plus the `.fixlock/` folder.
 
