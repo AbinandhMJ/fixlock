@@ -39,18 +39,21 @@ Locks are created automatically from `fix:` / `feat:` commits, and a **working-c
 
 ## Quick start
 
-```bash
-npm i -D @abinandhmj/fixlock
-npx fixlock init                         # team, rules, AI assistants, hooks
-npx fixlock autolock --all --dry-run     # see which past fixes it would lock
-```
+Pick one. Each takes about a minute and asks no questions.
 
-No Node.js? Install the standalone binary from [PyPI](https://pypi.org/project/fixlock/) and drop the `npx`:
+**On GitHub, one click.** [Install the fixlock GitHub App](https://github.com/apps/fixlock-by-algotricz/installations/new) on your repositories. Each one gets a **Set up fixlock** pull request with your team and the past fixes worth locking already filled in. Merge it and every PR is checked.
+
+**In your terminal, one command.** In any git repository:
 
 ```bash
-pipx install fixlock                     # or: uv tool install fixlock · pip install fixlock
-fixlock init
+npx @abinandhmj/fixlock quickstart       # no Node.js? pipx install fixlock && fixlock quickstart
 ```
+
+It sets up the team, locks the past fixes it's surest about, connects your AI assistants, installs the commit hooks and adds the PR check. Then commit and push.
+
+**In VS Code or Cursor.** Install the [fixlock extension](https://marketplace.visualstudio.com/items?itemName=algotricz.fixlock), open your repository and click **Set up fixlock**.
+
+Want to choose every setting yourself? `npx fixlock init` asks about team, roles, policies and hooks one by one.
 
 **Any language.** Structural matching reads [63 languages and formats](https://abinandhmj.github.io/fixlock/languages): TypeScript, Python, Java, Kotlin, Go, Rust, C#, Swift, PHP, Ruby, SQL, Terraform, YAML, Angular/Vue/Svelte templates and more. Not a JavaScript project? Use `pipx install fixlock` (or `npx @abinandhmj/fixlock init`) and the [GitHub Action or pre-commit hook](https://abinandhmj.github.io/fixlock/any-language).
 

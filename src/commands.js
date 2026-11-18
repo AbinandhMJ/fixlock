@@ -448,15 +448,14 @@ async function cmdQuickstart(args) {
   const fresh = !s.configExists();
   console.log(c.bold('fixlock quickstart') + c.dim('  · no questions; change anything later in .fixlock/config.json\n'));
 
-  if (fresh) {
-    await cmdInit({ ...args, yes: true, quiet: true });
-    const cfg = s.loadConfig();
-    done.push(`Team: ${cfg.team.map((m) => `${m.name}${m.github ? ` (@${m.github})` : ''}, ${m.role}`).join('; ') || 'none yet'}`);
-    done.push(`AI assistants: ${agents.enabled(cfg).join(', ')} get the lock rules${s.loadConfig().aiTools.includes('claude-code') ? '; Claude Code also gets a hook that asks before editing locked lines' : ''}`);
-    if (!args['no-git-hooks']) done.push('This machine: commit warning and auto-lock of fix:/feat: commits');
-  } else {
-    done.push('Already set up: kept your .fixlock/config.json');
-  }
+  // init --yes keeps an existing config (team, policies) and only fills in what's missing, so this also
+  // connects a clone of a repo someone else set up (for example through the GitHub App's setup PR).
+  await cmdInit({ ...args, yes: true, quiet: true });
+  const setUp = s.loadConfig();
+  if (!fresh) done.push('Already set up: kept your .fixlock/config.json');
+  done.push(`Team: ${setUp.team.map((m) => `${m.name}${m.github ? ` (@${m.github})` : ''}, ${m.role}`).join('; ') || 'none yet'}`);
+  done.push(`AI assistants: ${agents.enabled(setUp).join(', ')} get the lock rules${agents.enabled(setUp).includes('claude-code') ? '; Claude Code also gets a hook that asks before editing locked lines' : ''}`);
+  if (!args['no-git-hooks']) done.push('This machine: commit warning and auto-lock of fix:/feat: commits');
 
   // Lock the past fixes fixlock is most sure about. The rest are a `discover` away.
   const cfg = s.loadConfig();
@@ -480,7 +479,8 @@ async function cmdQuickstart(args) {
   // The PR check.
   let ci = 'skipped (--no-ci)';
   if (!args['no-ci']) {
-    if (hasFixlockWorkflow()) ci = 'a workflow already runs fixlock';
+    if (s.loadConfig().prCheck === 'github-app') ci = 'the fixlock GitHub App';
+    else if (hasFixlockWorkflow()) ci = 'a workflow already runs fixlock';
     else if (!onGithub() && !args.ci) ci = 'not on GitHub: add `fixlock check` to your CI (see the CI setup docs)';
     else {
       const file = path.join(s.root(), '.github', 'workflows', 'fixlock.yml');

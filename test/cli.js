@@ -115,6 +115,15 @@ try {
   ok(/fixlock is set up/.test(qout) && /git add -A && git commit/.test(qout) && !/synced/.test(qout), 'quickstart prints one summary ending with the commit command', qout);
   const qout2 = qrun('quickstart');
   ok(/Already set up/.test(qout2) && /a workflow already runs fixlock/.test(qout2) && JSON.parse(fs.readFileSync(path.join(qs, '.fixlock', 'registry.json'), 'utf8')).locks.length === 1, 'quickstart again: keeps the config, adds no duplicate lock or workflow', qout2);
+  // A repo set up by the GitHub App: quickstart adds hooks and AI rules, but no workflow (the App checks PRs)
+  const app = path.join(tmp, 'app');
+  fs.mkdirSync(path.join(app, '.fixlock'), { recursive: true });
+  execFileSync('git', ['init', '-q'], { cwd: app }); execFileSync('git', ['-C', app, 'remote', 'add', 'origin', 'https://github.com/acme/app.git']);
+  fs.writeFileSync(path.join(app, '.fixlock', 'config.json'), JSON.stringify({ project: 'app', team: [{ name: 'Abi', github: 'abi', emails: ['abi@x.com'], role: 'lead' }], prCheck: 'github-app' }));
+  fs.writeFileSync(path.join(app, '.fixlock', 'registry.json'), JSON.stringify({ version: 2, locks: [] }));
+  const aout = execFileSync(process.execPath, [path.join(__dirname, '..', 'bin', 'fixlock.js'), 'quickstart'], { cwd: app, encoding: 'utf8', env: genv });
+  ok(/PR check: the fixlock GitHub App/.test(aout) && !fs.existsSync(path.join(app, '.github', 'workflows', 'fixlock.yml')), 'quickstart in a repo the GitHub App set up: no extra workflow', aout);
+  ok(fs.existsSync(path.join(app, '.git', 'hooks', 'pre-commit')) && fs.existsSync(path.join(app, 'CLAUDE.md')) && JSON.parse(fs.readFileSync(path.join(app, '.fixlock', 'config.json'), 'utf8')).team.length === 1, 'quickstart in an existing setup: keeps the team, installs hooks and AI rules');
   let notGit = '';
   try { execFileSync(process.execPath, [path.join(__dirname, '..', 'bin', 'fixlock.js'), 'quickstart'], { cwd: fs.mkdtempSync(path.join(os.tmpdir(), 'nogit-')), encoding: 'utf8', stdio: 'pipe', env: genv }); } catch (e) { notGit = String(e.stderr); }
   ok(/inside a git repository/.test(notGit), 'quickstart outside git: says to git init', notGit);

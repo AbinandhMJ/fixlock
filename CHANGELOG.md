@@ -5,6 +5,7 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 ## [Unreleased]
 
 ### Added
+- **`fixlock quickstart`**: sets fixlock up in one command with no questions: the team (you as lead, with your GitHub username from the GitHub CLI), the past fixes it is surest about locked, AI assistants connected, this machine's hooks, and the PR check workflow. Run it again in a teammate's clone, or in a repository the GitHub App set up, and it keeps the existing settings and only connects that machine.
 - **VS Code extension 0.8.0**: when an AI assistant in a terminal (Claude Code, Codex, Aider) or a script changes locked code on disk, even in a file that isn't open, the editor alerts you right away (with **Show changes**) and lists it in Problems, instead of waiting for the commit or the PR. Also published to Open VSX for Cursor, Windsurf and VSCodium.
 
 ## [0.8.0] - 2026-11-17
