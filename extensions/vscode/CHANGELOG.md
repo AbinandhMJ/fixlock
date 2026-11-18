@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0
+
+- **Catches AI edits made outside the editor.** When an AI assistant in a terminal (Claude Code, Codex, Aider) or a script changes locked code on disk, even in a file you don't have open, fixlock alerts you right away with **Show changes** and **Why is it locked?**, and the change appears in Problems. Saves from the editor itself don't trigger the alert. Turn it off with `fixlock.notifyOutsideEdits`.
+- Bundles fixlock 0.8.0: clearer messages when nobody can approve a lock, smoother `init`.
+- Now on Open VSX too, for Cursor, Windsurf and VSCodium.
+
 ## 0.7.1
 
 - Bundles fixlock 0.7.1.

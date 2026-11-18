@@ -13,6 +13,7 @@ Install it from the **VS Code Marketplace** (VS Code) or **Open VSX** (Cursor, W
 - **Locked lines are visible**: a lock in the gutter, a subtle highlight, and a CodeLens with the lock's id, title and owner.
 - **Hover for the why**: the reason the code exists, the linked issue, and who must approve a change.
 - **Live warnings**: when an edit, yours or your AI's, changes what locked code does, the lock turns amber and a warning appears in Problems. Reformatting and comments don't count ([structural matching](../how-it-works.md)); variable renames show as a note.
+- **AI edits outside the editor are caught too**: when an AI assistant in a terminal (Claude Code, Codex, Aider) or a script rewrites locked code on disk, even in a file that isn't open, you get an alert at once with **Show changes** and **Why is it locked?**, and the change appears in Problems. Your own saves from the editor don't trigger it.
 - **Lock in two clicks**: select lines → right-click → **fixlock: Lock selected lines** (`Ctrl+Alt+L` / `Cmd+Alt+L`).
 - **Copilot agent mode checks first**: the extension registers fixlock's [MCP server](mcp.md) with VS Code automatically, so Copilot can call `fixlock_check_edit` before changing locked code. No `.vscode/mcp.json` needed.
 - **Run CI locally**: **fixlock: Check branch against main** and **fixlock: Check staged changes**.
@@ -25,6 +26,7 @@ The extension bundles fixlock and runs it with the editor's own runtime, so Node
 |---|---|---|
 | `fixlock.highlightLockedLines` | `true` | Gutter icon and background |
 | `fixlock.codeLens` | `true` | Lock id, title and owner above locked code |
+| `fixlock.notifyOutsideEdits` | `true` | Alert when locked code is changed on disk outside the editor |
 | `fixlock.mcp.enabled` | `true` | Offer the MCP tools to Copilot. Turn off if you set up `.vscode/mcp.json` with `fixlock setup copilot`, to avoid two servers |
 | `fixlock.baseBranch` | `origin/main` | Base branch for the branch check |
 | `fixlock.cliPath` | | A specific `bin/fixlock.js` to run |

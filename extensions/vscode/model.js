@@ -63,6 +63,24 @@ function analyze(state, rel, text) {
   });
 }
 
+/** Repo-relative paths of the files that have locks (watched on disk for changes made outside the editor). */
+function lockedFiles(state) {
+  return [...new Set(state.locks.map((l) => l.file))].filter((f) => !/[{}\[\]*?,]/.test(f)); // glob-safe names only
+}
+
+/** Locks that are changed now but weren't before. prev: Map(lock id → last status), updated in place. */
+function newlyChanged(prev, items) {
+  const out = items.filter((i) => i.status === 'changed' && prev.get(i.lock.id) !== 'changed');
+  for (const i of items) prev.set(i.lock.id, i.status);
+  return out;
+}
+
+/** The notification for a lock changed outside the editor. */
+function outsideEditMessage(item, rel) {
+  const who = item.approvers.filter(Boolean).join(' or ');
+  return `fixlock: ${item.lock.id} "${item.lock.title}" in ${rel} was just changed outside the editor, maybe by an AI assistant. ${who ? `${who} must approve this change on the PR` : 'This needs approval on the PR'}, or restore the lines.`;
+}
+
 /** Markdown shown when hovering a locked line. */
 function hoverText(item) {
   const { lock } = item;
@@ -114,4 +132,4 @@ function cliPath(root, override) {
   return path.join(__dirname, 'fixlock', 'bin', 'fixlock.js');
 }
 
-module.exports = { findRoot, loadState, relPath, analyze, hoverText, diagnostic, pickItems, cliPath };
+module.exports = { findRoot, loadState, relPath, analyze, lockedFiles, newlyChanged, outsideEditMessage, hoverText, diagnostic, pickItems, cliPath };
