@@ -21,6 +21,7 @@ ok(nextVersion('0.7.1', [c('feat!: drop node 16')]) === '0.8.0', 'breaking on 0.
 ok(nextVersion('1.4.2', [c('feat: a'), c('fix!: b')]) === '2.0.0', 'breaking on 1.x → major');
 ok(nextVersion('1.4.2', [c('feat: a')]) === '1.5.0', 'feat on 1.x → minor');
 ok(nextVersion('0.8.0', [c('feat(vscode): disk alerts'), c('fix(app): webhook'), c('feat(bench): more cases')]) === null, 'extension, app and bench changes ship on their own: no npm release');
+ok(nextVersion('0.8.0', [c('feat(jetbrains): plugin'), c('feat(wordpress): site plugin')]) === null, 'JetBrains and WordPress plugins ship on their own: no npm release');
 ok(nextVersion('0.8.0', [c('feat(vscode): x'), c('fix(cli): y')]) === '0.8.1', 'a package change alongside them still releases');
 
 // CHANGELOG: curated Unreleased notes are kept as the release's section
