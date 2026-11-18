@@ -53,6 +53,10 @@ It sets up the team, locks the past fixes it's surest about, connects your AI as
 
 **In VS Code or Cursor.** Install the [fixlock extension](https://marketplace.visualstudio.com/items?itemName=algotricz.fixlock), open your repository and click **Set up fixlock**.
 
+**In IntelliJ IDEA, PyCharm, WebStorm or another JetBrains IDE.** Install the [fixlock plugin](https://abinandhmj.github.io/fixlock/integrations/jetbrains), open your repository and click **Set up fixlock**.
+
+**On a WordPress site.** The [fixlock WordPress plugin](https://abinandhmj.github.io/fixlock/integrations/wordpress) tells you when an update undoes a fix you patched into a plugin or theme.
+
 Want to choose every setting yourself? `npx fixlock init` asks about team, roles, policies and hooks one by one.
 
 **Any language.** Structural matching reads [63 languages and formats](https://abinandhmj.github.io/fixlock/languages): TypeScript, Python, Java, Kotlin, Go, Rust, C#, Swift, PHP, Ruby, SQL, Terraform, YAML, Angular/Vue/Svelte templates and more. Not a JavaScript project? Use `pipx install fixlock` (or `npx @abinandhmj/fixlock init`) and the [GitHub Action or pre-commit hook](https://abinandhmj.github.io/fixlock/any-language).
