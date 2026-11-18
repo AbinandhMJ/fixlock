@@ -49,6 +49,8 @@ Daily:
   fixlock languages [file]             Languages structural matching understands (and which one a file is)
   fixlock why <file>[:line]            What is locked here, who owns it, can I change it?
   fixlock list | remove <id>
+  fixlock status [file] [--stdin] [--json]
+                                       Every lock and whether it's intact (--stdin: check unsaved editor text). For editor plugins
 
 CI / hooks:
   fixlock check [--base origin/main] [--pr N] [--notify] [--markdown out.md] [--json]

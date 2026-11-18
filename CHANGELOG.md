@@ -9,6 +9,8 @@ _No changes yet._
 ## [0.9.0] - 2026-11-18
 
 ### Added
+- **JetBrains plugin 0.9.0** for IntelliJ IDEA, PyCharm, WebStorm, PhpStorm, GoLand, Rider, Android Studio and the other JetBrains IDEs: locked lines in the gutter with the why on hover, a banner and an alert when an edit undoes a locked fix (checked on unsaved text with structural matching), one-click setup, Lock Selected Lines, branch and staged checks, and Junie rules. See [JetBrains IDEs](https://abinandhmj.github.io/fixlock/integrations/jetbrains).
+- **`fixlock status [file] [--stdin] --json`**: every lock and its state as JSON, for editor plugins; `--stdin` checks unsaved text.
 - **One-click setup with the GitHub App**: install it and every repository without `.fixlock/` gets a **Set up fixlock** pull request with the team (you as lead, recent committers as developers) and the past fixes fixlock is surest about already locked. Merge it and the check is on. The dashboard has a **Set up** button that opens the same PR. Needs the App's Contents permission raised to Read and write.
 - **`fixlock quickstart`**: sets fixlock up in one command with no questions: the team (you as lead, with your GitHub username from the GitHub CLI), the past fixes it is surest about locked, AI assistants connected, this machine's hooks, and the PR check workflow. Run it again in a teammate's clone, or in a repository the GitHub App set up, and it keeps the existing settings and only connects that machine.
 - **VS Code extension 0.9.0**: in a git repository without fixlock, a **Set up fixlock** button in the status bar runs `fixlock quickstart` in one click.

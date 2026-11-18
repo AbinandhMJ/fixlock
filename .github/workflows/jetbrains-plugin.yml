@@ -1,0 +1,64 @@
+name: JetBrains plugin
+on:
+  pull_request:
+    paths: ['extensions/jetbrains/**', 'src/commands.js', '.github/workflows/jetbrains-plugin.yml']
+  push:
+    tags: ['jetbrains-v*']
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish to'
+        type: choice
+        options: [nothing (build only), JetBrains Marketplace]
+        default: nothing (build only)
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: extensions/jetbrains
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v5
+      - name: Free disk space for the IDEs the verifier downloads
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL || true
+      - name: Test
+        run: ./gradlew test --stacktrace
+      - name: Build
+        run: ./gradlew buildPlugin
+      - name: Verify against IntelliJ IDEA, PyCharm, WebStorm and the recommended IDEs
+        run: ./gradlew verifyPlugin
+      - uses: actions/upload-artifact@v7
+        with:
+          name: fixlock-jetbrains
+          path: extensions/jetbrains/build/distributions/*.zip
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: plugin-verifier-report
+          path: extensions/jetbrains/build/reports/pluginVerifier
+          if-no-files-found: ignore
+      # Publishing: the first version is uploaded by hand at https://plugins.jetbrains.com/plugin/add
+      # (Marketplace requires that). After that, add a JETBRAINS_MARKETPLACE_TOKEN secret (a permanent
+      # token from https://plugins.jetbrains.com/author/me/tokens) and run this workflow with
+      # "JetBrains Marketplace", or push a jetbrains-v* tag. Signing is optional: add
+      # JETBRAINS_CERTIFICATE_CHAIN, JETBRAINS_PRIVATE_KEY and JETBRAINS_PRIVATE_KEY_PASSWORD to sign.
+      - name: Publish to JetBrains Marketplace
+        if: (github.event_name == 'workflow_dispatch' && inputs.publish == 'JetBrains Marketplace') || startsWith(github.ref, 'refs/tags/jetbrains-v')
+        env:
+          JETBRAINS_MARKETPLACE_TOKEN: ${{ secrets.JETBRAINS_MARKETPLACE_TOKEN }}
+          JETBRAINS_CERTIFICATE_CHAIN: ${{ secrets.JETBRAINS_CERTIFICATE_CHAIN }}
+          JETBRAINS_PRIVATE_KEY: ${{ secrets.JETBRAINS_PRIVATE_KEY }}
+          JETBRAINS_PRIVATE_KEY_PASSWORD: ${{ secrets.JETBRAINS_PRIVATE_KEY_PASSWORD }}
+        run: |
+          if [ -z "$JETBRAINS_MARKETPLACE_TOKEN" ]; then
+            echo "::error::Add the JETBRAINS_MARKETPLACE_TOKEN secret first (see the comment above this step)."
+            exit 1
+          fi
+          ./gradlew publishPlugin

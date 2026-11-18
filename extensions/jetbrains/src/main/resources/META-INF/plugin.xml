@@ -1,0 +1,61 @@
+<idea-plugin>
+    <id>com.algotricz.fixlock</id>
+    <name>fixlock</name>
+    <vendor url="https://abinandhmj.github.io/fixlock/">Algotricz</vendor>
+
+    <description><![CDATA[
+<p><b>Fixed stays fixed.</b> fixlock locks the lines that fix a bug or finish a feature, so an AI assistant, a teammate or a merge can't quietly undo them.</p>
+<ul>
+  <li><b>Locked lines are visible</b>: a lock in the gutter and a light background. Hover for why the code exists, the linked issue and who must approve a change.</li>
+  <li><b>Live warnings</b>: when an edit, yours or your AI assistant's, undoes a locked fix, the lock turns amber, a banner appears above the file and you get one alert. Reformatting and comments don't count (structural matching, the same as CI).</li>
+  <li><b>One-click setup</b>: open a git repository and click <b>Set up fixlock</b>. No questions: your team, the past fixes fixlock is surest about, commit hooks and the GitHub PR check.</li>
+  <li><b>Lock in two clicks</b>: select lines, right-click, <b>Lock Selected Lines</b>.</li>
+  <li><b>Run CI locally</b>: check your branch or staged changes from the Tools menu.</li>
+</ul>
+<p>Works in IntelliJ IDEA, PyCharm, WebStorm, PhpStorm, GoLand, Rider, CLion, RubyMine, RustRover, DataGrip and Android Studio, for any language.</p>
+<p>The plugin runs the fixlock command-line tool: your project's copy if it has one, else <code>fixlock</code> on PATH (<code>pipx install fixlock</code>, no Node.js needed), else <code>npx</code>. Nothing leaves your machine.</p>
+<p><a href="https://abinandhmj.github.io/fixlock/">Documentation</a> · <a href="https://github.com/AbinandhMJ/fixlock">Source</a> · a product of Algotricz</p>
+]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <notificationGroup id="fixlock" displayType="BALLOON"/>
+        <editorFactoryListener implementation="com.algotricz.fixlock.FixlockEditorListener"/>
+        <editorNotificationProvider implementation="com.algotricz.fixlock.ChangedLockBanner"/>
+        <postStartupActivity implementation="com.algotricz.fixlock.FixlockStartup"/>
+        <toolWindow id="fixlock" anchor="bottom" icon="/icons/toolWindow.svg" canCloseContents="false"
+                    factoryClass="com.algotricz.fixlock.FixlockToolWindowFactory"/>
+        <applicationConfigurable parentId="tools" id="com.algotricz.fixlock.settings" displayName="fixlock"
+                                 instance="com.algotricz.fixlock.FixlockConfigurable"/>
+    </extensions>
+
+    <actions>
+        <group id="fixlock.Menu" text="fixlock" popup="true" icon="/icons/locked.svg">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <action id="fixlock.Quickstart" class="com.algotricz.fixlock.QuickstartAction" text="Set Up fixlock (One Click, No Questions)"
+                    description="Run fixlock quickstart: team, past fixes locked, hooks, PR check"/>
+            <action id="fixlock.LockSelection" class="com.algotricz.fixlock.LockSelectionAction" text="Lock Selected Lines"
+                    description="Lock the selected lines as a bug fix or finished feature"/>
+            <action id="fixlock.Why" class="com.algotricz.fixlock.WhyAction" text="Why Is This Locked?"
+                    description="What is locked here, who owns it, can I change it?"/>
+            <action id="fixlock.ShowLocks" class="com.algotricz.fixlock.ShowLocksAction" text="Show All Locks"
+                    description="Every lock in this repository and whether it's intact"/>
+            <separator/>
+            <action id="fixlock.CheckBranch" class="com.algotricz.fixlock.CheckBranchAction" text="Check Branch Against Main"
+                    description="Run the same check as the PR check"/>
+            <action id="fixlock.CheckStaged" class="com.algotricz.fixlock.CheckStagedAction" text="Check Staged Changes"
+                    description="The pre-commit warning, on demand"/>
+            <action id="fixlock.Discover" class="com.algotricz.fixlock.DiscoverAction" text="Find Past Fixes Worth Locking"
+                    description="Rank past fixes from the commit history"/>
+            <action id="fixlock.Junie" class="com.algotricz.fixlock.ConnectJunieAction" text="Tell Junie About the Locks"
+                    description="Write the lock rules to .junie/guidelines.md"/>
+        </group>
+        <group id="fixlock.EditorPopup">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <separator/>
+            <reference ref="fixlock.LockSelection"/>
+            <reference ref="fixlock.Why"/>
+        </group>
+    </actions>
+</idea-plugin>
