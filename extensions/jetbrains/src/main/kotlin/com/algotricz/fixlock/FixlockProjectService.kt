@@ -2,8 +2,8 @@ package com.algotricz.fixlock
 
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.process.OSProcessHandler
-import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.notification.NotificationAction
@@ -98,7 +98,7 @@ class FixlockProjectService(private val project: Project) : Disposable {
         try {
             val handler = OSProcessHandler(cl)
             console.attachToProcess(handler)
-            handler.addProcessListener(object : ProcessAdapter() {
+            handler.addProcessListener(object : ProcessListener {
                 override fun processTerminated(event: ProcessEvent) {
                     ApplicationManager.getApplication().invokeLater { if (!project.isDisposed) done?.invoke(event.exitCode) }
                 }
