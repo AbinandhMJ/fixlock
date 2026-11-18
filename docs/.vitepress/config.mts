@@ -54,6 +54,7 @@ export default defineConfig({
         { text: 'GitHub Copilot', link: '/integrations/copilot' },
         { text: 'OpenAI Codex', link: '/integrations/codex' },
         { text: 'MCP server reference', link: '/integrations/mcp' },
+        { text: 'WordPress', link: '/integrations/wordpress' },
       ] },
       { text: 'Setup', items: [
         { text: 'CI setup', link: '/ci-setup' },

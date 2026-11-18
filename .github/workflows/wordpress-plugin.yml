@@ -1,0 +1,44 @@
+name: WordPress plugin
+on:
+  pull_request:
+    paths: ['extensions/wordpress/**', '.github/workflows/wordpress-plugin.yml']
+  push:
+    tags: ['wordpress-v*']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['7.4', '8.3']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - name: Lint
+        run: find extensions/wordpress -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Test
+        run: php extensions/wordpress/tests/run.php
+  plugin-check:
+    # WordPress.org's own Plugin Check, in a real WordPress.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: wordpress/plugin-check-action@v1
+        with:
+          build-dir: extensions/wordpress/fixlock
+  package:
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Zip
+        run: cd extensions/wordpress && zip -r fixlock.zip fixlock -x '*.DS_Store'
+      - uses: actions/upload-artifact@v7
+        with:
+          name: fixlock-wordpress
+          path: extensions/wordpress/fixlock.zip
