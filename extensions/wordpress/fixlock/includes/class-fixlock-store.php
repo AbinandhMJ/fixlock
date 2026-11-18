@@ -6,7 +6,9 @@
  * @package fixlock
  */
 
-defined( 'ABSPATH' ) || defined( 'FIXLOCK_TESTING' ) || exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * Lock storage.

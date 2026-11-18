@@ -4,7 +4,7 @@
  * server needed): php extensions/wordpress/tests/run.php
  */
 
-define( 'FIXLOCK_TESTING', true );
+define( 'ABSPATH', sys_get_temp_dir() . '/fixlock-wp-abspath/' );
 error_reporting( E_ALL );
 set_error_handler( function ( $no, $str, $file, $line ) { throw new ErrorException( $str, 0, $no, $file, $line ); } );
 
@@ -115,7 +115,7 @@ $GLOBALS['plugins']['shop-gateway/shop-gateway.php']['Version'] = '2.2.0';
 Fixlock_Hooks::after_update( null, array( 'type' => 'plugin', 'action' => 'update', 'plugins' => array( 'shop-gateway/shop-gateway.php' ) ) );
 $st = Fixlock_Store::state();
 ok( 'undone' === $st['site:WP-001']['state'] && '2.2.0' === $st['site:WP-001']['version'], 'after the update the lock is undone', $st );
-ok( 1 === count( $GLOBALS['mails'] ) && false !== strpos( $GLOBALS['mails'][0]['s'], 'A locked fix was undone' ) && false !== strpos( $GLOBALS['mails'][0]['b'], 'after updating shop-gateway' ) && false !== strpos( $GLOBALS['mails'][0]['b'], 'Ticket #482' ), 'the admin gets one email saying what and why', $GLOBALS['mails'] );
+ok( 1 === count( $GLOBALS['mails'] ) && false !== strpos( $GLOBALS['mails'][0]['s'], '1 locked fix was undone' ) && false !== strpos( $GLOBALS['mails'][0]['b'], 'after updating shop-gateway' ) && false !== strpos( $GLOBALS['mails'][0]['b'], 'Ticket #482' ), 'the admin gets one email saying what and why', $GLOBALS['mails'] );
 $ev = Fixlock_Store::events();
 ok( 'WP-001' === $ev[0]['id'] && 'intact' === $ev[0]['from'] && 'undone' === $ev[0]['to'] && 'after updating shop-gateway' === $ev[0]['context'], 'the change is logged', $ev );
 ok( array( 'site:WP-001' ) === Fixlock_Checker::unacknowledged(), 'an admin notice until someone looks' );

@@ -5,7 +5,9 @@
  * @package fixlock
  */
 
-defined( 'ABSPATH' ) || defined( 'FIXLOCK_TESTING' ) || exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * Admin screens.
@@ -48,7 +50,7 @@ final class Fixlock_Admin {
 			esc_html(
 				sprintf(
 					/* translators: %d: number of fixes */
-					_n( 'A locked fix is no longer in your files, usually because an update replaced a patched file.', '%d locked fixes are no longer in your files, usually because an update replaced patched files.', $n, 'fixlock' ),
+					_n( '%d locked fix is no longer in your files, usually because an update replaced a patched file.', '%d locked fixes are no longer in your files, usually because an update replaced patched files.', $n, 'fixlock' ),
 					$n
 				)
 			),

@@ -2,7 +2,7 @@
 Contributors: algotricz
 Tags: security, maintenance, updates, monitoring, developer
 Requires at least: 6.2
-Tested up to: 6.9
+Tested up to: 7.1
 Requires PHP: 7.4
 Stable tag: 0.9.0
 License: MIT

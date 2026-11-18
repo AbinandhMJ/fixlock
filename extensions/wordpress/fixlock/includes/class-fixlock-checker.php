@@ -7,7 +7,9 @@
  * @package fixlock
  */
 
-defined( 'ABSPATH' ) || defined( 'FIXLOCK_TESTING' ) || exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * Lock checks and alerts.
@@ -135,7 +137,7 @@ final class Fixlock_Checker {
 		}
 		$subject = sprintf(
 			/* translators: 1: site name, 2: number of fixes */
-			_n( '[%1$s] A locked fix was undone', '[%1$s] %2$d locked fixes were undone', count( $undone ), 'fixlock' ),
+			_n( '[%1$s] %2$d locked fix was undone', '[%1$s] %2$d locked fixes were undone', count( $undone ), 'fixlock' ),
 			$site,
 			count( $undone )
 		);
