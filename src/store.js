@@ -1,7 +1,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const { repoRoot } = require('./git');
+const repoRoot = () => require('./git').repoRoot(); // loaded on use (the GitHub App has no git)
 
 const DIR = '.fixlock';
 

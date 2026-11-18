@@ -11,6 +11,8 @@ The fixlock dashboard shows every locked fix across your repositories on one pag
 - **Locks to re-lock**: locks whose lines changed on the default branch, usually through an approved PR, so they no longer guard anything until they're locked on the new lines.
 - **Locks and owners**: every lock, its owner and whether that owner can approve on GitHub (approvals need a GitHub username in `.fixlock/config.json`).
 
+Repositories where fixlock isn't set up yet have a **Set up** button: it opens the same [setup pull request](github-app.md#one-click-setup) the App opens on install (you need write access to the repository). Nothing changes until it's merged.
+
 It's part of the [GitHub App](github-app.md). Open [fixlock-app.abinandhmurukesan.workers.dev/dashboard](https://fixlock-app.abinandhmurukesan.workers.dev/dashboard) and sign in with GitHub.
 
 ## Who sees what

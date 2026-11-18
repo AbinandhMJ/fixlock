@@ -2,7 +2,7 @@
   "name": "fixlock",
   "displayName": "fixlock by Algotricz — stop AI from undoing your bug fixes",
   "description": "See locked bug fixes and features right in the editor, get warned the moment an edit changes one, lock a selection in two clicks, and give Copilot agent mode fixlock's MCP tools so it checks before editing. A product of Algotricz.",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "publisher": "algotricz",
   "author": { "name": "Algotricz", "url": "https://www.linkedin.com/company/algotricz" },
   "license": "MIT",
@@ -27,7 +27,8 @@
       { "command": "fixlock.discover", "title": "Find past fixes to lock (from git history)", "category": "fixlock" },
       { "command": "fixlock.check", "title": "Check branch against main (like CI)", "category": "fixlock" },
       { "command": "fixlock.checkStaged", "title": "Check staged changes", "category": "fixlock" },
-      { "command": "fixlock.init", "title": "Set up fixlock in this repository", "category": "fixlock" },
+      { "command": "fixlock.quickstart", "title": "Set up fixlock (one click, no questions)", "category": "fixlock", "icon": "$(lock)" },
+      { "command": "fixlock.init", "title": "Set up fixlock step by step (choose every setting)", "category": "fixlock" },
       { "command": "fixlock.setupAssistants", "title": "Connect AI assistants (Claude Code, Cursor, Copilot, Codex…)", "category": "fixlock" },
       { "command": "fixlock.demo", "title": "Run the 60-second demo", "category": "fixlock" },
       { "command": "fixlock.refresh", "title": "Reload locks", "category": "fixlock" }
@@ -51,6 +52,7 @@
         "fixlock.highlightLockedLines": { "type": "boolean", "default": true, "description": "Mark locked lines with a gutter icon and a subtle background." },
         "fixlock.codeLens": { "type": "boolean", "default": true, "description": "Show the lock's id, title and owner above locked code." },
         "fixlock.notifyOutsideEdits": { "type": "boolean", "default": true, "description": "Alert when locked code is changed outside the editor, for example by an AI assistant in a terminal (Claude Code, Codex, Aider) or a script. The change also shows in Problems." },
+        "fixlock.suggestSetup": { "type": "boolean", "default": true, "description": "In a git repository without fixlock, show a \"Set up fixlock\" button in the status bar and offer it once per window. Setup runs `fixlock quickstart`: no questions, and nothing is committed for you." },
         "fixlock.mcp.enabled": { "type": "boolean", "default": true, "description": "Offer fixlock's MCP tools (check_edit, why, list, check_staged) to Copilot agent mode and other MCP clients in VS Code. Turn off if you configured .vscode/mcp.json yourself." },
         "fixlock.baseBranch": { "type": "string", "default": "origin/main", "description": "Base branch for \"fixlock: Check branch\"." },
         "fixlock.cliPath": { "type": "string", "default": "", "description": "Path to a fixlock bin/fixlock.js to use instead of the project's installed one (node_modules/@abinandhmj/fixlock) or the bundled one." }

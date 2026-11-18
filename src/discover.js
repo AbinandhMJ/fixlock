@@ -7,7 +7,8 @@
 //   - the locked lines add a guard (null check, error handling, bounds check, early return…)
 //   - the change is small and focused
 // Only lines that still exist at HEAD and still come from that commit are suggested (git blame).
-const g = require('./git');
+// git and the store load on first use, so this module's scoring also runs in the GitHub App (no git there)
+const g = new Proxy({}, { get: (_, k) => require('./git')[k] });
 const auto = require('./autolock');
 
 const REVERT_SUBJECT = /^Revert "(.+)"$/;
@@ -194,4 +195,4 @@ function parseSelection(input, n) {
   return [...picked].sort((x, y) => x - y);
 }
 
-module.exports = { TEST_FILE, history, scoreCommits, guardsIn, discover, toLocks, parseSelection, confidence };
+module.exports = { TEST_FILE, history, scoreCommits, guardsIn, hasCode, discover, toLocks, parseSelection, confidence };
