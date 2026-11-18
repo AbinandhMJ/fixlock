@@ -5,6 +5,7 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 ## [Unreleased]
 
 ### Added
+- **One-click setup with the GitHub App**: install it and every repository without `.fixlock/` gets a **Set up fixlock** pull request with the team (you as lead, recent committers as developers) and the past fixes fixlock is surest about already locked. Merge it and the check is on. The dashboard has a **Set up** button that opens the same PR. Needs the App's Contents permission raised to Read and write.
 - **`fixlock quickstart`**: sets fixlock up in one command with no questions: the team (you as lead, with your GitHub username from the GitHub CLI), the past fixes it is surest about locked, AI assistants connected, this machine's hooks, and the PR check workflow. Run it again in a teammate's clone, or in a repository the GitHub App set up, and it keeps the existing settings and only connects that machine.
 - **VS Code extension 0.9.0**: in a git repository without fixlock, a **Set up fixlock** button in the status bar runs `fixlock quickstart` in one click.
 - **Team dashboard** in the GitHub App (`/dashboard`): sign in with GitHub to see, across every repository you can access, which open PRs fixlock is blocking, which recent PRs it stopped and how they ended, locks whose lines changed on the default branch and need re-locking, and lock owners who can't approve because they have no GitHub username. Read live from GitHub with no database, cached for 5 minutes. See [Team dashboard](https://abinandhmj.github.io/fixlock/dashboard).

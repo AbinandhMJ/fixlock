@@ -2,8 +2,9 @@
 // Auto-lock: turn fix / feature commits into locks, for new commits (post-commit hook) and for history (backfill).
 const fs = require('fs');
 const path = require('path');
-const g = require('./git');
-const s = require('./store');
+// git and the store load on first use, so this module's scoring also runs in the GitHub App (no git there)
+const g = new Proxy({}, { get: (_, k) => require('./git')[k] });
+const s = new Proxy({}, { get: (_, k) => require('./store')[k] });
 const team = require('./team');
 const L = require('./locks');
 const { norm, trivial } = L;

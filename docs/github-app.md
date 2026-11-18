@@ -4,13 +4,24 @@ title: GitHub App
 
 # GitHub App
 
-The fixlock GitHub App runs the same check as [CI](ci-setup.md) on every pull request, with no workflow file in the repository. Install it on a repo that has a `.fixlock/` folder, and each PR gets:
+The fixlock GitHub App runs the same check as [CI](ci-setup.md) on every pull request, with no workflow file in the repository. Install it, merge the setup pull request it opens (see [One-click setup](#one-click-setup)), and each PR gets:
 
 - a **fixlock** check that fails when a locked fix or feature is changed without the owner's approval, and passes again as soon as they approve the PR;
 - one PR comment that explains which lock changed, why it exists and who must approve. The comment is edited in place as the PR changes, and clean PRs don't get one;
 - a [team dashboard](dashboard.md) at `/dashboard` with every lock, blocked PR and recent catch across your repositories.
 
-It reads the code through GitHub's API. Nothing is checked out or stored, and the only code it reads is the files a PR changes plus the `.fixlock/` folder.
+It reads the code through GitHub's API. Nothing is checked out or stored. On pull requests it reads only the files the PR changes plus the `.fixlock/` folder; the one-time setup PR also reads recent commits and the files their fixes touched.
+
+## One-click setup
+
+[Install the App](https://github.com/apps/fixlock-by-algotricz/installations/new) and pick your repositories. For each one that doesn't have a `.fixlock/` folder yet, the App opens a **Set up fixlock** pull request within a minute. It contains:
+
+- `.fixlock/config.json`: you as the lead, and the people who committed recently as developers (with their GitHub usernames, so they can approve);
+- `.fixlock/registry.json`: the past fixes fixlock is surest about, found in the last 100 commits the same way as [`fixlock discover`](getting-started.md#3-lock-the-fixes-you-already-have) and kept only if their lines are still on the default branch.
+
+Read the list in the PR, delete anything that shouldn't be locked, and merge. From then on every pull request gets the **fixlock** check. Close the PR instead and the App won't open it again; you can still set the repository up from the [dashboard](dashboard.md) or with `npx @abinandhmj/fixlock quickstart`.
+
+The setup PR needs the **Contents: Read and write** permission (to create its branch). The App never pushes to an existing branch.
 
 ## How it decides
 
@@ -66,7 +77,7 @@ Go to **GitHub → Settings → Developer settings → GitHub Apps → New GitHu
 | Homepage URL | `https://abinandhmj.github.io/fixlock/` |
 | Webhook URL | Your Worker URL followed by `/webhook` |
 | Webhook secret | A long random string, such as the output of `openssl rand -hex 32`. Keep it for step 3 |
-| Repository permissions | **Checks**: Read and write · **Contents**: Read-only · **Pull requests**: Read and write · **Metadata**: Read-only |
+| Repository permissions | **Checks**: Read and write · **Contents**: Read and write (for setup PRs; Read-only works if you don't want them) · **Pull requests**: Read and write · **Metadata**: Read-only |
 | Subscribe to events | **Pull request**, **Pull request review**, **Check run** |
 | Where can this app be installed? | Only on this account, or Any account to let others install it |
 
@@ -85,7 +96,9 @@ npx wrangler secret put PRIVATE_KEY < path/to/your-app.private-key.pem
 
 **4. Install it**
 
-On the app's page, click **Install App** and choose the repositories. Open a pull request in one of them: the **fixlock** check appears within a few seconds.
+On the app's page, click **Install App** and choose the repositories. Repositories without `.fixlock/` get a setup PR (see [One-click setup](#one-click-setup)); in the others, open a pull request: the **fixlock** check appears within a few seconds.
+
+Setup PRs read up to about 40 GitHub API requests per installation event, the Workers Free plan's limit. Installing on many repositories at once sets up the first one; set up the rest from the dashboard, or raise `SUBREQUEST_BUDGET` on the Workers Paid plan (for example `wrangler secret put SUBREQUEST_BUDGET` with `500`). `AUTO_SETUP=off` turns setup PRs off.
 
 On GitHub Enterprise Server, also set the `GITHUB_API` variable to your server's API URL, for example `https://github.example.com/api/v3`.
 
