@@ -59,5 +59,5 @@ jobs:
           if [ -z "$OVSX_PAT" ]; then unset OVSX_PAT; npx --yes ovsx@latest publish *.vsix --trusted-publishing
           else npx --yes ovsx@latest publish *.vsix; fi
       - name: Fail if the Marketplace publish failed
-        if: steps.marketplace.outcome == 'failure'
+        if: always() && steps.marketplace.outcome == 'failure'
         run: echo "::error::Publishing to the VS Code Marketplace failed (see that step). Open VSX ran anyway." && exit 1
