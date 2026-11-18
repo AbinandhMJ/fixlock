@@ -17,7 +17,7 @@ h1{font-size:22px;margin:4px 0 16px}h2{font-size:17px;margin:28px 0 10px}.muted{
 .scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted);font-weight:600;white-space:nowrap}
 .chip{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid currentColor;white-space:nowrap}
 .bad{color:var(--red)}.ok{color:var(--green)}.mid{color:var(--amber)}.none{color:var(--muted)}
-.btn{display:inline-block;background:var(--lime);color:#0E1116;padding:10px 16px;border-radius:8px;font-weight:600;text-decoration:none}
+.btn{display:inline-block;background:var(--lime);color:#0E1116;padding:10px 16px;border-radius:8px;font-weight:600;text-decoration:none;border:0;font:inherit;font-weight:600;cursor:pointer}
 .note{border-left:3px solid var(--amber);padding:8px 12px;margin:12px 0;background:color-mix(in srgb,var(--amber) 8%,transparent)}
 code{font:13px ui-monospace,SFMono-Regular,Menlo,monospace}footer{max-width:1040px;margin:30px auto;padding:0 20px;color:var(--muted);font-size:13px}`;
 
@@ -28,6 +28,12 @@ export function layout(title, body, user) {
 <main>${body}</main>
 <footer>fixlock · fixed stays fixed · a product of Algotricz · <a href="https://abinandhmj.github.io/fixlock/dashboard">Help</a></footer></body></html>`;
 }
+
+/** The "Set up" button: opens a pull request that sets fixlock up (POST, same origin only). */
+export const setupButton = (repo, label = 'Set up') => {
+  const [owner, name] = repo.split('/');
+  return `<form method="post" action="/dashboard/setup/${encodeURIComponent(owner)}/${encodeURIComponent(name)}" style="display:inline"><button class="btn" type="submit">${esc(label)}</button></form>`;
+};
 
 const tile = (n, label, cls = '') => `<div class="tile ${cls}"><b>${esc(n)}</b>${esc(label)}</div>`;
 
@@ -67,14 +73,17 @@ export function overview(user, groups) {
         + '</div>';
     }
     const notSet = g.summaries.filter((s) => !s.setUp);
-    if (notSet.length) body += `<p class="muted">Not set up yet (no <code>.fixlock/</code> on the default branch): ${notSet.map((s) => esc(s.repo)).join(', ')}.</p>`;
+    if (notSet.length) {
+      body += `<h3 class="muted" style="font-size:15px;margin-top:20px">Not set up yet</h3><p class="muted">Set up opens a pull request with the team and the past fixes worth locking. Nothing changes until you merge it.</p>`;
+      body += notSet.map((s) => `<div class="card" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span style="flex:1">${esc(s.repo)}</span>${setupButton(s.repo)}</div>`).join('');
+    }
   }
   return layout('Dashboard', body, user);
 }
 
 /** One repository in detail. */
 export function repoPage(user, s) {
-  if (!s.setUp) return layout(s.repo, `<h1>${esc(s.repo)}</h1><p>fixlock isn't set up here: there's no <code>.fixlock/config.json</code> on the default branch. Run <code>fixlock init</code> and merge it.</p>`, user);
+  if (!s.setUp) return layout(s.repo, `<p class="muted"><a href="/dashboard">All repositories</a></p><h1>${esc(s.repo)}</h1><p>fixlock isn't set up here yet. <b>Set up</b> opens a pull request with the team (from recent commit authors) and the past fixes fixlock is surest about. Nothing changes until you merge it.</p><p>${setupButton(s.repo, 'Set up fixlock')}</p><p class="muted">Or in a clone: <code>npx @abinandhmj/fixlock quickstart</code></p>`, user);
   if (s.error) return layout(s.repo, `<h1>${esc(s.repo)}</h1><p class="bad">${esc(s.error)}</p>`, user);
   const c = s.counts;
   let body = `<p class="muted"><a href="/dashboard">All repositories</a></p><h1><a href="${esc(s.url)}">${esc(s.repo)}</a></h1>

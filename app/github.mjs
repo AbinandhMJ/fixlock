@@ -58,7 +58,9 @@ export async function appJwt(appId, privateKey, now = Math.floor(Date.now() / 10
 
 /** A small GitHub REST client. */
 export function client(token, api = 'https://api.github.com') {
+  const gh = { calls: 0 }; // requests made, to stay inside the Worker's per-request subrequest limit
   async function request(method, path, body, accept = 'application/vnd.github+json') {
+    gh.calls++;
     const res = await fetch(path.startsWith('http') ? path : api + path, {
       method,
       headers: { Authorization: `Bearer ${token}`, Accept: accept, 'User-Agent': 'fixlock-app', 'X-GitHub-Api-Version': '2022-11-28', ...(body ? { 'Content-Type': 'application/json' } : {}) },
@@ -71,7 +73,7 @@ export function client(token, api = 'https://api.github.com') {
     if (!res.ok) throw new Error(`GitHub ${method} ${path.split('?')[0]}: ${res.status} ${(await res.text()).slice(0, 200)}`);
     return res.status === 204 ? null : res.json();
   }
-  return {
+  return Object.assign(gh, {
     get: (path) => json('GET', path),
     post: (path, body) => json('POST', path, body),
     patch: (path, body) => json('PATCH', path, body),
@@ -102,7 +104,7 @@ export function client(token, api = 'https://api.github.com') {
       if (!res.ok) throw new Error(`GitHub GET contents ${path}: ${res.status}`);
       return res.text();
     },
-  };
+  });
 }
 
 /** An installation token for the repo the webhook came from. */
