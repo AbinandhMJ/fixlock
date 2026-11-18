@@ -22,6 +22,7 @@ const c = { red: paint(31), green: paint(32), yellow: paint(33), bold: paint(1),
 
 /* ---------------- init / team ---------------- */
 async function cmdInit(args) {
+  const log = args.quiet ? () => {} : console.log; // quickstart prints its own summary
   const cfg = s.loadConfig();
   const useDefaults = args.yes || (!process.stdin.isTTY && !args.interactive);
   const hooks = useDefaults ? init.defaults(cfg) : await init.interactive(cfg);
@@ -37,28 +38,28 @@ async function cmdInit(args) {
     const project = ['claude-code', 'cursor', 'copilot', 'gemini'].filter((id) => agents.enabled(cfg).includes(id));
     if (project.length) mcpDone = require('./setup').setup(project).results;
   }
-  syncAgentFiles(true);
-  console.log(c.green('\n✔ fixlock is set up.'));
-  console.log(`  team: ${cfg.team.map((m) => `${m.name} (${m.role})`).join(', ') || '(none)'}`);
-  console.log(`  AI tools: ${agents.enabled(cfg).join(', ') || '(none)'}`);
-  if (hooks.claude) console.log('  Claude Code hook: .claude/settings.json');
-  if (mcpDone.length) console.log(`  MCP server connected for: ${mcpDone.map((r) => r.label).join(', ')}`);
+  syncAgentFiles(args.quiet ? 'silent' : true);
+  log(c.green('\n✔ fixlock is set up.'));
+  log(`  team: ${cfg.team.map((m) => `${m.name} (${m.role})`).join(', ') || '(none)'}`);
+  log(`  AI tools: ${agents.enabled(cfg).join(', ') || '(none)'}`);
+  if (hooks.claude) log('  Claude Code hook: .claude/settings.json');
+  if (mcpDone.length) log(`  MCP server connected for: ${mcpDone.map((r) => r.label).join(', ')}`);
   const userLevel = ['codex', 'windsurf'].filter((id) => agents.enabled(cfg).includes(id));
-  if (hooks.mcp && userLevel.length) console.log(`  ${userLevel.join(' / ')} users: run  ${cli.human(s.root())} setup ${userLevel.join(' ')}  on your own machine`);
-  if (hooks.git) console.log('  git hooks: commit warning + auto-lock of fix:/feat: commits (this machine)');
+  if (hooks.mcp && userLevel.length) log(`  ${userLevel.join(' / ')} users: run  ${cli.human(s.root())} setup ${userLevel.join(' ')}  on your own machine`);
+  if (hooks.git) log('  git hooks: commit warning + auto-lock of fix:/feat: commits (this machine)');
   const noGithub = cfg.team.filter((m) => !m.github && m.role !== 'reviewer');
   if (noGithub.length) {
-    console.log(c.yellow(`\n! No GitHub username for ${noGithub.map((m) => m.name).join(', ')}. Pull requests need their approval to change a lock they own,`));
-    console.log(c.yellow('  and GitHub approvals are matched by username. Add it:'));
-    for (const m of noGithub) console.log(c.yellow(`    ${cli.human(s.root())} team add --name "${m.name}" --github <username>${m.emails[0] ? ` --email ${m.emails[0]}` : ''} --role ${m.role}`));
+    log(c.yellow(`\n! No GitHub username for ${noGithub.map((m) => m.name).join(', ')}. Pull requests need their approval to change a lock they own,`));
+    log(c.yellow('  and GitHub approvals are matched by username. Add it:'));
+    for (const m of noGithub) log(c.yellow(`    ${cli.human(s.root())} team add --name "${m.name}" --github <username>${m.emails[0] ? ` --email ${m.emails[0]}` : ''} --role ${m.role}`));
   }
-  console.log('\nCommit .fixlock/ and the generated files above so the whole team gets them.');
+  log('\nCommit .fixlock/ and the generated files above so the whole team gets them.');
   const run = cli.human(s.root());
-  if (cfg.launcher === 'fixlock') console.log(`Every developer installs the fixlock command once:  pipx install fixlock  (or uv tool install fixlock)${hooks.git ? '  &&  fixlock install-hook' : ''}`);
-  else if (fs.existsSync(path.join(s.root(), 'package.json'))) console.log(`Every developer runs once:  ${cli.installedIn(s.root()) ? 'npm install' : 'npm i -D @abinandhmj/fixlock'}${hooks.git ? '  &&  npx fixlock install-hook' : ''}`);
-  else console.log(`Nothing to install: hooks and assistants run fixlock through npx (Node.js 18+).${hooks.git ? `  Each developer runs once:  ${run} install-hook` : ''}`);
-  console.log(`Find the fixes you already have:  ${run} discover`);
-  console.log(`Lock a fix:  ${run} mark <file> <start>-<end> -m "why" --issue linear:ENG-12`);
+  if (cfg.launcher === 'fixlock') log(`Every developer installs the fixlock command once:  pipx install fixlock  (or uv tool install fixlock)${hooks.git ? '  &&  fixlock install-hook' : ''}`);
+  else if (fs.existsSync(path.join(s.root(), 'package.json'))) log(`Every developer runs once:  ${cli.installedIn(s.root()) ? 'npm install' : 'npm i -D @abinandhmj/fixlock'}${hooks.git ? '  &&  npx fixlock install-hook' : ''}`);
+  else log(`Nothing to install: hooks and assistants run fixlock through npx (Node.js 18+).${hooks.git ? `  Each developer runs once:  ${run} install-hook` : ''}`);
+  log(`Find the fixes you already have:  ${run} discover`);
+  log(`Lock a fix:  ${run} mark <file> <start>-<end> -m "why" --issue linear:ENG-12`);
 }
 
 function cmdTeam(args) {
@@ -399,12 +400,113 @@ async function cmdDiscover(args) {
   console.log(c.dim(`\nCommit .fixlock/ so the locks apply to everyone: git add .fixlock && git commit -m "chore(fixlock): lock ${locks.length} past fix(es)"`));
 }
 
+/* ---------------- quickstart ---------------- */
+const QUICK_MIN = 7; // "high" confidence in discover: reverted-and-reapplied, linked issue + test, …
+const QUICK_MAX_LOCKS = 15;
+
+/** The GitHub Actions workflow for the PR check, pinned to this version of the action. */
+function ciWorkflow() {
+  return `# Added by fixlock quickstart. Fails a PR that changes a locked fix until its owner approves.
+name: fixlock
+on:
+  pull_request:
+  pull_request_review:        # re-run when the owner approves
+    types: [submitted, dismissed]
+permissions: { contents: read, pull-requests: write }
+jobs:
+  fixlock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: AbinandhMJ/fixlock@v${require('../package.json').version}
+`;
+}
+
+/** Is this repository hosted on GitHub (origin points at github.com)? */
+function onGithub() {
+  const url = (g.git(['remote', 'get-url', 'origin'], { allowFail: true }) || '').trim();
+  return /github\.com[:/]/i.test(url);
+}
+
+/** Does a workflow already run fixlock? */
+function hasFixlockWorkflow() {
+  const dir = path.join(s.root(), '.github', 'workflows');
+  try {
+    return fs.readdirSync(dir).some((f) => /\.ya?ml$/.test(f) && /abinandhmj\/fixlock@|fixlock(@[\w.^~-]+)?\s+check|fixlock check/i.test(fs.readFileSync(path.join(dir, f), 'utf8')));
+  } catch { return false; }
+}
+
+/**
+ * One command, no questions: set up fixlock with the defaults, lock the past fixes fixlock is most
+ * sure about, connect the AI assistants, install this machine's hooks and add the PR check.
+ */
+async function cmdQuickstart(args) {
+  try { g.repoRoot(); } catch { throw new Error('Run quickstart inside a git repository (git init first).'); }
+  const run = cli.human(s.root());
+  const done = [];
+  const fresh = !s.configExists();
+  console.log(c.bold('fixlock quickstart') + c.dim('  · no questions; change anything later in .fixlock/config.json\n'));
+
+  // init --yes keeps an existing config (team, policies) and only fills in what's missing, so this also
+  // connects a clone of a repo someone else set up (for example through the GitHub App's setup PR).
+  await cmdInit({ ...args, yes: true, quiet: true });
+  const setUp = s.loadConfig();
+  if (!fresh) done.push('Already set up: kept your .fixlock/config.json');
+  done.push(`Team: ${setUp.team.map((m) => `${m.name}${m.github ? ` (@${m.github})` : ''}, ${m.role}`).join('; ') || 'none yet'}`);
+  done.push(`AI assistants: ${agents.enabled(setUp).join(', ')} get the lock rules${agents.enabled(setUp).includes('claude-code') ? '; Claude Code also gets a hook that asks before editing locked lines' : ''}`);
+  if (!args['no-git-hooks']) done.push('This machine: commit warning and auto-lock of fix:/feat: commits');
+
+  // Lock the past fixes fixlock is most sure about. The rest are a `discover` away.
+  const cfg = s.loadConfig();
+  const reg = s.loadRegistry();
+  let more = 0;
+  if (!args['no-locks']) {
+    const { found, scanned } = discovery.discover(cfg, reg, { max: 1000 }, { min: 0, features: true });
+    const sure = found.filter((f) => f.score >= QUICK_MIN).slice(0, QUICK_MAX_LOCKS);
+    more = found.filter((f) => f.score >= 4).length - sure.length;
+    if (sure.length) {
+      const locks = discovery.toLocks(sure, cfg, reg);
+      s.saveRegistry(reg);
+      syncAgentFiles('silent');
+      done.push(`Locked ${locks.length} past fix(es) from ${scanned} commit(s):`);
+      for (const l of locks) done.push(`  ${l.id}  ${l.file}  ${l.title}`);
+    } else {
+      done.push(`Scanned ${scanned} commit(s): no past fix stood out enough to lock automatically`);
+    }
+  }
+
+  // The PR check.
+  let ci = 'skipped (--no-ci)';
+  if (!args['no-ci']) {
+    if (s.loadConfig().prCheck === 'github-app') ci = 'the fixlock GitHub App';
+    else if (hasFixlockWorkflow()) ci = 'a workflow already runs fixlock';
+    else if (!onGithub() && !args.ci) ci = 'not on GitHub: add `fixlock check` to your CI (see the CI setup docs)';
+    else {
+      const file = path.join(s.root(), '.github', 'workflows', 'fixlock.yml');
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, ciWorkflow());
+      ci = '.github/workflows/fixlock.yml';
+    }
+  }
+  done.push(`PR check: ${ci}`);
+
+  console.log(c.green('✔ fixlock is set up\n'));
+  for (const line of done) console.log(line.startsWith('  ') ? c.dim(line) : `  ${line}`);
+  const t = s.loadConfig().team.filter((m) => !m.github && m.role !== 'reviewer');
+  if (t.length) console.log(c.yellow(`\n! ${t.map((m) => m.name).join(', ')}: no GitHub username, so PR approvals can't be matched. Run  ${run} team add --name "${t[0].name}" --github <username>${t[0].emails[0] ? ` --email ${t[0].emails[0]}` : ''} --role ${t[0].role}`));
+  console.log(c.bold('\nLast step: commit and push'));
+  console.log('  git add -A && git commit -m "chore: set up fixlock" && git push');
+  if (more > 0) console.log(c.dim(`\n${more} more past fix(es) could be worth locking: ${run} discover`));
+  console.log(c.dim(`Make "fixlock" a required status check on main so blocked PRs can't merge.`));
+}
+
 /* ---------------- AI tool files / changelog / codeowners ---------------- */
 function syncAgentFiles(quiet) {
   const cfg = s.loadConfig();
   const { written, notes } = agents.sync(cfg);
   if (cfg.changelog !== false) { changelog.update(); written.push('CHANGELOG.md'); }
-  if (quiet) console.log(c.dim(`  synced ${written.join(', ')}`));
+  if (quiet === 'silent') { /* the caller reports */ } else if (quiet) console.log(c.dim(`  synced ${written.join(', ')}`));
   else written.forEach((f) => console.log(c.green(`✔ ${f}`)));
   notes.forEach((n) => console.log(c.yellow(`! ${n}`)));
   return written;
@@ -454,7 +556,7 @@ function writeCodeowners(quiet) {
 }
 
 module.exports = {
-  init: cmdInit, team: cmdTeam, mark: cmdMark, list: cmdList, remove: cmdRemove, why: cmdWhy, check: cmdCheck,
+  init: cmdInit, quickstart: cmdQuickstart, team: cmdTeam, mark: cmdMark, list: cmdList, remove: cmdRemove, why: cmdWhy, check: cmdCheck,
   sync: () => syncAgentFiles(false),
   tools: cmdTools,
   autolock: cmdAutolock,

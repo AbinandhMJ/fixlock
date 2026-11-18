@@ -15,6 +15,10 @@ A 60-second walkthrough in a throwaway repo: a fix is auto-locked, an AI edit th
 
 ## Setup
 
+### `quickstart [--no-ci] [--no-locks] [--no-git-hooks]`
+
+Sets everything up with no questions: the same defaults as `init --yes`, then locks the past fixes `discover` is surest about (high confidence, at most 15), and adds `.github/workflows/fixlock.yml` when the repository is on GitHub and nothing runs fixlock yet. In a repository that's already set up it keeps the config and only connects this machine (hooks, AI assistants). `--no-ci` skips the workflow, `--no-locks` skips locking, `--no-git-hooks` skips this machine's hooks.
+
 ### `init`
 Interactive setup: team, AI tools, rules, working-code guard, auto-lock, tracker, hooks. Safe to run again to change answers.
 - `--yes`: no questions; uses the defaults: you as lead (with your GitHub username, if the GitHub CLI `gh` is logged in), detected AI tools, the Claude Code hook, MCP configs, and this machine's git hooks (commit warning and auto-lock). If it can't find your GitHub username, it says how to add it.

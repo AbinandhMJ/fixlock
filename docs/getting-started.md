@@ -4,6 +4,20 @@ title: Getting started
 
 # Getting started
 
+## The fastest way
+
+Three ways to set fixlock up in about a minute, with no questions:
+
+- **GitHub App, one click**: [install it](https://github.com/apps/fixlock-by-algotricz/installations/new) and merge the **Set up fixlock** pull request it opens in each repository. See [One-click setup](github-app.md#one-click-setup).
+- **One command**: run `npx @abinandhmj/fixlock quickstart` (or `pipx install fixlock` then `fixlock quickstart`) in your repository, then commit and push. It does steps 2 to 6 below with the defaults, and locks only the past fixes it's surest about.
+- **VS Code or Cursor**: install the [fixlock extension](integrations/vscode.md), open the repository and click **Set up fixlock**.
+
+Teammates then run `npx @abinandhmj/fixlock quickstart` once in their clone: it keeps the team's settings and connects their hooks and AI assistants.
+
+The rest of this page is the step-by-step way, where you choose each setting.
+
+## Step by step
+
 About 10 minutes. You need git, a git repository, and one of: Node.js 18+ (npm) or Python 3.8+ (pip).
 
 ## 1. Install
