@@ -22,7 +22,7 @@ const { execFileSync } = require('child_process');
 const ROOT = path.join(__dirname, '..');
 const BRANCH = 'release-bot/next';
 const EMPTY = '_No changes yet._';
-const OWN_RELEASES = new Set(['vscode', 'app', 'bench']);
+const OWN_RELEASES = new Set(['vscode', 'jetbrains', 'wordpress', 'app', 'bench']);
 // Files that show the Action's version to users (the CHANGELOG keeps its history as it is).
 const VERSION_REFS = ['action.yml', 'docs/any-language.md', 'docs/ci-setup.md', 'examples/ci/github-action.yml', 'python/README.md'];
 
