@@ -221,7 +221,7 @@ function folderForInit() {
 function needRepo() {
   const root = workspaceRoot();
   if (!root) {
-    vscode.window.showInformationMessage('fixlock is not set up in this workspace yet.', 'Set up fixlock').then((a) => { if (a) vscode.commands.executeCommand('fixlock.init'); });
+    vscode.window.showInformationMessage('fixlock is not set up in this workspace yet.', 'Set up fixlock').then((a) => { if (a) vscode.commands.executeCommand('fixlock.quickstart'); });
   }
   return root;
 }
@@ -305,6 +305,55 @@ function cmdInit() {
   if (!dir) return vscode.window.showWarningMessage('Open a folder (a git repository) first.');
   terminal(dir, ['init'], 'fixlock init');
 }
+/* ---------------- one-click setup ---------------- */
+// In a git repository without fixlock, offer to set it up: a status bar button and one notification per
+// window. "Set up fixlock" runs `fixlock quickstart` (no questions) in a terminal so you see what it did.
+const DISMISSED = 'fixlock.setupDismissed';
+let setupItem = null;
+let extContext = null;
+const quickstarted = new Set();
+const dismissedFolders = () => new Set((extContext && extContext.workspaceState && extContext.workspaceState.get(DISMISSED)) || []);
+function pendingSetup() {
+  if (!cfg().get('suggestSetup', true) || vscode.workspace.isTrusted === false) return [];
+  return model.setupCandidates((vscode.workspace.workspaceFolders || []).map((f) => f.uri.fsPath), dismissedFolders());
+}
+function updateSetupItem() {
+  if (!setupItem) return [];
+  const pending = pendingSetup();
+  if (pending.length) {
+    setupItem.text = '$(lock) Set up fixlock';
+    setupItem.tooltip = `Lock the past bug fixes in ${path.basename(pending[0])} so AI assistants and pull requests can't quietly undo them. One click, no questions.`;
+    setupItem.show();
+  } else setupItem.hide();
+  return pending;
+}
+async function offerSetup() {
+  const pending = updateSetupItem();
+  if (!pending.length) return;
+  const dir = pending[0];
+  const a = await vscode.window.showInformationMessage(`Protect the bug fixes in ${path.basename(dir)}? fixlock locks your past fixes so AI assistants and pull requests can't quietly undo them. One click, no questions.`, 'Set up fixlock', 'Not now', "Don't ask again");
+  if (a === 'Set up fixlock') cmdQuickstart(dir);
+  else if (a === "Don't ask again" && extContext && extContext.workspaceState) {
+    await extContext.workspaceState.update(DISMISSED, [...dismissedFolders(), dir]);
+    updateSetupItem();
+  }
+}
+function cmdQuickstart(dirArg) {
+  const dir = (typeof dirArg === 'string' && dirArg) || (pendingSetup()[0]) || workspaceRoot() || folderForInit();
+  if (!dir) return vscode.window.showWarningMessage('Open a folder (a git repository) first.');
+  if (!model.inGitRepo(dir)) return vscode.window.showWarningMessage(`${path.basename(dir)} isn't a git repository yet. Run "git init" (or open a cloned repository), then set up fixlock.`);
+  if (terminal(dir, ['quickstart'], 'fixlock quickstart')) quickstarted.add(path.resolve(dir));
+}
+/** After quickstart writes .fixlock/: say what's next. */
+function setupFinished(root) {
+  updateSetupItem();
+  const dir = [...quickstarted].find((d) => model.findRoot(d) === root || d === root);
+  if (!dir) return;
+  quickstarted.delete(dir);
+  vscode.window.showInformationMessage(`fixlock is set up in ${path.basename(root)}. Commit the new files and push so your team and the PR check get them.`, 'Open Source Control')
+    .then((a) => { if (a) vscode.commands.executeCommand('workbench.view.scm'); });
+}
+
 function cmdDiscover() { const root = needRepo(); if (root) terminal(root, ['discover'], 'fixlock discover'); }
 function cmdSetup() { const root = needRepo(); if (root) terminal(root, ['setup'], 'fixlock setup'); }
 function cmdDemo() { terminal(folderForInit() || require('os').tmpdir(), ['demo'], 'fixlock demo'); }
@@ -354,8 +403,12 @@ function activate(context) {
   codeLensProvider.onDidChangeCodeLenses = codeLensEmitter.event;
 
   const watcher = vscode.workspace.createFileSystemWatcher('**/.fixlock/{registry,config}.json');
+  extContext = context;
+  setupItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 49);
+  setupItem.command = 'fixlock.quickstart';
   const reload = (uri) => {
     const r = model.findRoot(path.dirname(path.dirname(uri.fsPath)));
+    if (r) setupFinished(r);
     if (r) states.delete(r); else states.clear();
     refreshAll();
     if (r) watchDisk(r); else watchAllDisks(); // the set of locked files may have changed
@@ -366,7 +419,7 @@ function activate(context) {
   if (mcpChanged) watcher.onDidCreate(() => mcpChanged.fire());
 
   context.subscriptions.push(
-    diagnostics, decoIntact, decoChanged, status, codeLensEmitter, watcher,
+    diagnostics, decoIntact, decoChanged, status, setupItem, codeLensEmitter, watcher,
     vscode.languages.registerHoverProvider({ scheme: 'file' }, hoverProvider),
     vscode.languages.registerCodeLensProvider({ scheme: 'file' }, codeLensProvider),
     vscode.window.onDidChangeActiveTextEditor((e) => { if (e) refreshEditor(e); else status.hide(); }),
@@ -375,7 +428,7 @@ function activate(context) {
     vscode.workspace.onDidChangeTextDocument((e) => scheduleRefresh(e.document)),
     vscode.workspace.onDidCloseTextDocument((d) => { diagnostics.delete(d.uri); const r = rootFor(d.uri); if (r) scanDisk(r, model.relPath(r, d.uri.fsPath), false); }),
     vscode.workspace.onDidSaveTextDocument((d) => savedAt.set(d.uri.toString(), Date.now())),
-    vscode.workspace.onDidChangeWorkspaceFolders(() => watchAllDisks()),
+    vscode.workspace.onDidChangeWorkspaceFolders(() => { watchAllDisks(); updateSetupItem(); }),
     vscode.workspace.onDidChangeConfiguration((e) => { if (e.affectsConfiguration('fixlock')) refreshAll(); }),
     vscode.commands.registerCommand('fixlock.markSelection', cmdMark),
     vscode.commands.registerCommand('fixlock.why', cmdWhy),
@@ -384,12 +437,16 @@ function activate(context) {
     vscode.commands.registerCommand('fixlock.check', cmdCheck),
     vscode.commands.registerCommand('fixlock.checkStaged', cmdCheckStaged),
     vscode.commands.registerCommand('fixlock.init', cmdInit),
+    vscode.commands.registerCommand('fixlock.quickstart', cmdQuickstart),
     vscode.commands.registerCommand('fixlock.setupAssistants', cmdSetup),
     vscode.commands.registerCommand('fixlock.demo', cmdDemo),
     vscode.commands.registerCommand('fixlock.refresh', () => { states.clear(); refreshAll(); }),
   );
+  if (vscode.workspace.onDidGrantWorkspaceTrust) context.subscriptions.push(vscode.workspace.onDidGrantWorkspaceTrust(() => offerSetup()));
+  context.subscriptions.push(vscode.workspace.onDidChangeConfiguration((e) => { if (e.affectsConfiguration('fixlock.suggestSetup')) updateSetupItem(); }));
   refreshAll();
   watchAllDisks();
+  offerSetup();
 }
 
 function deactivate() {
