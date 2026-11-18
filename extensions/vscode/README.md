@@ -19,9 +19,10 @@ Works in VS Code, Cursor, Windsurf, VSCodium and other VS Code-based editors.
 ## Getting started
 
 1. Open a git repository.
-2. Run **fixlock: Set up fixlock in this repository** from the Command Palette. This is the same interactive `fixlock init` as the CLI: team, roles, policies, hooks and AI assistants.
-3. Select the lines of a fix and run **fixlock: Lock selected lines**. Commit the `.fixlock/` folder.
-4. Add `npx fixlock check` to CI ([CI setup](https://abinandhmj.github.io/fixlock/ci-setup)) so a PR that changes a locked fix needs the owner's approval.
+2. Click **Set up fixlock** in the status bar (or in the notification). It runs `fixlock quickstart` with no questions: your team, the past fixes fixlock is surest about locked, your AI assistants connected, commit hooks, and the GitHub PR check.
+3. Commit the new files and push.
+
+Want to choose every setting yourself? Run **fixlock: Set up fixlock step by step** from the Command Palette instead (the interactive `fixlock init`). Lock more fixes any time: select the lines and run **fixlock: Lock selected lines**.
 
 Want to see it first? Run **fixlock: Run the 60-second demo**.
 
@@ -35,7 +36,8 @@ Want to see it first? Run **fixlock: Run the 60-second demo**.
 | fixlock: Find past fixes to lock | Rank the bug fixes already in your git history and pick which to lock |
 | fixlock: Check branch against main | Run the same check as CI |
 | fixlock: Check staged changes | Check what you're about to commit |
-| fixlock: Set up fixlock in this repository | Interactive `fixlock init` |
+| fixlock: Set up fixlock (one click, no questions) | `fixlock quickstart` |
+| fixlock: Set up fixlock step by step | Interactive `fixlock init` |
 | fixlock: Connect AI assistants | Set up Claude Code, Cursor, Copilot, Codex, Gemini CLI, Windsurf |
 | fixlock: Run the 60-second demo | Walkthrough in a throwaway repo |
 
@@ -46,6 +48,7 @@ Want to see it first? Run **fixlock: Run the 60-second demo**.
 | `fixlock.highlightLockedLines` | `true` | Gutter icon and background on locked lines |
 | `fixlock.codeLens` | `true` | Lock id, title and owner above locked code |
 | `fixlock.notifyOutsideEdits` | `true` | Alert when locked code is changed on disk outside the editor (AI assistants in a terminal, scripts) |
+| `fixlock.suggestSetup` | `true` | In a git repository without fixlock, show **Set up fixlock** in the status bar and offer it once |
 | `fixlock.mcp.enabled` | `true` | Offer fixlock's MCP tools to Copilot agent mode. Turn off if you already set up `.vscode/mcp.json` with `fixlock setup copilot` |
 | `fixlock.baseBranch` | `origin/main` | Base for the branch check |
 | `fixlock.cliPath` | | Use a specific `bin/fixlock.js` |

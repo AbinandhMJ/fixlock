@@ -132,4 +132,20 @@ function cliPath(root, override) {
   return path.join(__dirname, 'fixlock', 'bin', 'fixlock.js');
 }
 
-module.exports = { findRoot, loadState, relPath, analyze, lockedFiles, newlyChanged, outsideEditMessage, hoverText, diagnostic, pickItems, cliPath };
+/** Is dir inside a git repository (a .git folder, or a .git file for worktrees and submodules)? */
+function inGitRepo(dir) {
+  let d = path.resolve(dir);
+  for (;;) {
+    if (fs.existsSync(path.join(d, '.git'))) return true;
+    const up = path.dirname(d);
+    if (up === d) return false;
+    d = up;
+  }
+}
+
+/** Workspace folders that are git repositories without fixlock, minus the ones the user said not to ask about. */
+function setupCandidates(folders, dismissed = new Set()) {
+  return folders.filter((f) => !dismissed.has(f) && !findRoot(f) && inGitRepo(f));
+}
+
+module.exports = { inGitRepo, setupCandidates, findRoot, loadState, relPath, analyze, lockedFiles, newlyChanged, outsideEditMessage, hoverText, diagnostic, pickItems, cliPath };
