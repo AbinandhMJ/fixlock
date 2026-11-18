@@ -35,7 +35,8 @@ class FixlockEditorListener : EditorFactoryListener {
         if (!vf.isInLocalFileSystem) return
         val file = File(vf.path)
         if (LockStatus.findRoot(file) == null) return
-        val disposable = (editor as? com.intellij.openapi.editor.ex.EditorEx)?.disposable ?: return
+        val disposable = com.intellij.openapi.util.Disposer.newDisposable("fixlock editor")
+        editor.putUserData(DISPOSABLE, disposable)
         val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable)
         val refresh = {
             alarm.cancelAllRequests()
@@ -52,7 +53,13 @@ class FixlockEditorListener : EditorFactoryListener {
         refresh()
     }
 
+    override fun editorReleased(event: EditorFactoryEvent) {
+        event.editor.getUserData(DISPOSABLE)?.let { com.intellij.openapi.util.Disposer.dispose(it) }
+        event.editor.putUserData(DISPOSABLE, null)
+    }
+
     companion object {
+        private val DISPOSABLE = Key.create<com.intellij.openapi.Disposable>("fixlock.editorDisposable")
         const val DELAY_MS = 700
         private val HIGHLIGHTERS = Key.create<List<RangeHighlighter>>("fixlock.highlighters")
         val LOCKED: Icon = IconLoader.getIcon("/icons/locked.svg", FixlockEditorListener::class.java)
