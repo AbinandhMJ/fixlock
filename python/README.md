@@ -26,7 +26,7 @@ fixlock check --base origin/main   # what CI will say
 
 `fixlock init` connects Claude Code, Cursor, GitHub Copilot, Codex, Gemini CLI and Windsurf, so they check a lock before editing.
 
-In CI, use the [GitHub Action](https://abinandhmj.github.io/fixlock/any-language#github-actions) (`uses: AbinandhMJ/fixlock@v0.8.0`) or run `fixlock check` after `pip install fixlock`.
+In CI, use the [GitHub Action](https://abinandhmj.github.io/fixlock/any-language#github-actions) (`uses: AbinandhMJ/fixlock@v0.9.0`) or run `fixlock check` after `pip install fixlock`.
 
 With [pre-commit](https://pre-commit.com):
 
