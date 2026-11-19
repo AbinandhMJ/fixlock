@@ -18,6 +18,10 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 - **Lock lifecycle.** `fixlock relock --changed` locks the lines that hold a fix after an approved change (keeping the old lines in `history`); `fixlock handover <from> <to>` gives someone's locks to a teammate; `fixlock mark --expires YYYY-MM-DD` makes a lock warn-only after a date; `fixlock review` lists locks that are expired, need re-locking, are orphaned or are overdue (`lifecycle.reviewAfterDays`), and `review <id> --keep|--remove` settles them. The dashboard shows test-linked, expired and orphaned locks.
 
 
+### Changed
+
+- **A pull request can't switch fixlock off.** `fixlock check` in CI (the Action, GitLab, Bitbucket, any CI) now uses the base branch's locks and settings, like the GitHub App. A PR that removes a lock or changes what it protects needs that lock's owner; a PR that changes `.fixlock/config.json` needs a lead from the base branch's team. Adding locks needs nobody. A settings change now applies from the next PR after it's merged. AI agents' hooks ask before editing `.fixlock/` directly. See [Changes to `.fixlock/` itself](https://abinandhmj.github.io/fixlock/ci-setup#changes-to-fixlock-itself).
+
 ## [0.9.0] - 2026-11-18
 
 ### Added

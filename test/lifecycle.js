@@ -19,6 +19,12 @@ const fx = (...a) => spawnSync(process.execPath, [BIN, ...a], { cwd: repo, env, 
 const write = (rel, text) => { fs.mkdirSync(path.dirname(path.join(repo, rel)), { recursive: true }); fs.writeFileSync(path.join(repo, rel), text); };
 const reg = () => JSON.parse(fs.readFileSync(path.join(repo, '.fixlock', 'registry.json'), 'utf8'));
 const cfgFile = path.join(repo, '.fixlock', 'config.json');
+const onMain = (edit, cfgPath) => { // a team setting lands on main first: a PR is checked with its base's settings
+  const br = git('rev-parse', '--abbrev-ref', 'HEAD');
+  git('checkout', '-q', 'main');
+  const c = JSON.parse(fs.readFileSync(cfgPath, 'utf8')); edit(c); fs.writeFileSync(cfgPath, JSON.stringify(c, null, 2));
+  git('commit', '-qam', 'chore: settings'); git('checkout', '-q', br); git('merge', '-q', '--no-edit', 'main');
+};
 
 const PAY = `function pay(amount) {
   if (amount <= 0) {
@@ -88,13 +94,14 @@ try {
 
   // tests.satisfies: false → the test result is shown but approval is still needed
   git('checkout', '-q', 'refactor');
-  const c2 = JSON.parse(fs.readFileSync(cfgFile, 'utf8')); c2.tests = { satisfies: false }; fs.writeFileSync(cfgFile, JSON.stringify(c2, null, 2));
+  const testsBefore = JSON.parse(fs.readFileSync(cfgFile, 'utf8')).tests;
+  onMain((c) => { c.tests = { satisfies: false }; }, cfgFile);
   r = fx('check', '--base', 'main', '--run-tests');
   ok(r.status === 1 && /still passes/.test(r.stdout), 'tests.satisfies false: passing test noted, approval still needed', r.stdout);
-  c2.tests = { run: true }; fs.writeFileSync(cfgFile, JSON.stringify(c2, null, 2));
+  onMain((c) => { c.tests = { run: true }; }, cfgFile);
   r = fx('check', '--base', 'main');
   ok(r.status === 0 && /TEST OK/.test(r.stdout), 'tests.run true in the config: no flag needed', r.stdout);
-  git('checkout', '-q', '--', '.fixlock/config.json');
+  onMain((c) => { if (testsBefore === undefined) delete c.tests; else c.tests = testsBefore; }, cfgFile);
 
   // relock after the approved refactor (now on main)
   git('checkout', '-q', 'main'); git('merge', '-q', '--no-edit', 'refactor');

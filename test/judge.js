@@ -30,7 +30,13 @@ const run = (args, extra = {}) => new Promise((resolve) => {
   p.on('close', (status) => resolve({ status, stdout, stderr }));
 });
 const cfgFile = path.join(repo, '.fixlock', 'config.json');
-const setJudge = (j) => { const c = JSON.parse(fs.readFileSync(cfgFile, 'utf8')); c.judge = j; fs.writeFileSync(cfgFile, JSON.stringify(c, null, 2)); };
+const onMain = (edit, cfgPath) => { // a team setting lands on main first: a PR is checked with its base's settings
+  const br = git('rev-parse', '--abbrev-ref', 'HEAD');
+  git('checkout', '-q', 'main');
+  const c = JSON.parse(fs.readFileSync(cfgPath, 'utf8')); edit(c); fs.writeFileSync(cfgPath, JSON.stringify(c, null, 2));
+  git('commit', '-qam', 'chore: settings'); git('checkout', '-q', br); git('merge', '-q', '--no-edit', 'main');
+};
+const setJudge = (j) => onMain((c) => { c.judge = j; }, cfgFile);
 
 let seen = null;
 const server = http.createServer((req, res) => {
