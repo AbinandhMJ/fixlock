@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Release bot (scripts/release-bot.js): versions from Conventional Commits, CHANGELOG cutting, doc refs.
 'use strict';
-const { parse, nextVersion, cutChangelog, sectionFromCommits, bumpRefs } = require('../scripts/release-bot');
+const { parse, nextVersion, cutChangelog, sectionFromCommits, bumpRefs, addMdSection, addWpSection, pluginNotes, PLUGINS } = require('../scripts/release-bot');
 
 let passed = 0;
 const ok = (cond, msg, extra) => { if (!cond) { console.error(`FAIL ${msg}${extra ? `\n${extra}` : ''}`); console.error('RELEASE BOT FAIL'); process.exit(1); } passed++; };
@@ -44,4 +44,15 @@ ok(threw, 'a CHANGELOG without Unreleased is an error, not a silent skip');
 // Doc refs
 ok(bumpRefs('uses: AbinandhMJ/fixlock@v0.7.1\nnpm i x@0.7.1', '0.7.1', '0.8.0') === 'uses: AbinandhMJ/fixlock@v0.8.0\nnpm i x@0.7.1', 'only the Action reference is bumped');
 
+// Plugins release on their own versions
+ok(nextVersion('0.9.1', [c('fix(jetbrains): x'), c('feat(cli): y')], 'jetbrains') === '0.9.2', 'plugin scope: only its own commits count (fix → patch)');
+ok(nextVersion('0.9.0', [c('feat(vscode): x')], 'vscode') === '0.10.0', 'plugin scope: feat → minor');
+ok(nextVersion('0.9.0', [c('docs(wordpress): x'), c('fix(vscode): y')], 'wordpress') === null, 'plugin scope: docs only → no release');
+ok(JSON.stringify(pluginNotes([c('fix(jetbrains): drop deprecated APIs (#50)'), c('feat(cli): z'), c('docs(jetbrains): w')], 'jetbrains')) === '["Drop deprecated APIs"]', 'plugin notes: its feat/fix commits, cleaned up');
+const md = addMdSection('# Changelog\n\n## 0.9.0\n\n- First.\n', '0.9.1', ['Fix one', 'Fix two']);
+ok(md === '# Changelog\n\n## 0.9.1\n\n- Fix one\n- Fix two\n\n## 0.9.0\n\n- First.\n', 'addMdSection puts the new version on top', md);
+ok(addMdSection(md, '0.9.1', ['again']) === md, 'addMdSection: no duplicate section');
+const wp = addWpSection('=== fixlock ===\nStable tag: 0.9.0\n\n== Changelog ==\n\n= 0.9.0 =\n* First.\n', '0.9.1', ['Fix one']);
+ok(/Stable tag: 0\.9\.1/.test(wp) && wp.includes('== Changelog ==\n\n= 0.9.1 =\n* Fix one\n\n= 0.9.0 =') && addWpSection(wp, '0.9.1', ['x']) === wp, 'addWpSection: entry on top, Stable tag set, no duplicates', wp);
+for (const p of PLUGINS) ok(/^\d+\.\d+\.\d+$/.test(p.version()) && p.released(p.version()), `${p.name}: version readable and has release notes`);
 console.log(`RELEASE BOT PASS (${passed} checks)`);

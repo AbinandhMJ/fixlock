@@ -1,7 +1,11 @@
-# Release bot. On every push to main it either:
-#   - opens or updates the "chore(release): X.Y.Z" pull request (version bump, CHANGELOG, docs), or
-#   - when that pull request has just been merged, tags vX.Y.Z and starts the Release workflow on it,
-#     which publishes to npm, PyPI and GitHub Releases (release.yml, trusted publishing).
+# Release bot. On every push to main it:
+#   - when the release PR has just been merged, tags vX.Y.Z and starts the Release workflow on it,
+#     which publishes to npm, PyPI and GitHub Releases (release.yml, trusted publishing);
+#   - tags each plugin version that's new (vscode-v, jetbrains-v, wordpress-v) and starts its publish
+#     workflow: VS Code Marketplace and Open VSX, JetBrains Marketplace, WordPress.org, each with a GitHub
+#     release holding the build;
+#   - opens or updates the "chore(release): ..." pull request with the next versions and their notes.
+# The GitHub App and the docs site deploy on every push to main by themselves (github-app.yml, docs.yml).
 # The next version comes from Conventional Commits; see scripts/release-bot.js.
 #
 # One-time repo setting: Settings → Actions → General → Workflow permissions →
@@ -48,8 +52,11 @@ jobs:
             echo "::error::package.json is at $v, which isn't tagged and has no CHANGELOG section. Release through the release PR."
             exit 1
           fi
+      - name: Tag and publish new plugin versions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/release-bot.js tag-plugins
       - name: Open or update the release PR
-        if: steps.release.outputs.released != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: node scripts/release-bot.js pr
