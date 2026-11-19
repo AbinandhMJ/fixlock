@@ -87,7 +87,7 @@ export function repoPage(user, s) {
   if (s.error) return layout(s.repo, `<h1>${esc(s.repo)}</h1><p class="bad">${esc(s.error)}</p>`, user);
   const c = s.counts;
   let body = `<p class="muted"><a href="/dashboard">All repositories</a></p><h1><a href="${esc(s.url)}">${esc(s.repo)}</a></h1>
-<div class="tiles">${tile(c.locks, 'locks')}${tile(c.blocked, 'open PRs waiting for approval', c.blocked ? 'alert' : '')}${tile(c.stopped, 'recent PRs fixlock stopped')}${tile(c.overrides, 'approved by the owner')}${tile(c.needsRelock, 'locks to re-lock', c.needsRelock ? 'warn' : '')}</div>`;
+<div class="tiles">${tile(c.locks, 'locks')}${tile(c.blocked, 'open PRs waiting for approval', c.blocked ? 'alert' : '')}${tile(c.stopped, 'recent PRs fixlock stopped')}${tile(c.overrides, 'approved by the owner')}${tile(`${c.withTests || 0}/${c.locks}`, 'locks proved by a test')}${tile(c.needsRelock, 'locks to re-lock', c.needsRelock ? 'warn' : '')}</div>`;
   if (s.noGithub.length) body += `<div class="note">${s.noGithub.map(esc).join(', ')} ${s.noGithub.length > 1 ? 'have' : 'has'} no GitHub username in <code>.fixlock/config.json</code>, so pull requests can't be approved by ${s.noGithub.length > 1 ? 'them' : 'them'}. Add it with <code>fixlock team add --name "…" --github &lt;username&gt;</code>.</div>`;
 
   body += '<h2>Open pull requests</h2>';
@@ -99,8 +99,9 @@ export function repoPage(user, s) {
     : '<p class="muted">fixlock hasn\'t stopped any of the last 20 closed pull requests.</p>';
 
   body += `<h2>Locks (${s.locks.length})</h2>`;
-  body += s.locks.length ? `<div class="scroll"><table><tr><th>Lock</th><th>File</th><th>Owner</th><th>On ${esc(s.defaultBranch)}</th></tr>${s.locks.map((l) => `<tr><td><b>${esc(l.id)}</b> ${esc(l.title)} <span class="muted">(${esc(l.type)})</span></td><td><code>${esc(l.file)}</code></td><td>${esc(l.owner)}${l.ownerHasGithub ? '' : ' <span class="chip mid">no GitHub username</span>'}</td><td>${stateChip(l.state)}</td></tr>`).join('')}</table></div>`
-    + (c.needsRelock ? '<p class="muted">"Needs re-lock": the locked lines changed on the default branch, usually through an approved PR. Lock the new lines with <code>fixlock mark</code>, or remove the lock if the fix is gone for good.</p>' : '')
+  body += s.locks.length ? `<div class="scroll"><table><tr><th>Lock</th><th>File</th><th>Owner</th><th>On ${esc(s.defaultBranch)}</th></tr>${s.locks.map((l) => `<tr><td><b>${esc(l.id)}</b> ${esc(l.title)} <span class="muted">(${esc(l.type)})</span></td><td><code>${esc(l.file)}</code></td><td>${esc(l.owner)}${l.ownerOnTeam === false ? ' <span class="chip bad">left the team</span>' : l.ownerHasGithub ? '' : ' <span class="chip mid">no GitHub username</span>'}</td><td>${stateChip(l.state)}${l.expired ? ' <span class="chip mid">expired</span>' : ''}${l.test ? ' <span class="chip ok" title="${esc(l.test)}">test-linked</span>' : ''}</td></tr>`).join('')}</table></div>`
+    + (c.needsRelock ? '<p class="muted">"Needs re-lock": the locked lines changed on the default branch, usually through an approved PR. Run <code>fixlock relock --changed</code> to lock the lines that hold the fix now, or remove the lock if the fix is gone for good.</p>' : '')
+    + (c.expired || c.orphaned ? `<p class="muted">${c.expired ? `${c.expired} expired lock(s) only warn now. ` : ''}${c.orphaned ? `${c.orphaned} lock(s) belong to someone who left the team: <code>fixlock handover &lt;from&gt; &lt;to&gt;</code>. ` : ''}<code>fixlock review</code> lists every lock that needs a decision.</p>` : '')
     : '<p class="muted">No locks yet. Run <code>fixlock discover</code> to find past fixes worth locking.</p>';
 
   body += `<h2>Team</h2><div class="scroll"><table><tr><th>Name</th><th>GitHub</th><th>Role</th></tr>${s.team.map((m) => `<tr><td>${esc(m.name)}</td><td>${m.github ? `@${esc(m.github)}` : '<span class="mid">none</span>'}</td><td>${esc(m.role)}</td></tr>`).join('')}</table></div>`;
