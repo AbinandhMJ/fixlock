@@ -36,7 +36,7 @@ test('a normal charge works', () => { assert.deepStrictEqual(pay(5), { charged: 
 `;
 
 try {
-  git('init', '-q', '-b', 'main'); git('config', 'user.email', 'abi@x.com'); git('config', 'user.name', 'Abi');
+  git('init', '-q', '-b', 'main'); git('config', 'user.email', 'abi@x.com'); git('config', 'user.name', 'Abi'); git('config', 'core.autocrlf', 'false'); // keep LF on Windows runners
   write('src/pay.js', PAY); write('test/pay.test.js', TEST); write('package.json', '{"name":"shop","private":true}\n');
   git('add', '.'); git('commit', '-qm', 'init');
   let r = fx('init', '--yes', '--no-git-hooks');
