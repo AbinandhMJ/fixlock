@@ -43,6 +43,7 @@ export default defineConfig({
       { text: 'Guides', items: [
         { text: 'Team lead guide', link: '/team-lead-guide' },
         { text: 'Developer guide', link: '/developer-guide' },
+        { text: 'Tests and lifecycle', link: '/tests-and-lifecycle' },
         { text: 'AI tools', link: '/ai-tools' },
       ] },
       { text: 'AI assistants', items: [

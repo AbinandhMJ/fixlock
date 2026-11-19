@@ -49,11 +49,16 @@ Daily:
   fixlock languages [file]             Languages structural matching understands (and which one a file is)
   fixlock why <file>[:line]            What is locked here, who owns it, can I change it?
   fixlock list | remove <id>
+  fixlock link <id> <test file>        The test that proves a lock's fix (--remove to unlink)
+  fixlock test [id...]                 Run the linked tests: every fix proved, not just present
+  fixlock relock <id...> | --changed   After an approved change, lock the lines that hold the fix now [--lines a-b]
+  fixlock handover <from> <to>         Give someone's locks to a teammate [--remove: take them off the team]
+  fixlock review [<id> --keep|--remove] Locks that need a decision: expired, orphaned, moved, not reviewed lately
   fixlock status [file] [--stdin] [--json]
                                        Every lock and whether it's intact (--stdin: check unsaved editor text). For editor plugins
 
 CI / hooks:
-  fixlock check [--base origin/main] [--pr N] [--notify] [--markdown out.md] [--json]
+  fixlock check [--base origin/main] [--pr N] [--run-tests] [--notify] [--markdown out.md] [--json]
   fixlock check --staged               Friendly warning before commit (never blocks)
   fixlock install-hook                 git hooks on this machine: commit warning + auto-lock after fix/feat commits
   fixlock install-claude-hook          Claude Code: warn / ask / block before AI edits locked or working code

@@ -4,7 +4,10 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
-_No changes yet._
+### Added
+- **Test-linked locks.** `fixlock link FIX-001 tests/test_refund.py` names the test that proves a fix. `fixlock check --run-tests` (the Action's `run-tests: true`, or `"tests": { "run": true }`) runs it when the locked lines change: if it still passes and the PR didn't edit it, the lock is satisfied and nobody has to approve; if it fails, the PR comment says the fix looks broken and shows the output. `fixlock test` runs every linked test. Commands are picked per language (pytest, vitest/jest/mocha/node --test, go test, Gradle/Maven, phpunit, rspec, cargo) or set in `tests.commands`. See [Test-linked locks and lifecycle](https://abinandhmj.github.io/fixlock/tests-and-lifecycle).
+- **Lock lifecycle.** `fixlock relock --changed` locks the lines that hold a fix after an approved change (keeping the old lines in `history`); `fixlock handover <from> <to>` gives someone's locks to a teammate; `fixlock mark --expires YYYY-MM-DD` makes a lock warn-only after a date; `fixlock review` lists locks that are expired, need re-locking, are orphaned or are overdue (`lifecycle.reviewAfterDays`), and `review <id> --keep|--remove` settles them. The dashboard shows test-linked, expired and orphaned locks.
+
 
 ## [0.9.0] - 2026-11-18
 

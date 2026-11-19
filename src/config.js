@@ -34,12 +34,18 @@ const DEFAULT_CONFIG = {
   //            "text"       – compare lines of text (whitespace-insensitive), as before v0.6
   //   renames: what a consistent rename of variables inside a lock means: "allow" | "warn" | "ask" | "block"
   matching: { mode: 'structural', renames: 'warn' },
+  // Test-linked locks (see src/tests.js). run: run each changed lock's test in `fixlock check` (or pass
+  // --run-tests). satisfies: a passing, unchanged test counts as approval. commands: { ".py": "… {files}" }.
+  tests: { run: false, satisfies: true, timeout: 600, commands: {} },
+  // Lock lifecycle (`fixlock review`): flag locks not reviewed for this many days (null: never).
+  lifecycle: { reviewAfterDays: null },
 };
 
 function mergeConfig(raw = {}) {
   return { ...DEFAULT_CONFIG, ...raw, policies: { ...DEFAULT_CONFIG.policies, ...(raw.policies || {}) },
     stableCode: { ...DEFAULT_CONFIG.stableCode, ...(raw.stableCode || {}) }, autoLock: { ...DEFAULT_CONFIG.autoLock, ...(raw.autoLock || {}) },
-    matching: { ...DEFAULT_CONFIG.matching, ...(raw.matching || {}) } };
+    matching: { ...DEFAULT_CONFIG.matching, ...(raw.matching || {}) },
+    tests: { ...DEFAULT_CONFIG.tests, ...(raw.tests || {}) }, lifecycle: { ...DEFAULT_CONFIG.lifecycle, ...(raw.lifecycle || {}) } };
 }
 
 /** registry.json contents → { version: 2, locks } (handles the v0.1 "fixes" format). */

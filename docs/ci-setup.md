@@ -49,10 +49,11 @@ jobs:
       - uses: AbinandhMJ/fixlock@v0.9.0
         # with:
         #   notify: true            # update linked tracker issues (set LINEAR_API_KEY etc. as env)
+        #   run-tests: true         # run changed locks' tests: a passing one needs no approval
         #   args: --json            # extra `fixlock check` flags
 ```
 
-The action posts and updates a PR comment and fails until the right people approve. See [all inputs](any-language.md#github-actions).
+The action posts and updates a PR comment and fails until the right people approve. With `run-tests: true` it first runs the test linked to each changed lock, so set up your language and dependencies in earlier steps; see [test-linked locks](tests-and-lifecycle.md). See [all inputs](any-language.md#github-actions).
 
 Prefer running your project's own installed fixlock (JavaScript projects)? `.github/workflows/fixlock.yml`:
 
