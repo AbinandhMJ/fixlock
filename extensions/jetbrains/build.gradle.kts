@@ -48,6 +48,8 @@ intellijPlatform {
             create(IntelliJPlatformType.PyCharmCommunity, providers.gradleProperty("platformVersion"))
             create(IntelliJPlatformType.WebStorm, providers.gradleProperty("platformVersion"))
             recommended()
+            // From 2025.3 IntelliJ IDEA is one product (no separate Community edition): check the newest release too.
+            create(IntelliJPlatformType.IntellijIdeaUltimate, "2026.3")
         }
     }
     publishing {
