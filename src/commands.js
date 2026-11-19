@@ -32,6 +32,9 @@ async function cmdInit(args) {
   s.saveConfig(cfg);
   s.saveRegistry(s.loadRegistry());
   if (hooks.claude) init.installClaudeHook();
+  // Pre-edit hooks for the other agents the team uses (project files, so they apply to every teammate).
+  if (hooks.claude && agents.enabled(cfg).includes('cursor')) init.installCursorHook();
+  if (hooks.claude && agents.enabled(cfg).includes('windsurf')) init.installWindsurfHook();
   if (hooks.git) init.installGitHook();
   if (hooks.codeowners) writeCodeowners(true);
   let mcpDone = [];
@@ -69,6 +72,7 @@ function cmdTeam(args) {
   if (sub === 'add') {
     if (!args.name) throw new Error('Usage: fixlock team add --name "Abi" --github abinandhmj --email abi@x.com --role lead|developer|reviewer');
     const m = { name: args.name, github: args.github ? String(args.github).replace(/^@/, '') : null,
+      ...(args.gitlab ? { gitlab: String(args.gitlab).replace(/^@/, '') } : {}),
       emails: String(args.email || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean), role: args.role || 'developer' };
     cfg.team = cfg.team.filter((x) => !(m.github && x.github === m.github) && x.name !== m.name);
     cfg.team.push(m);
@@ -421,6 +425,8 @@ function contentGetter(staged) {
   };
 }
 
+const gitlab = require('./gitlab');
+
 function prAuthor() {
   if (process.env.CHANGE_AUTHOR) return process.env.CHANGE_AUTHOR;
   if (process.env.GITHUB_EVENT_PATH) {
@@ -431,7 +437,8 @@ function prAuthor() {
 
 async function cmdCheck(args) {
   const staged = !!args.staged;
-  const base = args.base || process.env.FIXLOCK_BASE || 'origin/main';
+  const gl = staged ? null : gitlab.context();
+  const base = args.base || process.env.FIXLOCK_BASE || (gl && process.env.CI_MERGE_REQUEST_TARGET_BRANCH_NAME ? `origin/${process.env.CI_MERGE_REQUEST_TARGET_BRANCH_NAME}` : 'origin/main');
   const cfg = s.loadConfig();
   const reg = s.loadRegistry();
   const read = contentGetter(staged);
@@ -478,8 +485,8 @@ async function cmdCheck(args) {
 
   // Approvals: owner / lead approval on the PR clears a lock finding.
   let appr = { approvers: new Set(), source: 'none' };
-  if (!staged && E.needingApproval(cfg, findings).length) appr = await prApprovers(args.pr);
-  const author = staged ? '' : (prAuthor() || '').toLowerCase(); // no PR exists yet at commit time
+  if (!staged && E.needingApproval(cfg, findings).length) appr = gl && process.env.FIXLOCK_TEST_APPROVERS === undefined ? await gitlab.approvers(gl) : await prApprovers(args.pr);
+  const author = staged ? '' : ((gl && !process.env.CHANGE_AUTHOR ? await gitlab.author(gl) : prAuthor()) || '').toLowerCase(); // no PR exists yet at commit time
   let blocking = E.applyApprovals(cfg, findings, { approvers: appr.approvers, author });
 
   // Test-linked locks: run the tests of the locks this change touches. A passing, unchanged test satisfies
@@ -496,6 +503,12 @@ async function cmdCheck(args) {
     }
   }
 
+  // AI lock judgment: advice next to each changed lock that still needs a person. Never changes the result.
+  if (!staged && (args.judge || (cfg.judge || {}).enabled)) {
+    const n = await require('./judge').judgeFindings(cfg, findings, read, L, { log: (id) => { if (!args.json) console.log(c.dim(`Asking the AI reviewer about ${id}...`)); } });
+    if (n && !args.json) console.log('');
+  }
+
   // Tracker: reopen the linked issue for each blocked regression.
   if (args.notify && blocking.length) {
     const ctx = { pr: require('./approvals').prNumber(args.pr), branch: (g.git(['rev-parse', '--abbrev-ref', 'HEAD'], { allowFail: true }) || '').trim(), author: author || undefined };
@@ -505,6 +518,13 @@ async function cmdCheck(args) {
   if (args.json) console.log(JSON.stringify({ base, staged, ok: !blocking.length, approvals: appr.source, findings: findings.map(({ lock, approvers, ...f }) => ({ ...f, lock: lock && lock.id, approvers: approvers && approvers.map(team.handle) })) }, null, 2));
   else report(cfg, reg, findings, { base, staged, appr, strict: !!args.strict });
   if (args.markdown) fs.writeFileSync(args.markdown, E.toMarkdown(cfg, findings, base));
+  // GitLab merge request: one fixlock comment, kept up to date.
+  if (gl && args.comment) {
+    try {
+      const r = await gitlab.upsertComment(gl, `${E.toMarkdown(cfg, findings, base)}\n<sub>[fixlock](https://abinandhmj.github.io/fixlock/) · fixed stays fixed · a product of Algotricz</sub>\n`);
+      if (r.skipped && !args.json) console.log(c.yellow('! No MR comment: set FIXLOCK_GITLAB_TOKEN (project access token, api scope) as a masked CI/CD variable.'));
+    } catch (e) { if (!args.json) console.log(c.yellow(`! Couldn't post the MR comment: ${e.message}`)); }
+  }
   process.exitCode = blocking.length && !staged ? 1 : (blocking.length && args.strict ? 1 : 0);
 }
 
@@ -524,6 +544,7 @@ function report(cfg, reg, findings, { base, staged, appr, strict }) {
     if (f.renamed && f.renamed.length) console.log(c.dim(`    renamed (logic kept): ${f.renamed.map(([a, b]) => `${a} → ${b}`).join(', ')}`));
     if (f.test) console.log((f.test.status === 'failed' ? c.red : f.test.status === 'passed' ? c.green : c.yellow)(`    ${E.testNote(f.test).replace(/\*\*|`/g, '')}`));
     if (f.test && f.test.status === 'failed' && f.test.output) f.test.output.split('\n').slice(-8).forEach((l) => console.log(c.dim(`      ${l}`)));
+    if (f.judge) console.log((f.judge.verdict === 'broken' ? c.red : f.judge.verdict === 'preserved' ? c.cyan : c.yellow)(`    ${E.judgeNote(f.judge).replace(/\*\*/g, '')}`));
     if (f.expired) console.log(c.dim(`    expired on ${f.lock.expires}: changing it only warns (fixlock review ${f.lock.id} --keep to extend)`));
     if (f.status === 'blocked') console.log(`    → needs approval from ${f.approvers.map(team.handle).join(' or ') || 'nobody on the team (no owner or lead)'}${staged ? ' when you open the PR' : ' on the PR'}, or restore these lines.`);
     if (f.status === 'blocked' && !staged && f.unapprovable) console.log(c.yellow(`    ! ${f.unapprovable}`));
@@ -687,6 +708,14 @@ function onGithub() {
   return /github\.com[:/]/i.test(url);
 }
 
+/** Is origin a GitLab repository (gitlab.com, or a host named gitlab.*)? */
+function onGitlab() {
+  const url = (g.git(['remote', 'get-url', 'origin'], { allowFail: true }) || '').trim();
+  return /(^|[@/.])gitlab\.[\w.]+[:/]/i.test(url);
+}
+
+const GITLAB_INCLUDE = 'https://raw.githubusercontent.com/AbinandhMJ/fixlock/main/ci/gitlab/fixlock.gitlab-ci.yml';
+
 /** Does a workflow already run fixlock? */
 function hasFixlockWorkflow() {
   const dir = path.join(s.root(), '.github', 'workflows');
@@ -739,7 +768,16 @@ async function cmdQuickstart(args) {
   if (!args['no-ci']) {
     if (s.loadConfig().prCheck === 'github-app') ci = 'the fixlock GitHub App';
     else if (hasFixlockWorkflow()) ci = 'a workflow already runs fixlock';
-    else if (!onGithub() && !args.ci) ci = 'not on GitHub: add `fixlock check` to your CI (see the CI setup docs)';
+    else if (onGitlab()) {
+      const file = path.join(s.root(), '.gitlab-ci.yml');
+      const text = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
+      if (text && /fixlock/.test(text)) ci = '.gitlab-ci.yml already runs fixlock';
+      else if (text === null) {
+        fs.writeFileSync(file, `# Added by fixlock quickstart: fails a merge request that changes a locked fix until its owner approves.\n# Needs a masked CI/CD variable FIXLOCK_GITLAB_TOKEN (project access token, api scope).\ninclude:\n  - remote: ${GITLAB_INCLUDE}\n`);
+        ci = '.gitlab-ci.yml (add the FIXLOCK_GITLAB_TOKEN variable: see the GitLab docs)';
+      } else ci = `add this to your .gitlab-ci.yml:  include: [{ remote: ${GITLAB_INCLUDE} }]`;
+    }
+    else if (!onGithub() && !args.ci) ci = 'not on GitHub or GitLab: add `fixlock check` to your CI (see the CI setup docs)';
     else {
       const file = path.join(s.root(), '.github', 'workflows', 'fixlock.yml');
       fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -829,5 +867,26 @@ module.exports = {
   setup: cmdSetup,
   demo: (args) => { require('./demo').run({ keep: !!args.keep, fast: !!args.fast }); },
   mcp: () => require('./mcp').serve(),
-  hook: (args) => { if (args._[0] !== 'claude') throw new Error('Usage: fixlock hook claude'); require('./hook').run(); },
+  hook: (args) => {
+    const which = args._[0];
+    if (which === 'claude') return require('./hook').run();
+    if (which === 'cursor') return require('./agenthooks').runCursor();
+    if (which === 'windsurf' || which === 'devin') return require('./agenthooks').runWindsurf();
+    throw new Error('Usage: fixlock hook claude | cursor | windsurf');
+  },
+  allow: (args) => {
+    const ah = require('./agenthooks');
+    if (args.clear) { ah.clearAllowed(); return console.log(c.green('✔ Cleared: AI assistants must ask again before changing locked lines.')); }
+    if (!args._.length) {
+      const now = ah.allowed();
+      if (!Object.keys(now).length) return console.log('No locks are allowed right now. Allow one: fixlock allow FIX-001 [--minutes 30]');
+      for (const [id, t] of Object.entries(now)) console.log(`${id}  until ${new Date(t).toLocaleTimeString()}`);
+      return;
+    }
+    const reg = s.loadRegistry();
+    for (const id of args._) if (!reg.locks.some((l) => l.id.toUpperCase() === id.toUpperCase())) throw new Error(`No lock ${id}. See: fixlock list`);
+    const minutes = Math.max(1, Math.min(480, parseInt(args.minutes || '30', 10) || 30));
+    ah.allow(args._, minutes);
+    console.log(c.green(`✔ Cursor and Windsurf may change ${args._.map((x) => x.toUpperCase()).join(', ')} for ${minutes} minutes.`) + c.dim(' The PR still needs the owner\'s approval. Undo: fixlock allow --clear'));
+  },
 };

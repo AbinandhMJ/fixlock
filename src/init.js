@@ -149,6 +149,45 @@ function installClaudeHook() {
   fs.writeFileSync(file, JSON.stringify(settings, null, 2) + '\n');
 }
 
+/** Merge our command into a hooks.json list (replacing older fixlock entries, keeping everyone else's). */
+function mergeHookList(list, entry) {
+  const kept = (list || []).filter((h) => !cli.isOurs(h.command || '') || h.command === entry.command);
+  if (!kept.some((h) => h.command === entry.command)) kept.push(entry);
+  return kept;
+}
+const readJsonFile = (file) => { try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return {}; } };
+
+/** Cursor: .cursor/hooks.json, preToolUse on file tools + beforeShellExecution. */
+function installCursorHook() {
+  const file = path.join(s.root(), '.cursor', 'hooks.json');
+  const cfg = readJsonFile(file);
+  const command = `${cli.command(s.root())} hook cursor`;
+  cfg.version = cfg.version || 1;
+  cfg.hooks = cfg.hooks || {};
+  cfg.hooks.preToolUse = mergeHookList(cfg.hooks.preToolUse, { command, matcher: 'Write|Edit|Replace|Patch|Delete', timeout: 30 });
+  cfg.hooks.beforeShellExecution = mergeHookList(cfg.hooks.beforeShellExecution, { command, timeout: 30 });
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(cfg, null, 2) + '\n');
+  return file;
+}
+
+/** Windsurf / Devin Desktop: .devin/hooks.json (and .windsurf/hooks.json for older Windsurf), pre_write_code + pre_run_command. */
+function installWindsurfHook() {
+  const command = `${cli.command(s.root())} hook windsurf`;
+  const files = [];
+  for (const dir of ['.devin', '.windsurf']) {
+    const file = path.join(s.root(), dir, 'hooks.json');
+    const cfg = readJsonFile(file);
+    cfg.hooks = cfg.hooks || {};
+    cfg.hooks.pre_write_code = mergeHookList(cfg.hooks.pre_write_code, { command, show_output: true });
+    cfg.hooks.pre_run_command = mergeHookList(cfg.hooks.pre_run_command, { command, show_output: true });
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(cfg, null, 2) + '\n');
+    files.push(file);
+  }
+  return files;
+}
+
 function installGitHook() {
   const dir = path.join(s.root(), '.git', 'hooks');
   const run = cli.command(s.root());
@@ -159,4 +198,4 @@ function installGitHook() {
     `#!/bin/sh\n# installed by fixlock — locks lines from fix:/feat: commits in a follow-up chore commit\n[ -n "$FIXLOCK_IN_HOOK" ] && exit 0\nFIXLOCK_IN_HOOK=1 ${run} autolock --commit-result --quiet || true\n`, { mode: 0o755 });
 }
 
-module.exports = { interactive, defaults, installClaudeHook, installGitHook, prompter, githubLogin };
+module.exports = { interactive, defaults, installClaudeHook, installCursorHook, installWindsurfHook, installGitHook, prompter, githubLogin };

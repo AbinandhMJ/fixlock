@@ -49,7 +49,7 @@ Pick one. Each takes about a minute and asks no questions.
 npx @abinandhmj/fixlock quickstart       # no Node.js? pipx install fixlock && fixlock quickstart
 ```
 
-It sets up the team, locks the past fixes it's surest about, connects your AI assistants, installs the commit hooks and adds the PR check. Then commit and push.
+It sets up the team, locks the past fixes it's surest about, connects your AI assistants (with pre-edit hooks for Claude Code, Cursor and Windsurf), installs the commit hooks and adds the PR check: a GitHub workflow, or the merge request job on [GitLab](https://abinandhmj.github.io/fixlock/gitlab). Then commit and push.
 
 **In VS Code or Cursor.** Install the [fixlock extension](https://marketplace.visualstudio.com/items?itemName=algotricz.fixlock), open your repository and click **Set up fixlock**.
 

@@ -34,6 +34,10 @@ inputs:
     description: Run the test linked to each changed lock. A passing test that the PR didn't change satisfies the lock (no approval needed); a failing one says the fix is broken. Set up your language and install dependencies in earlier steps.
     required: false
     default: 'false'
+  judge:
+    description: Ask an AI model whether each changed lock's fix still works, and show its answer (advice only; it never approves or blocks). Needs ANTHROPIC_API_KEY (or judge settings in .fixlock/config.json) in the step's env.
+    required: false
+    default: 'false'
   args:
     description: Extra arguments for `fixlock check`.
     required: false
@@ -75,6 +79,7 @@ runs:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         NOTIFY: ${{ inputs.notify }}
         RUN_TESTS: ${{ inputs.run-tests }}
+        JUDGE: ${{ inputs.judge }}
         EXTRA: ${{ inputs.args }}
         PR_NUMBER: ${{ github.event.pull_request.number }}
       run: |
@@ -84,6 +89,7 @@ runs:
         [ -n "$PR_NUMBER" ] && flags+=(--pr "$PR_NUMBER")
         [ "$NOTIFY" = "true" ] && flags+=(--notify)
         [ "$RUN_TESTS" = "true" ] && flags+=(--run-tests)
+        [ "$JUDGE" = "true" ] && flags+=(--judge)
         # shellcheck disable=SC2206
         [ -n "$EXTRA" ] && flags+=($EXTRA)
         status=0

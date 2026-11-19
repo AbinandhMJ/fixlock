@@ -59,7 +59,8 @@ function applyApprovals(cfg, findings, { approvers = new Set(), author = '' } = 
   for (const f of findings.filter((x) => x.kind === 'lock')) {
     const pol = policyOf(cfg, f.lock);
     f.approvers = team.approvers(cfg, f.lock);
-    const gh = f.approvers.map((a) => (a.github || '').toLowerCase()).filter(Boolean);
+    // Usernames on the code host: GitHub, or GitLab (a member's gitlab field, else their github one).
+    const gh = f.approvers.flatMap((a) => [a.github, a.gitlab]).map((u) => String(u || '').toLowerCase()).filter(Boolean);
     if (pol.approval === 'none' || renameWarnOnly(cfg, f) || f.expired) f.status = 'warn';
     else if (gh.some((u) => approvers.has(u))) f.status = 'approved';
     else if (who && gh.includes(who)) f.status = 'approved';
@@ -99,13 +100,21 @@ function testNote(t) {
   }[t.status] || '';
 }
 
+/** The AI reviewer's note (kept here so the evaluator stays free of network code). */
+function judgeNote(jd) {
+  if (!jd) return '';
+  if (jd.verdict === 'error') return `AI review couldn't run (${jd.explanation}).`;
+  const head = { preserved: 'AI review: the fix looks preserved', broken: '**AI review: the fix looks broken**', unsure: 'AI review: unsure' }[jd.verdict] || 'AI review';
+  return `${head}${jd.model ? ` (${jd.model})` : ''}. ${jd.explanation} This is advice; the lock still needs its owner's approval.`;
+}
+
 /** Why nobody can approve a lock on GitHub, and how to fix it. */
 function unapprovable(approvers) {
   if (!approvers.length) return 'Nobody can approve this: the lock has no owner on the team and the team has no lead. Add one with `fixlock team add --name "…" --github <username> --role lead`, or restore the lines.';
   const names = approvers.map((m) => m.name);
   const m = approvers[0];
   const cmd = `fixlock team add --name "${m.name}" --github <username>${m.emails && m.emails[0] ? ` --email ${m.emails[0]}` : ''} --role ${m.role}`;
-  return `${names.join(' and ')} ${names.length > 1 ? 'have' : 'has'} no GitHub username in \`.fixlock/config.json\`, so this can't be approved on GitHub. Add it with \`${cmd}\`, or restore the lines.`;
+  return `${names.join(' and ')} ${names.length > 1 ? 'have' : 'has'} no GitHub or GitLab username in \`.fixlock/config.json\`, so this can't be approved in the PR. Add it with \`${cmd}\` (or \`--gitlab <username>\`), or restore the lines.`;
 }
 
 /** Latest review state per reviewer → Set of logins (lowercase) whose latest review is APPROVED. */
@@ -135,6 +144,7 @@ function toMarkdown(cfg, findings, base) {
     if (f.renamed && f.renamed.length) md += `  - Renamed inside the lock (logic kept): ${f.renamed.map(([a, b]) => '`' + a + '` → `' + b + '`').join(', ')}\n`;
     if (f.test) md += `  - ${testNote(f.test)}\n`;
     if (f.test && f.test.status === 'failed' && f.test.output) md += `  <details><summary>Test output</summary>\n\n\`\`\`\n${f.test.output.replace(/\`\`\`/g, "'''")}\n\`\`\`\n</details>\n`;
+    if (f.judge) md += `  - ${judgeNote(f.judge)}\n`;
     if (f.expired) md += `  - This lock expired on ${f.lock.expires}, so changing it only warns. Remove it, or extend it with \`fixlock review ${f.lock.id} --keep\`.\n`;
     if (f.status === 'blocked' && f.unapprovable) md += `  - ${f.unapprovable}\n`;
     else if (f.status === 'blocked') md += `  - **Approve this PR as ${f.approvers.map(team.handle).join(' or ')}** to accept the change, or restore the lines.\n`;
@@ -143,4 +153,4 @@ function toMarkdown(cfg, findings, base) {
   return md;
 }
 
-module.exports = { lockFindings, pathFindings, needingApproval, applyApprovals, applyTests, testNote, expired, approvedBy, toMarkdown };
+module.exports = { lockFindings, pathFindings, needingApproval, applyApprovals, applyTests, testNote, judgeNote, expired, approvedBy, toMarkdown };

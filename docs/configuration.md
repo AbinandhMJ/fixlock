@@ -37,6 +37,8 @@ All settings live in `.fixlock/config.json`. `init` writes it; you can edit it b
 | `emails` | Git commit emails, used to recognise who is editing or committing |
 | `role` | `lead`, `developer` or `reviewer` |
 
+Team members can have a `gitlab` username too (`fixlock team add --gitlab <username>`), used for [GitLab](gitlab.md) approvals.
+
 ## `policies.bug` / `policies.feature`
 
 | Field | Values |
@@ -97,6 +99,10 @@ How locks are compared with the current code.
 | Field | Default | Meaning |
 |---|---|---|
 | `reviewAfterDays` | `null` | `fixlock review` lists locks not reviewed for this many days |
+
+## `judge`
+
+[AI review of changed locks](ai-judgment.md): `enabled` (`false`), `provider` (`anthropic` | `openai` | `command`), `model`, `url`, `command`, `timeout` (`60`), `maxLines` (`400`). Advice only: it never approves or blocks.
 
 ## `tracker`
 
