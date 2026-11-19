@@ -15,6 +15,7 @@ const auto = require('./autolock');
 const stable = require('./stable');
 const discovery = require('./discover');
 const cli = require('./cli');
+const tests = require('./tests');
 
 const tty = process.stdout.isTTY && !process.env.NO_COLOR;
 const paint = (code) => (t) => (tty ? `\x1b[${code}m${t}\x1b[0m` : t);
@@ -89,7 +90,7 @@ function cmdTeam(args) {
 /* ---------------- mark / list / remove / why ---------------- */
 async function cmdMark(args) {
   const [file, range] = args._;
-  if (!file || !range) throw new Error('Usage: fixlock mark <file> <start>[-<end>] -m "why" [--type bug|feature] [--title ".."] [--issue linear:ENG-12] [--owner github] [--test spec]');
+  if (!file || !range) throw new Error('Usage: fixlock mark <file> <start>[-<end>] -m "why" [--type bug|feature] [--title ".."] [--issue linear:ENG-12] [--owner github] [--test spec] [--expires YYYY-MM-DD]');
   const [start, end = start] = range.split('-').map((n) => parseInt(n, 10));
   const rel = L.repoRel(s.root(), file);
   const abs = path.join(s.root(), rel);
@@ -110,6 +111,9 @@ async function cmdMark(args) {
     file: rel, snippet, owner: owner.github || owner.name, issue: args.issue || null, test: args.test || null,
     date: new Date().toISOString().slice(0, 10),
   };
+  if (args.expires) lock.expires = isoDate(args.expires);
+  if (lock.test && !fs.existsSync(path.join(s.root(), L.repoRel(s.root(), lock.test)))) throw new Error(`Test file not found: ${lock.test}`);
+  if (lock.test) lock.test = L.repoRel(s.root(), lock.test);
   L.withCopies(lock, lines.join('\n'));
   reg.locks.push(lock);
   s.saveRegistry(reg);
@@ -149,6 +153,197 @@ function cmdRemove(args) {
 }
 
 /** fixlock why <file>[:line] — what is locked here and who owns it. */
+/* ---------------- test-linked locks ---------------- */
+const isoDate = (d) => {
+  const m = /^\d{4}-\d{2}-\d{2}$/.exec(String(d || '').trim());
+  if (!m || isNaN(Date.parse(m[0]))) throw new Error(`Dates are YYYY-MM-DD, such as 2027-06-30 (got "${d}")`);
+  return m[0];
+};
+const findLock = (reg, id) => {
+  const lock = reg.locks.find((l) => l.id.toLowerCase() === String(id || '').toLowerCase());
+  if (!lock) throw new Error(`No lock ${id || '(give an id, such as FIX-001)'}. See: fixlock list`);
+  return lock;
+};
+
+/** fixlock link <id> <test file> | --remove: the test that proves a lock's fix. */
+function cmdLink(args) {
+  const [id, test] = args._;
+  const reg = s.loadRegistry();
+  const lock = findLock(reg, id);
+  if (args.remove) { delete lock.test; s.saveRegistry(reg); return console.log(c.green(`✔ ${lock.id} has no linked test now`)); }
+  if (!test) throw new Error('Usage: fixlock link <id> <test file>   (or --remove)');
+  const rel = L.repoRel(s.root(), path.resolve(process.cwd(), test));
+  if (!fs.existsSync(path.join(s.root(), rel))) throw new Error(`Test file not found: ${test}`);
+  lock.test = rel;
+  s.saveRegistry(reg);
+  const cmd = tests.commandFor(s.root(), s.loadConfig(), rel);
+  console.log(c.green(`✔ ${lock.id} is proved by ${rel}`) + c.dim(cmd ? `  (runs: ${tests.fill(cmd, [rel])})` : '  (fixlock does not know how to run it: set tests.commands in .fixlock/config.json)'));
+  console.log(c.dim(`When ${lock.id}'s lines change, "fixlock check --run-tests" runs it; if it still passes, the change needs no approval.`));
+}
+
+/** fixlock test [id…]: run the linked tests, so every locked fix is proved, not just present. */
+function cmdTest(args) {
+  const cfg = s.loadConfig();
+  const reg = s.loadRegistry();
+  const locks = args._.length ? args._.map((id) => findLock(reg, id)) : reg.locks;
+  const withTests = locks.filter((l) => l.test);
+  const without = locks.filter((l) => !l.test);
+  if (!withTests.length) {
+    console.log(`No lock has a linked test yet. Link one: ${cli.human(s.root())} link FIX-001 tests/test_refund.py`);
+    return;
+  }
+  const results = tests.run(s.root(), cfg, withTests.map((l) => l.test), { log: (cmd) => { if (!args.json) console.log(c.dim(`$ ${cmd}`)); } });
+  if (args.json) console.log(JSON.stringify(withTests.map((l) => ({ id: l.id, test: l.test, ...results[l.test] })), null, 2));
+  else {
+    console.log('');
+    for (const l of withTests) {
+      const r = results[l.test];
+      const mark = r.status === 'passed' ? c.green('✔') : r.status === 'failed' ? c.red('✖') : c.yellow('!');
+      console.log(`${mark} ${c.bold(l.id)} ${l.title}  ${c.dim(`${l.test}: ${r.status}`)}`);
+      if (r.status !== 'passed' && r.output) r.output.split('\n').slice(-6).forEach((x) => console.log(c.dim(`    ${x}`)));
+    }
+    if (without.length) console.log(c.dim(`\n${without.length} lock(s) have no test: ${without.slice(0, 6).map((l) => l.id).join(', ')}${without.length > 6 ? ', …' : ''}. Link one with: fixlock link <id> <test file>`));
+  }
+  if (withTests.some((l) => results[l.test].status !== 'passed')) process.exitCode = 1;
+}
+
+/* ---------------- lock lifecycle ---------------- */
+
+/**
+ * fixlock relock <id…> | --changed [--lines a-b] [-m "why"]: after an approved change, lock the lines that
+ * now hold the fix. Without --lines, fixlock takes the stretch of the file between the first and last
+ * locked lines it can still find. The old lines are kept in the lock's history.
+ */
+function cmdRelock(args) {
+  const cfg = s.loadConfig();
+  const reg = s.loadRegistry();
+  const root = s.root();
+  const me = team.current(cfg) || {};
+  const maxLines = Math.max(40, (cfg.autoLock || {}).maxLines || 40);
+  const all = !!(args.changed || args.all);
+  const ids = all ? reg.locks.map((l) => l.id) : args._;
+  if (!ids.length) throw new Error('Usage: fixlock relock <id…> [--lines 12-18] [-m "why"]   or   fixlock relock --changed');
+  if (args.lines && ids.length !== 1) throw new Error('--lines works with one lock at a time.');
+  const done = [];
+  const skipped = [];
+  for (const id of ids) {
+    const lock = findLock(reg, id);
+    const abs = path.join(root, lock.file);
+    const content = fs.existsSync(abs) ? fs.readFileSync(abs, 'utf8') : null;
+    if (content === null) { skipped.push(`${lock.id}: ${lock.file} is gone. Lock its new place with fixlock mark, then fixlock remove ${lock.id}.`); continue; }
+    const lines = content.split('\n').map((l) => l.replace(/\r$/, ''));
+    const v = L.verifyLock(lock, content, { mode: (cfg.matching || {}).mode, file: lock.file });
+    if (v.status === 'intact' && !args.lines) { if (!all) skipped.push(`${lock.id}: already intact, nothing to re-lock.`); continue; }
+    let start;
+    let end;
+    if (args.lines) {
+      [start, end = start] = String(args.lines).split('-').map((n) => parseInt(n, 10));
+      if (!(start >= 1 && end <= lines.length && start <= end)) throw new Error(`--lines ${args.lines} is outside ${lock.file} (1-${lines.length})`);
+    } else {
+      const at = L.locate(lock, lines);
+      if (!at.length) { skipped.push(`${lock.id}: none of its lines are left in ${lock.file}. Say where the fix is now: fixlock relock ${lock.id} --lines <start>-<end>`); continue; }
+      [start, end] = [Math.min(...at), Math.max(...at)];
+      // Line the old lock up with what's left: a changed first or last locked line sits just outside the
+      // lines still found, so widen by as many locked lines as come before/after them.
+      const n = lines.map(L.norm);
+      const sn = lock.snippet.map(L.norm);
+      const first = sn.indexOf(n[start - 1]);
+      const last = sn.lastIndexOf(n[end - 1]);
+      if (first > 0) start = Math.max(1, start - first);
+      if (last >= 0) end = Math.min(lines.length, end + (sn.length - 1 - last));
+      if (end - start + 1 > maxLines) { skipped.push(`${lock.id}: its lines are now spread over ${end - start + 1} lines. Say which hold the fix: fixlock relock ${lock.id} --lines <start>-<end>`); continue; }
+    }
+    const snippet = lines.slice(start - 1, end).filter((l) => !L.trivial(l));
+    if (!snippet.length) { skipped.push(`${lock.id}: lines ${start}-${end} are blank.`); continue; }
+    lock.history = [...(lock.history || []), { date: new Date().toISOString().slice(0, 10), snippet: lock.snippet, by: team.handle(me) || me.name || '', reason: args.m || 'relocked after an approved change' }].slice(-10);
+    lock.snippet = snippet;
+    delete lock.siblings;
+    L.withCopies(lock, content);
+    done.push(`${lock.id}  ${lock.file}:${start}-${end}  ${lock.title}`);
+  }
+  if (done.length) { s.saveRegistry(reg); syncAgentFiles(true); }
+  for (const d of done) console.log(c.green(`✔ relocked ${d}`));
+  for (const x of skipped) console.log(c.yellow(`! ${x}`));
+  if (!done.length && !skipped.length) console.log(c.green('✔ Every lock is intact: nothing to re-lock.'));
+  if (done.length) console.log(c.dim('Commit .fixlock/registry.json so CI guards the new lines.'));
+}
+
+/** fixlock handover <from> <to>: give someone's locks to a teammate (they're leaving, or moved team). */
+function cmdHandover(args) {
+  const [from, to] = args._;
+  if (!from || !to) throw new Error('Usage: fixlock handover <from> <to>   (names, GitHub usernames or emails from the team)');
+  const cfg = s.loadConfig();
+  const reg = s.loadRegistry();
+  const a = team.find(cfg, from);
+  const b = team.find(cfg, to);
+  if (!b) throw new Error(`"${to}" is not in the team. Add them first: fixlock team add --name "…" --github <username> --role developer`);
+  if (a === b) throw new Error('Give the locks to someone else.');
+  const same = (owner) => (a ? team.find(cfg, owner) === a : String(owner || '').toLowerCase().replace(/^@/, '') === String(from).toLowerCase().replace(/^@/, ''));
+  const moved = reg.locks.filter((l) => same(l.owner));
+  if (!moved.length) return console.log(`No locks are owned by ${from}.`);
+  for (const l of moved) { l.previousOwners = [...(l.previousOwners || []), l.owner]; l.owner = b.github || b.name; }
+  s.saveRegistry(reg);
+  syncAgentFiles(true);
+  if (fs.existsSync(path.join(s.root(), '.github', 'CODEOWNERS'))) writeCodeowners(true);
+  console.log(c.green(`✔ ${moved.length} lock(s) handed over to ${team.handle(b)}: `) + moved.map((l) => l.id).join(', '));
+  if (a && args.remove) {
+    cfg.team = cfg.team.filter((m) => m !== a);
+    s.saveConfig(cfg);
+    console.log(c.green(`✔ removed ${a.name} from the team`));
+  } else if (a) console.log(c.dim(`${a.name} is still on the team. To remove them too: fixlock handover ${from} ${to} --remove`));
+}
+
+/**
+ * What needs a person's decision, in one list:
+ *   expired        past its "expires" date (it only warns now)
+ *   needs re-lock  its lines aren't in the file as locked (usually after an approved change)
+ *   orphaned       its owner isn't on the team
+ *   not reviewed   older than lifecycle.reviewAfterDays since it was made or last reviewed
+ */
+function reviewItems(cfg, reg, root, on = new Date()) {
+  const day = on.toISOString().slice(0, 10);
+  const after = (cfg.lifecycle || {}).reviewAfterDays;
+  const out = [];
+  for (const l of reg.locks) {
+    const why = [];
+    if (E.expired(l, day)) why.push(`expired on ${l.expires}`);
+    const abs = path.join(root, l.file);
+    const content = fs.existsSync(abs) ? fs.readFileSync(abs, 'utf8') : null;
+    if (content === null) why.push(`its file ${l.file} is gone`);
+    else if (L.verifyLock(l, content, { mode: (cfg.matching || {}).mode, file: l.file }).status === 'changed') why.push('needs re-lock (its lines changed)');
+    if (l.owner && !team.find(cfg, l.owner)) why.push(`owner ${l.owner} isn't on the team`);
+    const since = l.reviewed || l.date;
+    if (after && since && (on - new Date(since)) / 864e5 > after) why.push(`not reviewed since ${since}`);
+    if (why.length) out.push({ lock: l, why });
+  }
+  return out;
+}
+
+/** fixlock review: locks that need a decision. fixlock review <id> --keep [--expires DATE] | --remove settles one. */
+function cmdReview(args) {
+  const cfg = s.loadConfig();
+  const reg = s.loadRegistry();
+  const id = args._[0];
+  if (id) {
+    const lock = findLock(reg, id);
+    if (args.remove) return cmdRemove({ ...args, _: [lock.id] });
+    if (!args.keep && !args.expires) throw new Error(`Usage: fixlock review ${lock.id} --keep [--expires YYYY-MM-DD]   or   --remove`);
+    lock.reviewed = new Date().toISOString().slice(0, 10);
+    if (args.expires) lock.expires = isoDate(args.expires);
+    else if (E.expired(lock)) delete lock.expires;
+    s.saveRegistry(reg);
+    return console.log(c.green(`✔ ${lock.id} reviewed and kept`) + c.dim(lock.expires ? ` (expires ${lock.expires})` : ''));
+  }
+  const items = reviewItems(cfg, reg, s.root());
+  if (args.json) return console.log(JSON.stringify(items.map((x) => ({ id: x.lock.id, file: x.lock.file, title: x.lock.title, why: x.why })), null, 2));
+  if (!items.length) return console.log(c.green(`✔ All ${reg.locks.length} locks are current: none expired, orphaned or out of date.`));
+  console.log(c.bold(`${items.length} lock(s) need a decision\n`));
+  for (const x of items) console.log(`${c.yellow('!')} ${c.bold(x.lock.id)} ${x.lock.title}  ${c.dim(x.lock.file)}\n    ${x.why.join('; ')}`);
+  const run = cli.human(s.root());
+  console.log(c.dim(`\nKeep one: ${run} review <id> --keep [--expires YYYY-MM-DD] · remove one: ${run} review <id> --remove\nRe-lock moved lines: ${run} relock --changed · give someone's locks away: ${run} handover <from> <to>`));
+  if (args.strict) process.exitCode = 1;
+}
+
 /**
  * Machine-readable state of the locks, for editor plugins (JetBrains, and anything else that can't load
  * fixlock as a library): `fixlock status [file] [--stdin] --json`. With --stdin, the file's content is read
@@ -285,7 +480,21 @@ async function cmdCheck(args) {
   let appr = { approvers: new Set(), source: 'none' };
   if (!staged && E.needingApproval(cfg, findings).length) appr = await prApprovers(args.pr);
   const author = staged ? '' : (prAuthor() || '').toLowerCase(); // no PR exists yet at commit time
-  const blocking = E.applyApprovals(cfg, findings, { approvers: appr.approvers, author });
+  let blocking = E.applyApprovals(cfg, findings, { approvers: appr.approvers, author });
+
+  // Test-linked locks: run the tests of the locks this change touches. A passing, unchanged test satisfies
+  // the lock (the fix still works); a failing one says the fix is broken.
+  if (!staged && (args['run-tests'] || (cfg.tests || {}).run)) {
+    const linked = findings.filter((f) => f.kind === 'lock' && f.lock.test);
+    if (linked.length) {
+      let changed = new Set();
+      try { changed = new Set(g.changedFiles(base).flatMap((ch) => [ch.file, ch.from].filter(Boolean))); } catch { /* no base */ }
+      if (!args.json) console.log(c.dim(`Running the tests of ${linked.length} changed lock(s)...`));
+      const results = tests.run(s.root(), cfg, linked.map((f) => f.lock.test), { log: (cmd) => { if (!args.json) console.log(c.dim(`  $ ${cmd}`)); } });
+      blocking = E.applyTests(cfg, findings, results, changed);
+      if (!args.json) console.log('');
+    }
+  }
 
   // Tracker: reopen the linked issue for each blocked regression.
   if (args.notify && blocking.length) {
@@ -307,12 +516,15 @@ function report(cfg, reg, findings, { base, staged, appr, strict }) {
     if (f.kind === 'path') { console.log(`${c.yellow('PATH')}  ${f.msg}`); continue; }
     if (f.kind === 'stable') { console.log(`${c.yellow('REWRITE')}  ${f.msg}`); f.sum.sample.forEach((l) => console.log(c.dim(`    - ${l}`))); continue; }
     const owner = team.handle(team.find(cfg, f.lock.owner)) || f.lock.owner;
-    const tag = { blocked: c.red('LOCKED'), approved: c.green('APPROVED'), warn: c.yellow('WARNING') }[f.status];
+    const tag = { blocked: c.red('LOCKED'), approved: c.green('APPROVED'), warn: c.yellow('WARNING'), satisfied: c.green('TEST OK') }[f.status];
     console.log(`${tag}  ${f.lock.id} "${f.lock.title}" (${f.lock.type}, owner ${owner}) — ${f.deleted ? 'file deleted: ' : ''}${f.file}`);
     if (f.lock.reason && f.lock.reason !== f.lock.title) console.log(c.dim(`    why: ${f.lock.reason}`));
     for (const l of f.missing) console.log(c.dim(`    - ${l.trim()}`));
     if (f.copies) console.log(c.dim(`    this code appeared ${f.copies.expected} times in the file; only ${f.copies.found} identical copies are left`));
     if (f.renamed && f.renamed.length) console.log(c.dim(`    renamed (logic kept): ${f.renamed.map(([a, b]) => `${a} → ${b}`).join(', ')}`));
+    if (f.test) console.log((f.test.status === 'failed' ? c.red : f.test.status === 'passed' ? c.green : c.yellow)(`    ${E.testNote(f.test).replace(/\*\*|`/g, '')}`));
+    if (f.test && f.test.status === 'failed' && f.test.output) f.test.output.split('\n').slice(-8).forEach((l) => console.log(c.dim(`      ${l}`)));
+    if (f.expired) console.log(c.dim(`    expired on ${f.lock.expires}: changing it only warns (fixlock review ${f.lock.id} --keep to extend)`));
     if (f.status === 'blocked') console.log(`    → needs approval from ${f.approvers.map(team.handle).join(' or ') || 'nobody on the team (no owner or lead)'}${staged ? ' when you open the PR' : ' on the PR'}, or restore these lines.`);
     if (f.status === 'blocked' && !staged && f.unapprovable) console.log(c.yellow(`    ! ${f.unapprovable}`));
     if (f.tracker) console.log(c.dim(`    tracker: ${f.tracker}`));
@@ -602,7 +814,7 @@ function writeCodeowners(quiet) {
 }
 
 module.exports = {
-  init: cmdInit, quickstart: cmdQuickstart, team: cmdTeam, mark: cmdMark, list: cmdList, remove: cmdRemove, why: cmdWhy, status: cmdStatus, check: cmdCheck,
+  init: cmdInit, quickstart: cmdQuickstart, team: cmdTeam, mark: cmdMark, list: cmdList, remove: cmdRemove, why: cmdWhy, status: cmdStatus, check: cmdCheck, link: cmdLink, test: cmdTest, relock: cmdRelock, handover: cmdHandover, review: cmdReview,
   sync: () => syncAgentFiles(false),
   tools: cmdTools,
   autolock: cmdAutolock,

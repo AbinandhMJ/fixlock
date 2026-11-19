@@ -72,7 +72,8 @@ export async function repoSummary(gh, repo) {
     const owner = team.find(cfg, lock.owner);
     locks.push({
       id: lock.id, type: lock.type, title: lock.title, file: lock.file, issue: lock.issue || null,
-      owner: team.handle(owner) || lock.owner || '', ownerHasGithub: !!(owner && owner.github),
+      owner: team.handle(owner) || lock.owner || '', ownerHasGithub: !!(owner && owner.github), ownerOnTeam: !!owner,
+      test: lock.test || null, expires: lock.expires || null, expired: !!lock.expires && lock.expires < new Date().toISOString().slice(0, 10),
       approvers: team.approvers(cfg, lock).map(team.handle).filter(Boolean),
       state: content === null ? 'file missing' : v.status === 'changed' ? 'needs re-lock' : v.status === 'renamed' ? 'renamed' : 'intact',
     });
@@ -105,6 +106,9 @@ export async function repoSummary(gh, repo) {
     counts: {
       locks: locks.length,
       needsRelock: locks.filter((l) => l.state === 'needs re-lock' || l.state === 'file missing').length,
+      expired: locks.filter((l) => l.expired).length,
+      orphaned: locks.filter((l) => l.owner && !l.ownerOnTeam).length,
+      withTests: locks.filter((l) => l.test).length,
       blocked: openPrs.filter((p) => p.check && p.check.conclusion === 'failure').length,
       stopped: stopped.length,
       overrides: stopped.filter((s) => s.outcome.startsWith('approved')).length,

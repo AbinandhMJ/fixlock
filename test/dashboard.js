@@ -14,7 +14,7 @@ const CONFIG = JSON.stringify({ team: [
   { name: 'Meena', github: null, emails: ['meena@example.com'], role: 'developer' },
 ] });
 const REGISTRY = JSON.stringify({ version: 2, locks: [
-  { id: 'FIX-001', type: 'bug', title: 'never charge zero', file: 'pay.py', snippet: ['    if amount <= 0:', '        raise ValueError("bad")'], owner: 'Ravi' },
+  { id: 'FIX-001', type: 'bug', title: 'never charge zero', file: 'pay.py', snippet: ['    if amount <= 0:', '        raise ValueError("bad")'], owner: 'Ravi', test: 'tests/test_pay.py' },
   { id: 'FIX-002', type: 'bug', title: 'retry on timeout', file: 'net.py', snippet: ['    for attempt in range(3):', '        resp = send()'], owner: 'Meena' },
 ] });
 const FILES = {
@@ -128,6 +128,7 @@ async function fakeFetch(input, init = {}) {
   ok(/#7[^]*Needs approval/.test(page) && page.includes('1 locked change(s) need approval'), 'open PR blocked by fixlock: needs approval');
   ok(/#5 port billing from v1[^]*approved, then merged/.test(page) && !/#6 docs/.test(page), 'recently stopped: PR #5 blocked then approved; PR #6 never stopped is left out');
   ok(page.includes('&lt;script&gt;alert(1)&lt;/script&gt;') && !page.includes('<script>alert(1)'), 'PR titles are escaped');
+  ok(/FIX-001[^]*test-linked/.test(page) && /1\/2<\/b>locks proved by a test/.test(page) && /fixlock relock --changed/.test(page), 'repo page: test-linked locks, the proved count, and the relock command', page);
   ok(/Meena has no GitHub username/.test(page) && /no GitHub username/.test(page), 'warns when someone who owns locks has no GitHub username');
 
   // Access control

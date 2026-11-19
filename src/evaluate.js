@@ -6,6 +6,9 @@ const L = require('./locks');
 const team = require('./team');
 
 const policyOf = (cfg, lock) => cfg.policies[lock.type] || cfg.policies.bug;
+const today = () => new Date().toISOString().slice(0, 10);
+/** A lock past its "expires" date only warns: its owner chose to stop guarding it then. */
+const expired = (lock, on = today()) => !!lock.expires && lock.expires < on;
 
 /**
  * Locks that are changed in the new version of the code.
@@ -23,8 +26,8 @@ async function lockFindings(cfg, reg, { read, good, renames = {}, only = null })
     const content = await read(target);
     const before = lock.siblings === undefined && content !== null && good ? await good(lock.file) : undefined;
     const v = L.verifyLock(lock, content, { mode: match.mode, file: target, before });
-    if (v.status === 'changed') findings.push({ kind: 'lock', lock, file: target, missing: v.missing, renamed: [], copies: v.copies || null, deleted: content === null });
-    else if (v.status === 'renamed' && match.renames !== 'allow') findings.push({ kind: 'lock', lock, file: target, missing: [], renamed: v.renames, deleted: false });
+    if (v.status === 'changed') findings.push({ kind: 'lock', lock, file: target, missing: v.missing, renamed: [], copies: v.copies || null, deleted: content === null, expired: expired(lock) });
+    else if (v.status === 'renamed' && match.renames !== 'allow') findings.push({ kind: 'lock', lock, file: target, missing: [], renamed: v.renames, deleted: false, expired: expired(lock) });
   }
   return findings;
 }
@@ -43,7 +46,7 @@ const renameWarnOnly = (cfg, f) => f.renamed && f.renamed.length && ((cfg.matchi
 
 /** Lock findings that someone has to approve (so it's worth asking GitHub for the PR's reviews). */
 function needingApproval(cfg, findings) {
-  return findings.filter((f) => f.kind === 'lock' && !renameWarnOnly(cfg, f) && policyOf(cfg, f.lock).approval !== 'none');
+  return findings.filter((f) => f.kind === 'lock' && !renameWarnOnly(cfg, f) && !f.expired && policyOf(cfg, f.lock).approval !== 'none');
 }
 
 /**
@@ -57,13 +60,43 @@ function applyApprovals(cfg, findings, { approvers = new Set(), author = '' } = 
     const pol = policyOf(cfg, f.lock);
     f.approvers = team.approvers(cfg, f.lock);
     const gh = f.approvers.map((a) => (a.github || '').toLowerCase()).filter(Boolean);
-    if (pol.approval === 'none' || renameWarnOnly(cfg, f)) f.status = 'warn';
+    if (pol.approval === 'none' || renameWarnOnly(cfg, f) || f.expired) f.status = 'warn';
     else if (gh.some((u) => approvers.has(u))) f.status = 'approved';
     else if (who && gh.includes(who)) f.status = 'approved';
     else f.status = 'blocked';
     if (f.status === 'blocked' && !gh.length) f.unapprovable = unapprovable(f.approvers);
   }
   return findings.filter((f) => f.status === 'blocked');
+}
+
+/**
+ * Test-linked locks: results = { [testFile]: { status, command, output } } from src/tests.js; changed = Set
+ * of files the change touches. A blocked lock whose test passes, and wasn't itself changed, is satisfied
+ * (cfg.tests.satisfies). Sets f.test on each lock finding with a test. Returns the findings still blocked.
+ */
+function applyTests(cfg, findings, results, changed = new Set()) {
+  const satisfies = ((cfg.tests || {}).satisfies) !== false;
+  for (const f of findings.filter((x) => x.kind === 'lock' && x.lock.test && results[x.lock.test])) {
+    const r = results[f.lock.test];
+    const touched = changed.has(f.lock.test);
+    f.test = { file: f.lock.test, status: r.status === 'passed' && touched ? 'changed' : r.status, command: r.command, output: r.output };
+    if (f.test.status === 'passed' && satisfies && f.status === 'blocked') f.status = 'satisfied';
+  }
+  return findings.filter((f) => f.status === 'blocked');
+}
+
+/** One line on a lock's test result, for the PR comment and the terminal. */
+function testNote(t) {
+  if (!t) return '';
+  const name = `\`${t.file}\``;
+  return {
+    passed: `Its test ${name} still passes and isn't changed here, so the fix holds after this change.`,
+    changed: `Its test ${name} passes, but this change also edits the test, so the test can't stand in for an approval.`,
+    failed: `**Its test ${name} fails**: the fix looks broken by this change.`,
+    timeout: `Its test ${name} timed out.`,
+    missing: `Its test ${name} doesn't exist any more.`,
+    'no-runner': `Its test ${name} wasn't run: fixlock doesn't know the command. Set \`tests.commands\` in \`.fixlock/config.json\`.`,
+  }[t.status] || '';
 }
 
 /** Why nobody can approve a lock on GitHub, and how to fix it. */
@@ -86,15 +119,23 @@ function approvedBy(reviews) {
 function toMarkdown(cfg, findings, base) {
   if (!findings.length) return `### fixlock: all clear\nEvery locked fix and feature is intact (base \`${base}\`).\n`;
   const blocked = findings.filter((f) => f.status === 'blocked');
+  if (!blocked.length && findings.length && findings.every((f) => f.status === 'satisfied')) {
+    let ok = `### fixlock: locked code changed, and its tests still pass\n\n`;
+    for (const f of findings) ok += `- **Test passes: ${f.lock.id}** ${f.lock.title} (${f.lock.type}) — \`${f.file}\`\n  - ${testNote(f.test)}\n`;
+    return ok;
+  }
   let md = `### fixlock: ${blocked.length ? `${blocked.length} locked change(s) need approval` : 'review notes'}\n\n`;
   for (const f of findings) {
     if (f.kind === 'path') { md += `- **Warning:** ${f.msg}\n`; continue; }
     if (f.kind === 'stable') { md += `- **Rewrite of working code:** ${f.msg}. Check this was intended.\n`; continue; }
-    const label = { blocked: 'Needs approval', approved: 'Approved', warn: 'Changed' }[f.status];
+    const label = { blocked: 'Needs approval', approved: 'Approved', warn: 'Changed', satisfied: 'Test passes' }[f.status];
     md += `- **${label}: ${f.lock.id}** ${f.lock.title} (${f.lock.type}) — \`${f.file}\`\n`;
     if (f.lock.reason && f.lock.reason !== f.lock.title) md += `  - Why it exists: ${f.lock.reason}\n`;
     if (f.missing.length) md += `  - Removed/rewritten: ${f.missing.map((l) => '`' + l.trim().replace(/`/g, "'") + '`').join(', ')}\n`;
     if (f.renamed && f.renamed.length) md += `  - Renamed inside the lock (logic kept): ${f.renamed.map(([a, b]) => '`' + a + '` → `' + b + '`').join(', ')}\n`;
+    if (f.test) md += `  - ${testNote(f.test)}\n`;
+    if (f.test && f.test.status === 'failed' && f.test.output) md += `  <details><summary>Test output</summary>\n\n\`\`\`\n${f.test.output.replace(/\`\`\`/g, "'''")}\n\`\`\`\n</details>\n`;
+    if (f.expired) md += `  - This lock expired on ${f.lock.expires}, so changing it only warns. Remove it, or extend it with \`fixlock review ${f.lock.id} --keep\`.\n`;
     if (f.status === 'blocked' && f.unapprovable) md += `  - ${f.unapprovable}\n`;
     else if (f.status === 'blocked') md += `  - **Approve this PR as ${f.approvers.map(team.handle).join(' or ')}** to accept the change, or restore the lines.\n`;
     if (f.tracker) md += `  - Tracker: ${f.tracker}\n`;
@@ -102,4 +143,4 @@ function toMarkdown(cfg, findings, base) {
   return md;
 }
 
-module.exports = { lockFindings, pathFindings, needingApproval, applyApprovals, approvedBy, toMarkdown };
+module.exports = { lockFindings, pathFindings, needingApproval, applyApprovals, applyTests, testNote, expired, approvedBy, toMarkdown };
