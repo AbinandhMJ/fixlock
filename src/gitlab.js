@@ -47,6 +47,21 @@ async function author(ctx) {
   try { return String(((await api(ctx, 'GET', `/merge_requests/${ctx.iid}`)).author || {}).username || ''); } catch { return ''; }
 }
 
+/** The body of the fixlock comment already on the MR (for alert state), or null. */
+async function previousBody(ctx) {
+  if (!ctx.token) return null;
+  try {
+    const notes = await api(ctx, 'GET', `/merge_requests/${ctx.iid}/notes?per_page=100&sort=asc`);
+    const mine = (notes || []).find((n) => !n.system && String(n.body || '').startsWith(MARKER));
+    return mine ? mine.body : null;
+  } catch { return null; }
+}
+
+/** Title, link and author for alerts. */
+function prInfo(ctx, env = process.env) {
+  return { number: `!${ctx.iid}`, title: env.CI_MERGE_REQUEST_TITLE || '', url: env.CI_MERGE_REQUEST_PROJECT_URL ? `${env.CI_MERGE_REQUEST_PROJECT_URL}/-/merge_requests/${ctx.iid}` : '', author: '' };
+}
+
 /** Post the fixlock comment, or edit the one already there. */
 async function upsertComment(ctx, markdown) {
   if (!ctx.token) return { skipped: 'no token' };
@@ -58,4 +73,4 @@ async function upsertComment(ctx, markdown) {
   return { created: n && n.id };
 }
 
-module.exports = { context, approvers, author, upsertComment, MARKER };
+module.exports = { context, approvers, author, upsertComment, previousBody, prInfo, MARKER, name: 'GitLab', tokenVar: 'FIXLOCK_GITLAB_TOKEN', baseVar: 'CI_MERGE_REQUEST_TARGET_BRANCH_NAME' };

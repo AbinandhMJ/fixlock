@@ -4,6 +4,7 @@
 // (a Cloudflare Worker), so both always judge a PR the same way.
 const L = require('./locks');
 const team = require('./team');
+const rules = require('./rules');
 
 const policyOf = (cfg, lock) => cfg.policies[lock.type] || cfg.policies.bug;
 const today = () => new Date().toISOString().slice(0, 10);
@@ -46,7 +47,7 @@ const renameWarnOnly = (cfg, f) => f.renamed && f.renamed.length && ((cfg.matchi
 
 /** Lock findings that someone has to approve (so it's worth asking GitHub for the PR's reviews). */
 function needingApproval(cfg, findings) {
-  return findings.filter((f) => f.kind === 'lock' && !renameWarnOnly(cfg, f) && !f.expired && policyOf(cfg, f.lock).approval !== 'none');
+  return findings.filter((f) => f.kind === 'rule' || (f.kind === 'lock' && !renameWarnOnly(cfg, f) && !f.expired && policyOf(cfg, f.lock).approval !== 'none'));
 }
 
 /**
@@ -60,14 +61,28 @@ function applyApprovals(cfg, findings, { approvers = new Set(), author = '' } = 
     const pol = policyOf(cfg, f.lock);
     f.approvers = team.approvers(cfg, f.lock);
     // Usernames on the code host: GitHub, or GitLab (a member's gitlab field, else their github one).
-    const gh = f.approvers.flatMap((a) => [a.github, a.gitlab]).map((u) => String(u || '').toLowerCase()).filter(Boolean);
+    const gh = f.approvers.flatMap((a) => [a.github, a.gitlab, a.bitbucket]).map((u) => String(u || '').toLowerCase()).filter(Boolean);
     if (pol.approval === 'none' || renameWarnOnly(cfg, f) || f.expired) f.status = 'warn';
     else if (gh.some((u) => approvers.has(u))) f.status = 'approved';
     else if (who && gh.includes(who)) f.status = 'approved';
     else f.status = 'blocked';
     if (f.status === 'blocked' && !gh.length) f.unapprovable = unapprovable(f.approvers);
   }
+  // Rules (policy as code): a lead, or the rule's own approvers.
+  for (const f of findings.filter((x) => x.kind === 'rule')) {
+    f.approvers = ruleApprovers(cfg, f.rule);
+    const names = f.approvers.flatMap((a) => [a.github, a.gitlab, a.bitbucket]).map((u) => String(u || '').toLowerCase()).filter(Boolean);
+    f.status = names.some((u) => approvers.has(u)) || (who && names.includes(who)) ? 'approved' : 'blocked';
+    if (f.status === 'blocked' && !names.length) f.unapprovable = f.approvers.length ? unapprovable(f.approvers) : `Nobody can approve rule "${rules.ruleName(f.rule)}": the team has no lead and the rule lists no approvers.`;
+  }
   return findings.filter((f) => f.status === 'blocked');
+}
+
+/** Who can approve a rule: its approvers (people or usernames), plus the leads unless approval is "approvers". */
+function ruleApprovers(cfg, rule) {
+  const listed = (rule.approvers || []).map((x) => team.find(cfg, String(x).replace(/^@/, '')) || { name: String(x), github: String(x).replace(/^@/, ''), emails: [], role: 'reviewer' });
+  const leads = rule.approval === 'approvers' ? [] : cfg.team.filter((m) => m.role === 'lead');
+  return [...new Set([...listed, ...leads])];
 }
 
 /**
@@ -137,6 +152,14 @@ function toMarkdown(cfg, findings, base) {
   for (const f of findings) {
     if (f.kind === 'path') { md += `- **Warning:** ${f.msg}\n`; continue; }
     if (f.kind === 'stable') { md += `- **Rewrite of working code:** ${f.msg}. Check this was intended.\n`; continue; }
+    if (f.kind === 'rule') {
+      md += `- **${f.status === 'approved' ? 'Approved' : 'Needs approval'}: rule "${rules.ruleName(f.rule)}"** — ${f.msg}\n`;
+      if (f.rule.reason) md += `  - Why: ${f.rule.reason}\n`;
+      if (f.files.length > 1) md += `  - Files: ${f.files.slice(0, 10).map((x) => `\`${x}\``).join(', ')}${f.files.length > 10 ? ', …' : ''}\n`;
+      if (f.status === 'blocked' && f.unapprovable) md += `  - ${f.unapprovable}\n`;
+      else if (f.status === 'blocked') md += `  - **Approve this PR as ${f.approvers.map(team.handle).join(' or ')}** to accept it.\n`;
+      continue;
+    }
     const label = { blocked: 'Needs approval', approved: 'Approved', warn: 'Changed', satisfied: 'Test passes' }[f.status];
     md += `- **${label}: ${f.lock.id}** ${f.lock.title} (${f.lock.type}) — \`${f.file}\`\n`;
     if (f.lock.reason && f.lock.reason !== f.lock.title) md += `  - Why it exists: ${f.lock.reason}\n`;
@@ -153,4 +176,4 @@ function toMarkdown(cfg, findings, base) {
   return md;
 }
 
-module.exports = { lockFindings, pathFindings, needingApproval, applyApprovals, applyTests, testNote, judgeNote, expired, approvedBy, toMarkdown };
+module.exports = { ruleApprovers, lockFindings, pathFindings, needingApproval, applyApprovals, applyTests, testNote, judgeNote, expired, approvedBy, toMarkdown };

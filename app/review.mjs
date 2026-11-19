@@ -2,6 +2,7 @@
 // no workflow file. Then report it as the "fixlock" check run plus one sticky PR comment.
 import config from '../src/config.js';
 import evaluate from '../src/evaluate.js';
+import rules from '../src/rules.js';
 
 export const CHECK_NAME = 'fixlock';
 export const MARKER = '<!-- fixlock-app -->';
@@ -57,12 +58,24 @@ export async function reviewPullRequest(gh, pr) {
     ...evaluate.pathFindings(cfg, changes),
   ];
 
+  // Rules (policy as code). For "aiOnly" rules, the PR counts as AI-written when any of its commits is
+  // (author or Co-authored-by trailer); the App doesn't read files per commit.
+  if ((cfg.rules || []).length) {
+    let aiFiles = null;
+    if (cfg.rules.some((r) => r.aiOnly)) {
+      const commits = await gh.all(`/repos/${baseRepo}/pulls/${pr.number}/commits`);
+      const agents = new Set(commits.map((c) => rules.agentOf({ authorName: (c.commit.author || {}).name, authorEmail: (c.commit.author || {}).email, body: c.commit.message })).filter(Boolean));
+      aiFiles = new Map(changes.map((ch) => [ch.file, agents]));
+    }
+    findings.push(...rules.ruleFindings(cfg, changes, { aiFiles }));
+  }
+
   let approvers = new Set();
   if (evaluate.needingApproval(cfg, findings).length) approvers = evaluate.approvedBy(await gh.all(`/repos/${baseRepo}/pulls/${pr.number}/reviews`));
   const blocked = evaluate.applyApprovals(cfg, findings, { approvers, author: pr.user && pr.user.login });
 
   const locks = findings.filter((f) => f.kind === 'lock');
-  const title = blocked.length ? `${blocked.length} locked change(s) need approval`
+  const title = blocked.length ? `${blocked.length} ${blocked.every((f) => f.kind === 'lock') ? 'locked ' : ''}change(s) need approval`
     : locks.length ? `${locks.length} locked change(s), all approved or warnings only`
     : findings.length ? 'Review notes' : `All ${reg.locks.length} locks intact`;
   return { conclusion: blocked.length ? 'failure' : 'success', title, summary: evaluate.toMarkdown(cfg, findings, pr.base.ref), findings };

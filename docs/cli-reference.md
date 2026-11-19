@@ -115,7 +115,8 @@ Unlock. Only an approver of the lock can do this (`--force` overrides; CI will s
 | `--pr <n>` | PR number for approvals |
 | `--run-tests` | Run the test linked to each changed lock: a passing, unchanged test satisfies it ([details](tests-and-lifecycle.md)) |
 | `--judge` | Ask an AI model whether each changed lock's fix still works; advice only ([details](ai-judgment.md)) |
-| `--comment` | In a GitLab merge request pipeline: post or update the fixlock comment ([GitLab](gitlab.md)) |
+| `--comment` | In a GitLab or Bitbucket pipeline: post or update the fixlock comment ([GitLab](gitlab.md), [Bitbucket](bitbucket.md)) |
+| `--alert` | Post to Slack / Teams / a webhook when something changed ([alerts](alerts.md)) |
 | `--notify` | Reopen linked tracker issues |
 | `--markdown <file>` | Write a PR comment |
 | `--json` | JSON output |
@@ -140,7 +141,7 @@ Give one person's locks to a teammate. `--remove` also takes them off the team.
 Without an id: locks that are expired, need re-locking, are orphaned or are overdue for review (`--json`, `--strict` to exit `1`). With an id: `--keep [--expires YYYY-MM-DD]` or `--remove`.
 
 ### `allow <id…>`
-Let Cursor and Windsurf change a locked fix for a while (`--minutes`, default 30, at most 480). Without ids: what's allowed now. `--clear` takes it back. Stored in `.git`, never committed. AI agents can't run it: their shell hooks refuse it.
+Let Cursor and Windsurf change a locked fix (or a file under an `ask` [rule](rules.md): `fixlock allow "rule:auth"`) for a while (`--minutes`, default 30, at most 480). Without ids: what's allowed now. `--clear` takes it back. Stored in `.git`, never committed. AI agents can't run it: their shell hooks refuse it.
 
 ### `hook claude` / `hook cursor` / `hook windsurf`
 Used by Claude Code; reads the tool call from stdin. You don't run this yourself.

@@ -130,10 +130,10 @@ function checkEdit(args) {
   } else {
     return { text: 'Give either old_text (+ new_text) or new_content so fixlock can see what changes.', isError: true };
   }
-  const r = evaluate({ file: abs, before, after, touched });
+  const r = evaluate({ file: abs, before, after, touched }, { agent: clientAgent });
   const verdict = r ? r.level : 'ok';
   const text = [VERDICT_TEXT[verdict], r ? r.reason : '', note].filter(Boolean).join('\n\n');
-  return { text, structured: { verdict, file: rel, locks: r ? r.locks : [], workingCode: r ? r.stable : null } };
+  return { text, structured: { verdict, file: rel, locks: r ? r.locks : [], rule: r ? r.rule : null, workingCode: r ? r.stable : null } };
 }
 
 function why(args) {
@@ -188,6 +188,20 @@ function checkStaged(args) {
 
 const HANDLERS = { fixlock_check_edit: checkEdit, fixlock_why: why, fixlock_list: list, fixlock_check_staged: checkStaged };
 
+/* ---------------- which assistant is calling (for per-agent rules) ---------------- */
+let clientAgent = null;
+/** MCP clientInfo.name → a rules agent id ("claude-code", "cursor", …), or null. */
+function agentFromClient(info) {
+  const n = String((info && (info.name || info.title)) || '').toLowerCase();
+  if (/claude/.test(n)) return 'claude-code';
+  if (/cursor/.test(n)) return 'cursor';
+  if (/windsurf|codeium|cascade|devin/.test(n)) return 'windsurf';
+  if (/copilot|visual studio code|vscode/.test(n)) return 'copilot';
+  if (/codex|openai/.test(n)) return 'codex';
+  if (/gemini/.test(n)) return 'gemini';
+  return null;
+}
+
 /* ---------------- JSON-RPC over stdio ---------------- */
 function send(msg) { process.stdout.write(JSON.stringify({ jsonrpc: '2.0', ...msg }) + '\n'); }
 
@@ -195,6 +209,7 @@ function handle(msg) {
   const { id, method, params = {} } = msg;
   const isRequest = id !== undefined && id !== null;
   if (method === 'initialize') {
+    clientAgent = agentFromClient(params.clientInfo);
     const v = PROTOCOLS.includes(params.protocolVersion) ? params.protocolVersion : PROTOCOLS[0];
     return send({ id, result: { protocolVersion: v, capabilities: { tools: { listChanged: false } }, serverInfo: { name: 'fixlock', title: 'fixlock by Algotricz', version: VERSION }, instructions: INSTRUCTIONS } });
   }

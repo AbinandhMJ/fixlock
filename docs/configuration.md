@@ -37,7 +37,7 @@ All settings live in `.fixlock/config.json`. `init` writes it; you can edit it b
 | `emails` | Git commit emails, used to recognise who is editing or committing |
 | `role` | `lead`, `developer` or `reviewer` |
 
-Team members can have a `gitlab` username too (`fixlock team add --gitlab <username>`), used for [GitLab](gitlab.md) approvals.
+Team members can also have a `gitlab` username, a `bitbucket` nickname and a `slack` member ID (`fixlock team add --gitlab … --bitbucket … --slack …`), used for [GitLab](gitlab.md) and [Bitbucket](bitbucket.md) approvals and [Slack mentions](alerts.md).
 
 ## `policies.bug` / `policies.feature`
 
@@ -99,6 +99,14 @@ How locks are compared with the current code.
 | Field | Default | Meaning |
 |---|---|---|
 | `reviewAfterDays` | `null` | `fixlock review` lists locks not reviewed for this many days |
+
+## `rules`
+
+[Rules for AI agents](rules.md): `[{ name, paths, ai, agents, approval, approvers, aiOnly, reason }]`.
+
+## `alerts`
+
+[Slack and Teams alerts](alerts.md): `enabled` (`false`; or `check --alert`), `on` (default `blocked`, `approved`, `test-failed`, `ai-broken`, `merged-blocked`). Webhook URLs come from `FIXLOCK_SLACK_WEBHOOK`, `FIXLOCK_TEAMS_WEBHOOK`, `FIXLOCK_ALERT_WEBHOOK`.
 
 ## `judge`
 
