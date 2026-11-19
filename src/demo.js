@@ -25,7 +25,8 @@ function run(opts = {}) {
 
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fixlock-demo-'));
   const env = (who, extra = {}) => {
-    const e = { ...process.env, NO_COLOR: '1', FIXLOCK_USER: who.email, ...extra };
+    // The commits fixlock makes itself (auto-lock) need an identity too, also where git has none set up (CI).
+    const e = { ...process.env, NO_COLOR: '1', FIXLOCK_USER: who.email, GIT_AUTHOR_NAME: who.name, GIT_AUTHOR_EMAIL: who.email, GIT_COMMITTER_NAME: who.name, GIT_COMMITTER_EMAIL: who.email, ...extra };
     for (const k of Object.keys(e)) if (/^(GITHUB_|GH_|CHANGE_)/.test(k)) delete e[k];
     return e;
   };
