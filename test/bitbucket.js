@@ -56,6 +56,17 @@ const run = (args, env) => new Promise((resolve) => {
     let r = await run(['quickstart', '--no-locks', '--no-git-hooks'], {});
     const pipe = fs.readFileSync(path.join(repo, 'bitbucket-pipelines.yml'), 'utf8');
     ok(r.status === 0 && /PR check: bitbucket-pipelines\.yml/.test(r.stdout) && /pull-requests:/.test(pipe) && /depth: full/.test(pipe) && /\$\{BITBUCKET_PR_DESTINATION_BRANCH\}/.test(pipe) && /check --base "origin\/\$\{BITBUCKET_PR_DESTINATION_BRANCH\}" --comment/.test(pipe), 'quickstart on Bitbucket adds the PR pipeline', r.stdout + pipe);
+    {
+      // A host that only mentions bitbucket.org in its path is not Bitbucket
+      const other = fs.mkdtempSync(path.join(os.tmpdir(), 'fixlock-bb-spoof-'));
+      const g2 = (...a) => execFileSync('git', a, { cwd: other, env: baseEnv, encoding: 'utf8' });
+      g2('init', '-q', '-b', 'main'); g2('config', 'user.email', 'abi@x.com'); g2('config', 'user.name', 'Abi');
+      g2('remote', 'add', 'origin', 'https://evil.example/bitbucket.org/acme/shop.git');
+      fs.writeFileSync(path.join(other, 'a.py'), 'x = 1\n'); g2('add', '.'); g2('commit', '-qm', 'init');
+      execFileSync(process.execPath, [BIN, 'quickstart', '--no-locks', '--no-git-hooks'], { cwd: other, env: baseEnv, encoding: 'utf8' });
+      ok(!fs.existsSync(path.join(other, 'bitbucket-pipelines.yml')), 'a remote that only mentions bitbucket.org in its path is not treated as Bitbucket');
+      fs.rmSync(other, { recursive: true, force: true });
+    }
     r = await run(['team', 'add', '--name', 'Ravi', '--bitbucket', 'ravi_k', '--role', 'developer'], {});
     ok(r.status === 0, 'team add --bitbucket');
     await run(['mark', 'pay.py', '2-3', '-m', 'zero crashed the ledger', '--title', 'never charge zero', '--owner', 'ravi_k'], {});

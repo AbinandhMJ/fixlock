@@ -784,23 +784,33 @@ jobs:
 }
 
 /** Is this repository hosted on GitHub (origin points at github.com)? */
-function onGithub() {
+/** A file's text, or null when there's no such file (one read: no check-then-read race). */
+function readIfExists(file) {
+  try { return fs.readFileSync(file, 'utf8'); } catch (e) { if (e.code === 'ENOENT') return null; throw e; }
+}
+
+/** The host of origin's URL (https://host/…, ssh://user@host:22/…, user@host:path), lower-cased, or ''. */
+function remoteHost() {
   const url = (g.git(['remote', 'get-url', 'origin'], { allowFail: true }) || '').trim();
-  return /github\.com[:/]/i.test(url);
+  const m = url.match(/^[a-z][\w+.-]*:\/\/(?:[^@/]+@)?([^/:]+)/i) || url.match(/^(?:[^@/:]+@)?([^/:]+):(?!\/)/);
+  return m ? m[1].toLowerCase() : '';
+}
+
+function onGithub() {
+  const host = remoteHost();
+  return host === 'github.com' || host.endsWith('.github.com');
 }
 
 /** Is origin a GitLab repository (gitlab.com, or a host named gitlab.*)? */
 function onGitlab() {
-  const url = (g.git(['remote', 'get-url', 'origin'], { allowFail: true }) || '').trim();
-  return /(^|[@/.])gitlab\.[\w.]+[:/]/i.test(url);
+  return /(^|\.)gitlab\./.test(remoteHost());   // gitlab.com and self-managed gitlab.example.com
 }
 
 const GITLAB_INCLUDE = 'https://raw.githubusercontent.com/AbinandhMJ/fixlock/main/ci/gitlab/fixlock.gitlab-ci.yml';
 
 /** Is origin a Bitbucket Cloud repository? */
 function onBitbucket() {
-  const url = (g.git(['remote', 'get-url', 'origin'], { allowFail: true }) || '').trim();
-  return /bitbucket\.org[:/]/i.test(url);
+  return remoteHost() === 'bitbucket.org';
 }
 
 /** A bitbucket-pipelines.yml with the fixlock pull-request step. */
@@ -873,18 +883,18 @@ async function cmdQuickstart(args) {
     else if (hasFixlockWorkflow()) ci = 'a workflow already runs fixlock';
     else if (onGitlab()) {
       const file = path.join(s.root(), '.gitlab-ci.yml');
-      const text = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
+      const text = readIfExists(file);
       if (text && /fixlock/.test(text)) ci = '.gitlab-ci.yml already runs fixlock';
       else if (text === null) {
-        fs.writeFileSync(file, `# Added by fixlock quickstart: fails a merge request that changes a locked fix until its owner approves.\n# Needs a masked CI/CD variable FIXLOCK_GITLAB_TOKEN (project access token, api scope).\ninclude:\n  - remote: ${GITLAB_INCLUDE}\n`);
+        fs.writeFileSync(file, `# Added by fixlock quickstart: fails a merge request that changes a locked fix until its owner approves.\n# Needs a masked CI/CD variable FIXLOCK_GITLAB_TOKEN (project access token, api scope).\ninclude:\n  - remote: ${GITLAB_INCLUDE}\n`, { flag: 'wx' });   // wx: never overwrite a file made meanwhile
         ci = '.gitlab-ci.yml (add the FIXLOCK_GITLAB_TOKEN variable: see the GitLab docs)';
       } else ci = `add this to your .gitlab-ci.yml:  include: [{ remote: ${GITLAB_INCLUDE} }]`;
     }
     else if (onBitbucket()) {
       const file = path.join(s.root(), 'bitbucket-pipelines.yml');
-      const text = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
+      const text = readIfExists(file);
       if (text && /fixlock/.test(text)) ci = 'bitbucket-pipelines.yml already runs fixlock';
-      else if (text === null) { fs.writeFileSync(file, BITBUCKET_PIPELINE); ci = 'bitbucket-pipelines.yml (add the FIXLOCK_BITBUCKET_TOKEN variable: see the Bitbucket docs)'; }
+      else if (text === null) { fs.writeFileSync(file, BITBUCKET_PIPELINE, { flag: 'wx' }); ci = 'bitbucket-pipelines.yml (add the FIXLOCK_BITBUCKET_TOKEN variable: see the Bitbucket docs)'; }
       else ci = 'add the fixlock step to your bitbucket-pipelines.yml pull-requests pipeline (see the Bitbucket docs)';
     }
     else if (!onGithub() && !args.ci) ci = 'not on GitHub, GitLab or Bitbucket: add `fixlock check` to your CI (see the CI setup docs)';
