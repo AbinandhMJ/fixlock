@@ -2,7 +2,7 @@
 #   docker build -f app/Dockerfile -t fixlock-app .
 #   docker run -p 8787:8787 -e APP_ID=… -e WEBHOOK_SECRET=… -v $PWD/app.pem:/run/app.pem:ro -e PRIVATE_KEY_FILE=/run/app.pem fixlock-app
 # Published as ghcr.io/abinandhmj/fixlock-app. See docs/self-hosting.md.
-FROM node:22-alpine
+FROM node:26-alpine
 WORKDIR /fixlock
 COPY package.json ./
 COPY src ./src
