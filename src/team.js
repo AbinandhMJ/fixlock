@@ -6,7 +6,7 @@ const lc = (s) => String(s || '').trim().toLowerCase();
 function find(cfg, who) {
   const w = lc(who);
   if (!w) return null;
-  return cfg.team.find((m) => lc(m.github) === w || lc(m.name) === w || (m.emails || []).some((e) => lc(e) === w)) || null;
+  return cfg.team.find((m) => lc(m.github) === w || lc(m.gitlab) === w || lc(m.name) === w || (m.emails || []).some((e) => lc(e) === w)) || null;
 }
 
 /** The person running fixlock: FIXLOCK_USER (github/email) or git user.email. */
@@ -15,7 +15,7 @@ function current(cfg) {
   return find(cfg, id) || { name: id || 'unknown', github: null, emails: id ? [id] : [], role: 'developer', unknown: true };
 }
 
-const handle = (m) => (m ? (m.github ? `@${m.github}` : m.name) : ''); // nobody → '' so callers can fall back to the recorded owner
+const handle = (m) => (m ? (m.github || m.gitlab ? `@${m.github || m.gitlab}` : m.name) : ''); // nobody → '' so callers can fall back to the recorded owner
 
 /** GitHub usernames allowed to approve changes to a lock, per policy. */
 function approvers(cfg, lock) {
@@ -38,7 +38,7 @@ function githubApprovers(cfg, lock) {
 function exempt(cfg, lock, person) {
   const policy = cfg.policies[lock.type] || cfg.policies.bug;
   if (policy.approval === 'none') return true;
-  return approvers(cfg, lock).some((a) => a === person || (person.github && lc(a.github) === lc(person.github)));
+  return approvers(cfg, lock).some((a) => a === person || (person.github && lc(a.github) === lc(person.github)) || (person.gitlab && lc(a.gitlab) === lc(person.gitlab)));
 }
 
 module.exports = { find, current, handle, approvers, githubApprovers, exempt };

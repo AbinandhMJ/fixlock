@@ -44,6 +44,7 @@ export default defineConfig({
         { text: 'Team lead guide', link: '/team-lead-guide' },
         { text: 'Developer guide', link: '/developer-guide' },
         { text: 'Tests and lifecycle', link: '/tests-and-lifecycle' },
+        { text: 'AI review of changed locks', link: '/ai-judgment' },
         { text: 'AI tools', link: '/ai-tools' },
       ] },
       { text: 'AI assistants', items: [
@@ -52,6 +53,7 @@ export default defineConfig({
         { text: 'JetBrains IDEs', link: '/integrations/jetbrains' },
         { text: 'Claude Code', link: '/integrations/claude-code' },
         { text: 'Cursor', link: '/integrations/cursor' },
+        { text: 'Windsurf / Devin Desktop', link: '/integrations/windsurf' },
         { text: 'GitHub Copilot', link: '/integrations/copilot' },
         { text: 'OpenAI Codex', link: '/integrations/codex' },
         { text: 'MCP server reference', link: '/integrations/mcp' },
@@ -60,6 +62,7 @@ export default defineConfig({
       { text: 'Setup', items: [
         { text: 'CI setup', link: '/ci-setup' },
         { text: 'GitHub App', link: '/github-app' },
+        { text: 'GitLab', link: '/gitlab' },
         { text: 'Team dashboard', link: '/dashboard' },
         { text: 'Issue trackers', link: '/trackers' },
         { text: 'Examples', link: '/examples' },

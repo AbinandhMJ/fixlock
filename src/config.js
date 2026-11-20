@@ -39,13 +39,17 @@ const DEFAULT_CONFIG = {
   tests: { run: false, satisfies: true, timeout: 600, commands: {} },
   // Lock lifecycle (`fixlock review`): flag locks not reviewed for this many days (null: never).
   lifecycle: { reviewAfterDays: null },
+  // AI lock judgment (src/judge.js): advice on whether a changed fix still works. Never approves or blocks.
+  //   enabled, provider: "anthropic" | "openai" | "command", model, url, command (local, e.g. "ollama run llama3.1")
+  judge: { enabled: false, provider: 'anthropic', model: '', url: '', command: '', timeout: 60, maxLines: 400 },
 };
 
 function mergeConfig(raw = {}) {
   return { ...DEFAULT_CONFIG, ...raw, policies: { ...DEFAULT_CONFIG.policies, ...(raw.policies || {}) },
     stableCode: { ...DEFAULT_CONFIG.stableCode, ...(raw.stableCode || {}) }, autoLock: { ...DEFAULT_CONFIG.autoLock, ...(raw.autoLock || {}) },
     matching: { ...DEFAULT_CONFIG.matching, ...(raw.matching || {}) },
-    tests: { ...DEFAULT_CONFIG.tests, ...(raw.tests || {}) }, lifecycle: { ...DEFAULT_CONFIG.lifecycle, ...(raw.lifecycle || {}) } };
+    tests: { ...DEFAULT_CONFIG.tests, ...(raw.tests || {}) }, lifecycle: { ...DEFAULT_CONFIG.lifecycle, ...(raw.lifecycle || {}) },
+    judge: { ...DEFAULT_CONFIG.judge, ...(raw.judge || {}) } };
 }
 
 /** registry.json contents → { version: 2, locks } (handles the v0.1 "fixes" format). */

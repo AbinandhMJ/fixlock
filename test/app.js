@@ -233,7 +233,7 @@ function pullRequest(n = 7, head = 'h1', author = 'abi') {
   setFiles('acme/nogh@n0', { ...base, '.fixlock/config.json': JSON.stringify({ team: [{ name: 'Ravi', github: null, emails: ['ravi@example.com'], role: 'lead' }] }) });
   setFiles('acme/nogh@n1', { ...base, 'pay.py': PAY_REVERTED });
   await send('pull_request', { action: 'opened', installation: { id: 99 }, repository: { full_name: 'acme/nogh' }, pull_request: { ...pullRequest(11, 'n1'), base: { ref: 'main', sha: 'n0', repo: { full_name: 'acme/nogh' } }, head: { ref: 'f', sha: 'n1', repo: { full_name: 'acme/nogh' } } } });
-  ok(lastCheck().conclusion === 'failure' && /has no GitHub username/.test(lastCheck().output.summary) && /fixlock team add --name "Ravi" --github <username>/.test(lastCheck().output.summary), 'owner without a GitHub username: the check explains why nobody can approve and how to fix it');
+  ok(lastCheck().conclusion === 'failure' && /has no GitHub or GitLab username/.test(lastCheck().output.summary) && /fixlock team add --name "Ravi" --github <username>/.test(lastCheck().output.summary), 'owner without a GitHub username: the check explains why nobody can approve and how to fix it');
 
   console.log(`GITHUB APP PASS (${passed} checks)`);
 })().catch((e) => { console.error(e); console.error('GITHUB APP FAIL'); process.exit(1); });

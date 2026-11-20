@@ -1,0 +1,31 @@
+# fixlock for GitLab: fails a merge request that changes a locked fix until its owner approves the MR.
+#
+# Use it from your .gitlab-ci.yml:
+#   include:
+#     - remote: https://raw.githubusercontent.com/AbinandhMJ/fixlock/main/ci/gitlab/fixlock.gitlab-ci.yml
+#
+# Then add a masked CI/CD variable FIXLOCK_GITLAB_TOKEN: a project access token with the "api" scope and
+# the Developer role (Settings > Access tokens). fixlock uses it to read the MR's approvals and to post one
+# comment saying which locked fix changed and who must approve. After the owner approves, run the pipeline
+# again (Pipelines > Run pipeline, or push), and make the pipeline required to merge
+# (Settings > Merge requests > Pipelines must succeed).
+#
+# Options (variables):
+#   FIXLOCK_VERSION  npm version range of fixlock to run (default "0": the latest 0.x)
+#   FIXLOCK_ARGS     extra `fixlock check` flags, such as "--run-tests" (use an image with your toolchain)
+fixlock:
+  stage: test
+  image: node:22
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  variables:
+    GIT_DEPTH: "0"
+    FIXLOCK_VERSION: "0"
+    FIXLOCK_ARGS: ""
+  script:
+    - git fetch --no-tags origin "+refs/heads/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}:refs/remotes/origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}"
+    - npx -y "@abinandhmj/fixlock@${FIXLOCK_VERSION}" check --base "origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}" --comment --markdown fixlock.md $FIXLOCK_ARGS
+  artifacts:
+    when: always
+    paths: [fixlock.md]
+    expire_in: 1 week

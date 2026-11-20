@@ -10,7 +10,7 @@ fixlock plugs into AI coding assistants in up to three ways:
 |---|---|---|
 | **MCP server** | The assistant asks fixlock *before* editing: "may I change these lines?" and gets a verdict (`ok`, `warn`, `ask`, `block`) with the reason and owner. | Claude Code, Cursor, GitHub Copilot (VS Code), Codex, Gemini CLI, Windsurf, any MCP client |
 | **Rules file** | The assistant's own instructions file tells it to check before rewriting working code, and lists the current locks. | 12 assistants (see [AI tools](../ai-tools.md)) |
-| **Pre-edit hook** | The edit is intercepted before it happens, even if the assistant forgets to check. | Claude Code |
+| **Pre-edit hook** | The edit is intercepted before it happens, even if the assistant forgets to check. | Claude Code, Cursor, Windsurf / Devin Desktop |
 
 Behind all of them, the git hooks warn at commit time and [CI](../ci-setup.md) blocks reverting PRs until the owner approves, whatever tool wrote the code.
 
@@ -26,6 +26,7 @@ Prefer clicks? The [VS Code extension](vscode.md) shows locks in the editor, war
 |---|---|
 | Claude Code | [Claude Code](claude-code.md) |
 | Cursor | [Cursor](cursor.md) |
+| Windsurf / Devin Desktop | [Windsurf](windsurf.md) |
 | GitHub Copilot | [GitHub Copilot](copilot.md) |
 | OpenAI Codex | [Codex](codex.md) |
 | Anything else with MCP | [MCP server reference](mcp.md) |

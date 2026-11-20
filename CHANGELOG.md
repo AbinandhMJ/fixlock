@@ -4,7 +4,10 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
-_No changes yet._
+### Added
+- **Cursor and Windsurf stop before editing a locked fix.** `fixlock setup cursor` adds a pre-edit hook (`.cursor/hooks.json`, `preToolUse`) and `fixlock setup windsurf` adds Cascade hooks (`.devin/hooks.json` and `.windsurf/hooks.json`, `pre_write_code`), with the same decision as the Claude Code hook: `block` and `ask` locks refuse the edit with which fix, why and who owns it. Since these editors can't ask mid-edit, the developer runs `fixlock allow FIX-001` (30 minutes, stored in `.git`) to OK it; the agents' shell hooks refuse `fixlock allow`, `fixlock remove` and `--no-verify`. `init` installs them when the team uses Cursor or Windsurf.
+- **GitLab merge requests.** `fixlock check --comment` in a GitLab MR pipeline reads the MR's approvals and the author through the API (`FIXLOCK_GITLAB_TOKEN`), and posts one comment it keeps up to date; the base defaults to the MR's target branch. A ready-made job: `include: remote: …/ci/gitlab/fixlock.gitlab-ci.yml`, which `quickstart` adds on GitLab repositories. Team members get a `gitlab` username (`team add --gitlab`). Works with self-managed GitLab. See [GitLab](https://abinandhmj.github.io/fixlock/gitlab).
+- **AI review of changed locks** (`fixlock check --judge`, the Action's `judge: true`, or `"judge": { "enabled": true }`): asks a model whether each changed lock's fix still works and shows its answer in the check and PR comment. Advice only: it never approves or blocks. Anthropic (default `claude-haiku-5-5`), any OpenAI-compatible API, or a local command such as Ollama so nothing leaves the machine. See [AI review](https://abinandhmj.github.io/fixlock/ai-judgment).
 
 ## [0.10.0] - 2026-11-19
 
