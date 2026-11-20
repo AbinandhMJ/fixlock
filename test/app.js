@@ -180,6 +180,19 @@ function pullRequest(n = 7, head = 'h1', author = 'abi') {
   gh.st.prFiles = [{ filename: 'pay.py', status: 'modified' }, { filename: '.fixlock/registry.json', status: 'modified' }];
   await send('pull_request', { action: 'synchronize', installation: { id: 99 }, repository: { full_name: 'acme/shop' }, pull_request: pullRequest(7, 'h4') });
   ok(lastCheck().conclusion === 'failure', "deleting the lock in the same PR doesn't bypass it (locks come from the base branch)");
+  ok(/This PR removes the lock itself/.test(lastCheck().output.summary), 'and the removal is reported on its own');
+
+  // 6b. Removing the lock alone (code untouched) also needs the owner: otherwise the next PR is unprotected
+  setFiles('acme/shop@h4b', { ...base, '.fixlock/registry.json': JSON.stringify({ version: 2, locks: [] }) });
+  gh.st.prFiles = [{ filename: '.fixlock/registry.json', status: 'modified' }];
+  await send('pull_request', { action: 'synchronize', installation: { id: 99 }, repository: { full_name: 'acme/shop' }, pull_request: pullRequest(7, 'h4b') });
+  ok(lastCheck().conclusion === 'failure' && /FIX-001/.test(lastCheck().output.summary) && /This PR removes the lock itself/.test(lastCheck().output.summary), 'a PR that only removes a lock needs its owner');
+
+  // 6c. Changing the settings needs a lead
+  setFiles('acme/shop@h4c', { ...base, '.fixlock/config.json': JSON.stringify({ ...JSON.parse(CONFIG), policies: { bug: { onEdit: 'warn', approval: 'none' } } }) });
+  gh.st.prFiles = [{ filename: '.fixlock/config.json', status: 'modified' }];
+  await send('pull_request', { action: 'synchronize', installation: { id: 99 }, repository: { full_name: 'acme/shop' }, pull_request: pullRequest(7, 'h4c') });
+  ok(lastCheck().conclusion === 'failure' && /rule "fixlock settings"/.test(lastCheck().output.summary) && /`policies`/.test(lastCheck().output.summary), 'a PR that changes the settings needs a lead');
 
   // 7. Renamed file: the lock follows it
   setFiles('acme/shop@h5', { ...base, 'billing/pay.py': PAY_REVERTED, 'pay.py': undefined });

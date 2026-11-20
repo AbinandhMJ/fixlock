@@ -13,7 +13,7 @@
 const STATE_RE = /<!-- fixlock-state (\{[\s\S]*?\}) -->/;
 const DEFAULT_ON = ['blocked', 'approved', 'test-failed', 'ai-broken', 'merged-blocked'];
 
-const keyOf = (f) => (f.kind === 'rule' ? `rule:${f.rule.name || f.rule.paths.join(',')}` : f.lock.id);
+const keyOf = (f) => (f.kind === 'rule' ? `rule:${f.rule.name || f.rule.paths.join(',')}` : f.registry ? `${f.lock.id}:registry` : f.lock.id);
 
 /** The state to remember for this run: { key: "blocked" | "approved" | ..., "key#test": "failed", ... }. */
 function stateOf(findings) {
@@ -56,7 +56,7 @@ function lineFor(e, team) {
   const f = e.finding;
   if (!f) return `${e.key}: ${LABEL[e.type]}`;
   const who = (f.approvers || []).map((a) => (a.slack ? `<@${a.slack}>` : team.handle(a))).filter(Boolean).join(' or ');
-  const what = f.kind === 'rule' ? `rule "${f.rule.name || f.rule.paths.join(', ')}" (${f.files.length === 1 ? f.files[0] : `${f.files.length} files`})` : `${f.lock.id} "${f.lock.title}" in ${f.file}`;
+  const what = f.kind === 'rule' ? `rule "${f.rule.name || f.rule.paths.join(', ')}" (${f.files.length === 1 ? f.files[0] : `${f.files.length} files`})` : f.registry ? `${f.lock.id} "${f.lock.title}" ${f.registry === 'removed' ? 'removed from' : 'changed in'} ${f.file}` : `${f.lock.id} "${f.lock.title}" in ${f.file}`;
   return `${what}: ${LABEL[e.type]}${e.type === 'blocked' && who ? ` from ${who}` : ''}`;
 }
 

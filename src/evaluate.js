@@ -92,7 +92,7 @@ function ruleApprovers(cfg, rule) {
  */
 function applyTests(cfg, findings, results, changed = new Set()) {
   const satisfies = ((cfg.tests || {}).satisfies) !== false;
-  for (const f of findings.filter((x) => x.kind === 'lock' && x.lock.test && results[x.lock.test])) {
+  for (const f of findings.filter((x) => x.kind === 'lock' && !x.registry && x.lock.test && results[x.lock.test])) {
     const r = results[f.lock.test];
     const touched = changed.has(f.lock.test);
     f.test = { file: f.lock.test, status: r.status === 'passed' && touched ? 'changed' : r.status, command: r.command, output: r.output };
@@ -155,6 +155,7 @@ function toMarkdown(cfg, findings, base) {
     if (f.kind === 'rule') {
       md += `- **${f.status === 'approved' ? 'Approved' : 'Needs approval'}: rule "${rules.ruleName(f.rule)}"** — ${f.msg}\n`;
       if (f.rule.reason) md += `  - Why: ${f.rule.reason}\n`;
+      if (f.settings && !['deleted', 'not valid JSON'].includes(f.settings[0])) md += `  - Changed: ${f.settings.map((x) => '`' + x + '`').join(', ')}. This PR is checked with the settings it started from.\n`;
       if (f.files.length > 1) md += `  - Files: ${f.files.slice(0, 10).map((x) => `\`${x}\``).join(', ')}${f.files.length > 10 ? ', …' : ''}\n`;
       if (f.status === 'blocked' && f.unapprovable) md += `  - ${f.unapprovable}\n`;
       else if (f.status === 'blocked') md += `  - **Approve this PR as ${f.approvers.map(team.handle).join(' or ')}** to accept it.\n`;
@@ -163,6 +164,7 @@ function toMarkdown(cfg, findings, base) {
     const label = { blocked: 'Needs approval', approved: 'Approved', warn: 'Changed', satisfied: 'Test passes' }[f.status];
     md += `- **${label}: ${f.lock.id}** ${f.lock.title} (${f.lock.type}) — \`${f.file}\`\n`;
     if (f.lock.reason && f.lock.reason !== f.lock.title) md += `  - Why it exists: ${f.lock.reason}\n`;
+    if (f.registry) md += `  - ${f.registry === 'removed' ? 'This PR removes the lock itself' : `This PR changes the lock itself (${f.fields.map((x) => '`' + x + '`').join(', ')})`}, so the locked code would be unprotected after the merge.\n`;
     if (f.missing.length) md += `  - Removed/rewritten: ${f.missing.map((l) => '`' + l.trim().replace(/`/g, "'") + '`').join(', ')}\n`;
     if (f.renamed && f.renamed.length) md += `  - Renamed inside the lock (logic kept): ${f.renamed.map(([a, b]) => '`' + a + '` → `' + b + '`').join(', ')}\n`;
     if (f.test) md += `  - ${testNote(f.test)}\n`;
@@ -170,7 +172,7 @@ function toMarkdown(cfg, findings, base) {
     if (f.judge) md += `  - ${judgeNote(f.judge)}\n`;
     if (f.expired) md += `  - This lock expired on ${f.lock.expires}, so changing it only warns. Remove it, or extend it with \`fixlock review ${f.lock.id} --keep\`.\n`;
     if (f.status === 'blocked' && f.unapprovable) md += `  - ${f.unapprovable}\n`;
-    else if (f.status === 'blocked') md += `  - **Approve this PR as ${f.approvers.map(team.handle).join(' or ')}** to accept the change, or restore the lines.\n`;
+    else if (f.status === 'blocked') md += `  - **Approve this PR as ${f.approvers.map(team.handle).join(' or ')}** to accept the change, or ${f.registry ? 'undo the change to the lock' : 'restore the lines'}.\n`;
     if (f.tracker) md += `  - Tracker: ${f.tracker}\n`;
   }
   return md;

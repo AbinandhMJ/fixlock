@@ -62,4 +62,5 @@ Each release has a CycloneDX SBOM (`fixlock.cdx.json`). fixlock has no runtime d
 - Every GitHub Action in fixlock's workflows and in `action.yml` is pinned to a full commit SHA; Dependabot updates them. Tools run in release steps are pinned to exact versions. A test (`test/workflows.js`) fails CI if any of this slips.
 - Workflow tokens are read-only by default; each job asks only for what it needs.
 - [CodeQL](https://github.com/AbinandhMJ/fixlock/security/code-scanning) scans every pull request, and [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/AbinandhMJ/fixlock) rates the project weekly.
+- fixlock can't be switched off from inside a pull request: CI and the App check every PR with the base branch's locks and settings, and a PR that removes or weakens a lock, or changes the settings, needs the lock's owner or a lead. See [Changes to `.fixlock/` itself](https://abinandhmj.github.io/fixlock/ci-setup#changes-to-fixlock-itself).
 - Secret scanning with push protection and Dependabot security updates are on for the repository.
