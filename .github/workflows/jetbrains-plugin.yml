@@ -18,16 +18,18 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write   # the GitHub release for a jetbrains-v tag
+      id-token: write   # signed build attestation for the plugin zip
+      attestations: write
     defaults:
       run:
         working-directory: extensions/jetbrains
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-java@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
           distribution: temurin
           java-version: 21
-      - uses: gradle/actions/setup-gradle@v5
+      - uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5.0.2
       - name: Free disk space for the IDEs the verifier downloads
         run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL || true
       - name: Test
@@ -36,11 +38,11 @@ jobs:
         run: ./gradlew buildPlugin
       - name: Verify against IntelliJ IDEA, PyCharm, WebStorm and the recommended IDEs
         run: ./gradlew verifyPlugin
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: fixlock-jetbrains
           path: extensions/jetbrains/build/distributions/*.zip
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: plugin-verifier-report
@@ -70,6 +72,10 @@ jobs:
           else
             ./gradlew publishPlugin
           fi
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        if: startsWith(github.ref, 'refs/tags/jetbrains-v')
+        with:
+          subject-path: extensions/jetbrains/build/distributions/*.zip
       - name: GitHub release with the plugin zip
         if: startsWith(github.ref, 'refs/tags/jetbrains-v')
         env:

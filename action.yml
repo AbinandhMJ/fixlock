@@ -105,7 +105,7 @@ runs:
         exit $status
     - name: PR comment
       if: always() && inputs.comment == 'true' && github.event.pull_request.number && github.event.action != 'closed' && steps.check.outputs.markdown != ''
-      uses: marocchino/sticky-pull-request-comment@v3
+      uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
       with:
         header: fixlock
         path: ${{ steps.check.outputs.markdown }}

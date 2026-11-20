@@ -50,3 +50,15 @@ Node.js 20 or newer; no `npm install` needed. Use your process manager (systemd,
 ## Updating
 
 `docker pull ghcr.io/abinandhmj/fixlock-app:latest` and restart. Each commit to fixlock's main branch is also tagged with its commit SHA, if you want to pin a version.
+
+## Verifying the image
+
+Each image is built by fixlock's GitHub Actions workflow, signed with Sigstore (keyless) and carries a signed build attestation and an SBOM. Check one before you run it:
+
+```bash
+gh attestation verify oci://ghcr.io/abinandhmj/fixlock-app:latest -R AbinandhMJ/fixlock
+# or, with cosign:
+cosign verify ghcr.io/abinandhmj/fixlock-app:latest \
+  --certificate-identity-regexp '^https://github.com/AbinandhMJ/fixlock/' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```

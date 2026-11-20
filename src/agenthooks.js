@@ -33,7 +33,8 @@ function applyEdits(before, edits) {
   return after;
 }
 
-const readFile = (file) => (fs.existsSync(file) && fs.statSync(file).isFile() ? fs.readFileSync(file, 'utf8') : '');
+// One read, no existsSync/statSync first (no check-then-read race); a missing file or a folder reads as ''.
+const readFile = (file) => { try { return fs.readFileSync(file, 'utf8'); } catch { return ''; } };
 
 /**
  * A proposed change from a file tool's input, in the shape hook.evaluate wants: { file, before, after }.

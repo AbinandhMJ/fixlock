@@ -10,6 +10,7 @@
   <a href="https://www.npmjs.com/package/@abinandhmj/fixlock"><img alt="npm" src="https://img.shields.io/npm/v/@abinandhmj/fixlock?color=B8F23A&labelColor=0E1116"></a>
   <a href="https://github.com/marketplace/actions/fixlock-by-algotricz"><img alt="GitHub Marketplace" src="https://img.shields.io/badge/Marketplace-fixlock%20by%20Algotricz-B8F23A?logo=github&labelColor=0E1116"></a>
   <a href="https://github.com/AbinandhMJ/fixlock/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/AbinandhMJ/fixlock/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://scorecard.dev/viewer/?uri=github.com/AbinandhMJ/fixlock"><img alt="OpenSSF Scorecard" src="https://api.scorecard.dev/projects/github.com/AbinandhMJ/fixlock/badge"></a>
   <img alt="zero dependencies" src="https://img.shields.io/badge/dependencies-0-B8F23A?labelColor=0E1116">
   <img alt="node" src="https://img.shields.io/node/v/@abinandhmj/fixlock?labelColor=0E1116">
   <a href="LICENSE"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-B8F23A?labelColor=0E1116"></a>
