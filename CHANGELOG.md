@@ -4,6 +4,10 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
+_No changes yet._
+
+## [0.11.0] - 2026-11-20
+
 ### Added
 - **Verifiable releases.** Each GitHub release now has signed build attestations (`gh attestation verify <file> -R AbinandhMJ/fixlock`) for the standalone binaries, the VS Code, JetBrains and WordPress plugins, plus `SHA256SUMS` and a CycloneDX SBOM; PyPI files carry PEP 740 attestations; the self-hosted App image is signed with cosign and carries an SBOM and provenance. See [Security](https://abinandhmj.github.io/fixlock/security).
 - **Hardened build.** Every GitHub Action in fixlock's workflows and in `action.yml` is pinned to a commit SHA (a test keeps it that way), release tools are pinned to exact versions, and CodeQL and OpenSSF Scorecard run continuously.
