@@ -1,0 +1,46 @@
+# Self-hosted GitHub App image: ghcr.io/abinandhmj/fixlock-app (latest from main, plus one tag per commit).
+# Pull requests only build it.
+name: App image
+on:
+  push:
+    branches: [main]
+    paths: ['app/**', 'src/**', 'package.json', '.github/workflows/app-image.yml']
+  pull_request:
+    paths: ['app/**', 'src/**', 'package.json', '.github/workflows/app-image.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  packages: write
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        if: github.event_name != 'pull_request'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Build (and push from main)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: app/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          load: ${{ github.event_name == 'pull_request' }}
+          tags: |
+            ghcr.io/abinandhmj/fixlock-app:latest
+            ghcr.io/abinandhmj/fixlock-app:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/AbinandhMJ/fixlock
+            org.opencontainers.image.description=fixlock GitHub App and team dashboard, self-hosted
+            org.opencontainers.image.licenses=MIT
+      - name: Smoke test the image
+        if: github.event_name == 'pull_request'
+        run: |
+          docker run -d --name fx -p 8787:8787 -e WEBHOOK_SECRET=x ghcr.io/abinandhmj/fixlock-app:${{ github.sha }}
+          for i in 1 2 3 4 5 6 7 8 9 10; do curl -fsS http://127.0.0.1:8787/ && break; sleep 1; done
+          curl -fsS http://127.0.0.1:8787/ | grep -q 'fixlock GitHub App is running'
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8787/webhook -d '{}')" = 401

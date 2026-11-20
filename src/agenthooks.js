@@ -107,7 +107,7 @@ function shellDecision(command) {
  * Decide an edit: { deny: false } or { deny: true, reason }. Locks the developer allowed are skipped;
  * the working-code guard only warns here (these editors have no "ask the developer" step).
  */
-function editDecision(change) {
+function editDecision(change, agent) {
   const hook = require('./hook');
   const s = require('./store');
   if (!s.configExists()) return { deny: false };
@@ -116,13 +116,26 @@ function editDecision(change) {
     const L = require('./locks');
     const rel = L.repoRel(s.root(), change.file);
     const cfg = s.loadConfig();
+    const rule = require('./rules').editRule(cfg, rel, agent);
+    if (rule && (rule.level === 'block' || (rule.level === 'ask' && !ok[`RULE:${require('./rules').ruleName(rule.rule)}`.toUpperCase()]))) {
+      return { deny: true, short: `fixlock stopped an AI edit to ${rel} (rule "${require('./rules').ruleName(rule.rule)}").`, reason: `fixlock: ${rule.message}\nThis edit was stopped.` };
+    }
     const locks = s.loadRegistry().locks.filter((l) => l.file === rel && !ok[l.id.toUpperCase()] && ['ask', 'block'].includes((cfg.policies[l.type] || cfg.policies.bug).onEdit));
     if (!locks.length) return { deny: false };
     return { deny: true, short: `fixlock stopped an AI edit to ${rel}, which holds ${locks.map((l) => l.id).join(', ')}.`, reason: `fixlock: ${rel} holds locked ${locks.length > 1 ? 'fixes' : 'fix'} ${locks.map((l) => `${l.id} "${l.title}"`).join(', ')}, and fixlock couldn't see which lines this edit changes. Edit around the locked lines (see fixlock_why), or ask the developer.` };
   }
-  const r = hook.evaluate(change);
+  const r = hook.evaluate(change, { agent });
   if (!r) return { deny: false };
   const blocking = r.locks.filter((l) => (l.level === 'block' || l.level === 'ask') && !ok[String(l.id).toUpperCase()]);
+  // A team rule for this path (policy as code): "block" always stops; "ask" stops until the developer allows it.
+  if (r.rule && (r.rule.level === 'block' || (r.rule.level === 'ask' && !ok[`RULE:${r.rule.name}`.toUpperCase()]))) {
+    const rel = require('./locks').repoRel(require('./store').root(), change.file);
+    return {
+      deny: true,
+      short: `fixlock stopped an AI edit to ${rel}: rule "${r.rule.name}" ${r.rule.level === 'block' ? 'keeps AI out of these files' : 'says to ask first'}.${r.rule.level === 'ask' ? ` If the change is intended, run: fixlock allow "rule:${r.rule.name}"` : ''}`,
+      reason: `${r.reason}\n${r.rule.level === 'ask' ? `This edit was stopped. Explain the change to the developer; if they agree, they run \`fixlock allow "rule:${r.rule.name}"\` and you try again. Don't run that command yourself.` : 'This edit was stopped. Leave this file to a person.'}`,
+    };
+  }
   if (!blocking.length) return { deny: false, note: r.reason };
   const ids = blocking.map((l) => l.id).join(' ');
   const askOnly = blocking.every((l) => l.level === 'ask');
@@ -153,7 +166,7 @@ function runCursor() {
       const change = changeFromInput(input.tool_name, input.tool_input || {}, input.cwd || root);
       if (change) {
         chdirTo(path.dirname(change.file));
-        const d = editDecision(change);
+        const d = editDecision(change, 'cursor');
         if (d.deny) out = { permission: 'deny', user_message: d.short || d.reason.split('\n')[0], agent_message: d.reason };
       }
     }
@@ -171,7 +184,7 @@ function runWindsurf() {
     if (ev === 'pre_run_command') d = shellDecision(t.command_line || t.command);
     else if (ev === 'pre_write_code') {
       const change = changeFromInput('edit', t, t.cwd);
-      if (change) { chdirTo(path.dirname(change.file)); d = editDecision(change); }
+      if (change) { chdirTo(path.dirname(change.file)); d = editDecision(change, 'windsurf'); }
     }
   } catch { d = { deny: false }; }
   if (d.deny) { process.stderr.write(d.reason + '\n'); process.exitCode = 2; }

@@ -73,6 +73,8 @@ function cmdTeam(args) {
     if (!args.name) throw new Error('Usage: fixlock team add --name "Abi" --github abinandhmj --email abi@x.com --role lead|developer|reviewer');
     const m = { name: args.name, github: args.github ? String(args.github).replace(/^@/, '') : null,
       ...(args.gitlab ? { gitlab: String(args.gitlab).replace(/^@/, '') } : {}),
+      ...(args.bitbucket ? { bitbucket: String(args.bitbucket).replace(/^@/, '') } : {}),
+      ...(args.slack ? { slack: String(args.slack) } : {}),
       emails: String(args.email || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean), role: args.role || 'developer' };
     cfg.team = cfg.team.filter((x) => !(m.github && x.github === m.github) && x.name !== m.name);
     cfg.team.push(m);
@@ -426,6 +428,50 @@ function contentGetter(staged) {
 }
 
 const gitlab = require('./gitlab');
+const bitbucket = require('./bitbucket');
+const rules = require('./rules');
+const alerts = require('./alerts');
+
+/** The GitHub Actions event payload, or null. */
+function ghEvent() {
+  try { return process.env.GITHUB_EVENT_PATH ? JSON.parse(fs.readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8')) : null; } catch { return null; }
+}
+
+/** Where alerts point, and the previous fixlock comment (for alert state), on GitHub. */
+async function githubPr() {
+  const ev = ghEvent();
+  const pr = ev && ev.pull_request;
+  if (!pr) return null;
+  const info = { number: `#${pr.number}`, title: pr.title || '', url: pr.html_url || '', author: pr.user ? `@${pr.user.login}` : '', merged: !!pr.merged, closed: ev.action === 'closed' };
+  const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+  const slug = require('./approvals').repoSlug();
+  info.previous = null;
+  if (token && slug) {
+    try {
+      const api = process.env.FIXLOCK_GITHUB_API || 'https://api.github.com';
+      const res = await fetch(`${api}/repos/${slug}/issues/${pr.number}/comments?per_page=100`, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'User-Agent': 'fixlock' } });
+      if (res.ok) { const mine = (await res.json()).filter((cm) => alerts.readState(cm.body)); if (mine.length) info.previous = mine[mine.length - 1].body; }
+    } catch { /* no previous state: alert as on a first run */ }
+  }
+  return info;
+}
+
+/** Files changed by AI-written commits since base: Map file → Set of agent ids (see rules.agentOf). */
+function aiAuthorship(base) {
+  const out = new Map();
+  let raw = '';
+  try { raw = g.git(['log', `${base}..HEAD`, '--no-merges', '--name-only', '--format=%x1e%an%x1f%ae%x1f%B%x1f']); } catch { return out; }
+  for (const chunk of raw.split('\x1e').filter((x) => x.trim())) {
+    const [authorName, authorEmail, body, files = ''] = chunk.split('\x1f');
+    const agent = rules.agentOf({ authorName, authorEmail, body });
+    if (!agent) continue;
+    for (const f of files.split('\n').map((x) => x.trim()).filter(Boolean)) {
+      if (!out.has(f)) out.set(f, new Set());
+      out.get(f).add(agent);
+    }
+  }
+  return out;
+}
 
 function prAuthor() {
   if (process.env.CHANGE_AUTHOR) return process.env.CHANGE_AUTHOR;
@@ -437,8 +483,22 @@ function prAuthor() {
 
 async function cmdCheck(args) {
   const staged = !!args.staged;
-  const gl = staged ? null : gitlab.context();
-  const base = args.base || process.env.FIXLOCK_BASE || (gl && process.env.CI_MERGE_REQUEST_TARGET_BRANCH_NAME ? `origin/${process.env.CI_MERGE_REQUEST_TARGET_BRANCH_NAME}` : 'origin/main');
+  // Code host for approvals and the PR comment when not on GitHub: GitLab or Bitbucket pipelines.
+  const hostMod = staged ? null : gitlab.context() ? gitlab : bitbucket.context() ? bitbucket : null;
+  const gl = hostMod ? hostMod.context() : null;
+  const wantAlerts = !staged && (args.alert || (s.loadConfig().alerts || {}).enabled) && alerts.configured();
+  const pr = wantAlerts ? (gl ? { previous: await hostMod.previousBody(gl), ...hostMod.prInfo(gl) } : await githubPr()) : null;
+  // A PR was just closed: if it was merged while fixlock still blocked it, say so. Nothing else to check.
+  if (pr && pr.closed) {
+    const prev = alerts.readState(pr.previous) || {};
+    const left = Object.keys(prev).filter((k) => !k.includes('#') && prev[k] === 'blocked');
+    if (pr.merged && left.length) {
+      const sent = await alerts.send(left.map((k) => ({ type: 'merged-blocked', key: k })), pr, s.loadConfig(), team);
+      if (!args.json) console.log(`fixlock: ${pr.number} was merged while ${left.join(', ')} still needed approval.${sent.length ? ` Alerted: ${sent.map((x) => x.to + (x.ok ? '' : ` (failed: ${x.error})`)).join(', ')}.` : ''}`);
+    }
+    return;
+  }
+  const base = args.base || process.env.FIXLOCK_BASE || (gl && process.env[hostMod.baseVar] ? `origin/${process.env[hostMod.baseVar]}` : 'origin/main');
   const cfg = s.loadConfig();
   const reg = s.loadRegistry();
   const read = contentGetter(staged);
@@ -452,6 +512,15 @@ async function cmdCheck(args) {
   const goodRef = staged ? 'HEAD' : base;
   const good = (file) => g.git(['show', `${goodRef}:${file}`], { allowFail: true });
   findings.push(...await E.lockFindings(cfg, reg, { read, good, renames }));
+
+  // Rules (policy as code): changes under a rule's paths need a lead's (or its approvers') approval;
+  // "aiOnly" rules only count files changed by AI-written commits (author / Co-authored-by trailers).
+  if (!staged && (cfg.rules || []).length) {
+    try {
+      const changes = g.changedFiles(base);
+      findings.push(...rules.ruleFindings(cfg, changes, { aiFiles: aiAuthorship(base) }));
+    } catch { /* no base */ }
+  }
 
   // Changes inside protected paths: warnings only.
   if (!staged && cfg.protectedPaths.length) {
@@ -485,8 +554,8 @@ async function cmdCheck(args) {
 
   // Approvals: owner / lead approval on the PR clears a lock finding.
   let appr = { approvers: new Set(), source: 'none' };
-  if (!staged && E.needingApproval(cfg, findings).length) appr = gl && process.env.FIXLOCK_TEST_APPROVERS === undefined ? await gitlab.approvers(gl) : await prApprovers(args.pr);
-  const author = staged ? '' : ((gl && !process.env.CHANGE_AUTHOR ? await gitlab.author(gl) : prAuthor()) || '').toLowerCase(); // no PR exists yet at commit time
+  if (!staged && E.needingApproval(cfg, findings).length) appr = gl && process.env.FIXLOCK_TEST_APPROVERS === undefined ? await hostMod.approvers(gl) : await prApprovers(args.pr);
+  const author = staged ? '' : ((gl && !process.env.CHANGE_AUTHOR ? await hostMod.author(gl) : prAuthor()) || '').toLowerCase(); // no PR exists yet at commit time
   let blocking = E.applyApprovals(cfg, findings, { approvers: appr.approvers, author });
 
   // Test-linked locks: run the tests of the locks this change touches. A passing, unchanged test satisfies
@@ -517,13 +586,18 @@ async function cmdCheck(args) {
 
   if (args.json) console.log(JSON.stringify({ base, staged, ok: !blocking.length, approvals: appr.source, findings: findings.map(({ lock, approvers, ...f }) => ({ ...f, lock: lock && lock.id, approvers: approvers && approvers.map(team.handle) })) }, null, 2));
   else report(cfg, reg, findings, { base, staged, appr, strict: !!args.strict });
-  if (args.markdown) fs.writeFileSync(args.markdown, E.toMarkdown(cfg, findings, base));
-  // GitLab merge request: one fixlock comment, kept up to date.
+  if (args.markdown) fs.writeFileSync(args.markdown, E.toMarkdown(cfg, findings, base) + alerts.stateComment(alerts.stateOf(findings)));
+  // Alerts: what changed since the last run of this PR (Slack, Teams, webhook).
+  if (pr) {
+    const sent = await alerts.send(alerts.events(findings, alerts.readState(pr.previous)), pr, cfg, team);
+    if (sent.length && !args.json) console.log(c.dim(`Alerted: ${sent.map((x) => x.to + (x.ok ? '' : ` (failed: ${x.error})`)).join(', ')}`));
+  }
+  // GitLab merge request / Bitbucket pull request: one fixlock comment, kept up to date.
   if (gl && args.comment) {
     try {
-      const r = await gitlab.upsertComment(gl, `${E.toMarkdown(cfg, findings, base)}\n<sub>[fixlock](https://abinandhmj.github.io/fixlock/) · fixed stays fixed · a product of Algotricz</sub>\n`);
-      if (r.skipped && !args.json) console.log(c.yellow('! No MR comment: set FIXLOCK_GITLAB_TOKEN (project access token, api scope) as a masked CI/CD variable.'));
-    } catch (e) { if (!args.json) console.log(c.yellow(`! Couldn't post the MR comment: ${e.message}`)); }
+      const r = await hostMod.upsertComment(gl, `${E.toMarkdown(cfg, findings, base)}\n<sub>[fixlock](https://abinandhmj.github.io/fixlock/) · fixed stays fixed · a product of Algotricz</sub>\n${alerts.stateComment(alerts.stateOf(findings))}`);
+      if (r.skipped && !args.json) console.log(c.yellow(`! No ${hostMod.name} comment: set ${hostMod.tokenVar} as a secret CI variable.`));
+    } catch (e) { if (!args.json) console.log(c.yellow(`! Couldn't post the ${hostMod.name} comment: ${e.message}`)); }
   }
   process.exitCode = blocking.length && !staged ? 1 : (blocking.length && args.strict ? 1 : 0);
 }
@@ -535,6 +609,13 @@ function report(cfg, reg, findings, { base, staged, appr, strict }) {
   for (const f of findings) {
     if (f.kind === 'path') { console.log(`${c.yellow('PATH')}  ${f.msg}`); continue; }
     if (f.kind === 'stable') { console.log(`${c.yellow('REWRITE')}  ${f.msg}`); f.sum.sample.forEach((l) => console.log(c.dim(`    - ${l}`))); continue; }
+    if (f.kind === 'rule') {
+      console.log(`${f.status === 'approved' ? c.green('APPROVED') : c.red('RULE')}  ${f.msg}`);
+      if (f.rule.reason) console.log(c.dim(`    why: ${f.rule.reason}`));
+      if (f.files.length > 1) f.files.slice(0, 8).forEach((x) => console.log(c.dim(`    - ${x}`)));
+      if (f.status === 'blocked') console.log(f.unapprovable ? c.yellow(`    ! ${f.unapprovable}`) : `    → needs approval from ${f.approvers.map(team.handle).join(' or ')} on the PR.`);
+      continue;
+    }
     const owner = team.handle(team.find(cfg, f.lock.owner)) || f.lock.owner;
     const tag = { blocked: c.red('LOCKED'), approved: c.green('APPROVED'), warn: c.yellow('WARNING'), satisfied: c.green('TEST OK') }[f.status];
     console.log(`${tag}  ${f.lock.id} "${f.lock.title}" (${f.lock.type}, owner ${owner}) — ${f.deleted ? 'file deleted: ' : ''}${f.file}`);
@@ -716,6 +797,28 @@ function onGitlab() {
 
 const GITLAB_INCLUDE = 'https://raw.githubusercontent.com/AbinandhMJ/fixlock/main/ci/gitlab/fixlock.gitlab-ci.yml';
 
+/** Is origin a Bitbucket Cloud repository? */
+function onBitbucket() {
+  const url = (g.git(['remote', 'get-url', 'origin'], { allowFail: true }) || '').trim();
+  return /bitbucket\.org[:/]/i.test(url);
+}
+
+/** A bitbucket-pipelines.yml with the fixlock pull-request step. */
+const BITBUCKET_PIPELINE = `# Added by fixlock quickstart: fails a pull request that changes a locked fix until its owner approves.
+# Needs a secured repository variable FIXLOCK_BITBUCKET_TOKEN (repository access token, Pull requests: Write).
+image: node:22
+clone:
+  depth: full
+pipelines:
+  pull-requests:
+    '**':
+      - step:
+          name: fixlock
+          script:
+            - git fetch origin "+refs/heads/\${BITBUCKET_PR_DESTINATION_BRANCH}:refs/remotes/origin/\${BITBUCKET_PR_DESTINATION_BRANCH}"
+            - npx -y @abinandhmj/fixlock@0 check --base "origin/\${BITBUCKET_PR_DESTINATION_BRANCH}" --comment
+`;
+
 /** Does a workflow already run fixlock? */
 function hasFixlockWorkflow() {
   const dir = path.join(s.root(), '.github', 'workflows');
@@ -777,7 +880,14 @@ async function cmdQuickstart(args) {
         ci = '.gitlab-ci.yml (add the FIXLOCK_GITLAB_TOKEN variable: see the GitLab docs)';
       } else ci = `add this to your .gitlab-ci.yml:  include: [{ remote: ${GITLAB_INCLUDE} }]`;
     }
-    else if (!onGithub() && !args.ci) ci = 'not on GitHub or GitLab: add `fixlock check` to your CI (see the CI setup docs)';
+    else if (onBitbucket()) {
+      const file = path.join(s.root(), 'bitbucket-pipelines.yml');
+      const text = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
+      if (text && /fixlock/.test(text)) ci = 'bitbucket-pipelines.yml already runs fixlock';
+      else if (text === null) { fs.writeFileSync(file, BITBUCKET_PIPELINE); ci = 'bitbucket-pipelines.yml (add the FIXLOCK_BITBUCKET_TOKEN variable: see the Bitbucket docs)'; }
+      else ci = 'add the fixlock step to your bitbucket-pipelines.yml pull-requests pipeline (see the Bitbucket docs)';
+    }
+    else if (!onGithub() && !args.ci) ci = 'not on GitHub, GitLab or Bitbucket: add `fixlock check` to your CI (see the CI setup docs)';
     else {
       const file = path.join(s.root(), '.github', 'workflows', 'fixlock.yml');
       fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -884,7 +994,12 @@ module.exports = {
       return;
     }
     const reg = s.loadRegistry();
-    for (const id of args._) if (!reg.locks.some((l) => l.id.toUpperCase() === id.toUpperCase())) throw new Error(`No lock ${id}. See: fixlock list`);
+    const cfgNow = s.loadConfig();
+    for (const id of args._) {
+      const m = /^rule:(.+)$/i.exec(id);
+      if (m) { if (!(cfgNow.rules || []).some((r) => rules.ruleName(r).toLowerCase() === m[1].toLowerCase())) throw new Error(`No rule "${m[1]}" in .fixlock/config.json`); continue; }
+      if (!reg.locks.some((l) => l.id.toUpperCase() === id.toUpperCase())) throw new Error(`No lock ${id}. See: fixlock list`);
+    }
     const minutes = Math.max(1, Math.min(480, parseInt(args.minutes || '30', 10) || 30));
     ah.allow(args._, minutes);
     console.log(c.green(`✔ Cursor and Windsurf may change ${args._.map((x) => x.toUpperCase()).join(', ')} for ${minutes} minutes.`) + c.dim(' The PR still needs the owner\'s approval. Undo: fixlock allow --clear'));
