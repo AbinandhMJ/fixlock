@@ -35,9 +35,21 @@ jobs:
           test "$GITHUB_REF_TYPE" = tag || { echo "::error::Run this on a vX.Y.Z tag, not a branch."; exit 1; }
           test "v$(node -p "require('./package.json').version")" = "${GITHUB_REF_NAME}"
       - run: npm test
-      - run: npm publish --provenance --access public   # OIDC: no NODE_AUTH_TOKEN
+      # Every step can run again: "Re-run failed jobs" finishes a release that stopped halfway.
+      - name: npm publish
+        run: |
+          if npm view "@abinandhmj/fixlock@${GITHUB_REF_NAME#v}" version >/dev/null 2>&1; then
+            echo "::notice::@abinandhmj/fixlock@${GITHUB_REF_NAME#v} is already on npm."
+          else
+            npm publish --provenance --access public   # OIDC: no NODE_AUTH_TOKEN
+          fi
       - name: SBOM (CycloneDX)
-        run: npm sbom --sbom-format cyclonedx --omit dev > fixlock.cdx.json
+        # From the lockfile: the release job installs nothing (zero runtime dependencies), and npm sbom
+        # stops on uninstalled devDependencies otherwise. Without node_modules npm names the package after
+        # the folder, so set the name from package.json.
+        run: |
+          npm sbom --sbom-format cyclonedx --omit dev --package-lock-only > fixlock.cdx.json
+          node -e "const f='./fixlock.cdx.json', j=require(f); j.metadata.component.name=require('./package.json').name; require('fs').writeFileSync(f, JSON.stringify(j, null, 2))"
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: fixlock.cdx.json
@@ -46,7 +58,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           awk -v v="${GITHUB_REF_NAME#v}" '$0 ~ "^## \\[" v "\\]" {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md > notes.md
-          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md fixlock.cdx.json
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" fixlock.cdx.json --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md fixlock.cdx.json
+          fi
 
   pypi:
     needs: publish            # only after the tests passed and npm has the same version
@@ -100,5 +116,6 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
         with:
           packages-dir: dist/wheels
+          skip-existing: true  # a re-run doesn't fail on files already uploaded
           attestations: true   # PEP 740: PyPI shows each file's signed provenance
 
