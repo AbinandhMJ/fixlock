@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.2
+
+- Stop using APIs deprecated or scheduled for removal in IntelliJ 2026.x (0.9.1)
+
 ## 0.9.1
 
 - Ready for future IDE versions: no deprecated or scheduled-for-removal platform APIs (flagged by JetBrains Plugin Verifier for IntelliJ IDEA 2026.1 to 2026.3).
