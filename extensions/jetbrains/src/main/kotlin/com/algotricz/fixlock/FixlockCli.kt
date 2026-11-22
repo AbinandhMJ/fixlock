@@ -36,10 +36,13 @@ object FixlockCli {
 
     fun findOnPath(name: String): File? {
         val names = if (SystemInfo.isWindows) listOf("$name.cmd", "$name.exe", "$name.bat", name) else listOf(name)
-        // The shell's PATH (also when the IDE was started from the Dock or Start menu).
+        // The login shell's PATH (an IDE started from the Dock or Start menu doesn't inherit the terminal's).
         val path = EnvironmentUtil.getValue("PATH") ?: System.getenv("PATH") ?: return null
-        for (dir in path.split(File.pathSeparator).filter { it.isNotBlank() }) {
-            for (n in names) File(dir, n).takeIf { it.isFile && it.canExecute() }?.let { return it }
+        for (dir in path.split(File.pathSeparatorChar).filter { it.isNotBlank() }) {
+            for (n in names) {
+                val f = File(dir, n)
+                if (f.isFile && f.canExecute()) return f
+            }
         }
         return null
     }

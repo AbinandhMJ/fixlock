@@ -37,6 +37,8 @@ All settings live in `.fixlock/config.json`. `init` writes it; you can edit it b
 | `emails` | Git commit emails, used to recognise who is editing or committing |
 | `role` | `lead`, `developer` or `reviewer` |
 
+Team members can also have a `gitlab` username, a `bitbucket` nickname and a `slack` member ID (`fixlock team add --gitlab … --bitbucket … --slack …`), used for [GitLab](gitlab.md) and [Bitbucket](bitbucket.md) approvals and [Slack mentions](alerts.md).
+
 ## `policies.bug` / `policies.feature`
 
 | Field | Values |
@@ -80,6 +82,35 @@ How locks are compared with the current code.
 |---|---|---|
 | `mode` | `structural` | `structural` compares tokens, so formatting, comments, quote style, semicolons, trailing commas and line wrapping are ignored. Used for JS/TS, Python, Java, Go, C#, Kotlin, Rust, C/C++, Swift, PHP, Ruby and similar; other files fall back to text. `text` compares lines of text (whitespace-insensitive), as before v0.6. |
 | `renames` | `warn` | What a consistent rename of variables inside a lock means: `allow` (ignore it), `warn` (report, don't block), `ask` / `block` (treat it like a change: the AI asks first and the PR needs approval). Renaming a field or object key is always a change. |
+
+## `tests`
+
+[Test-linked locks](tests-and-lifecycle.md).
+
+| Field | Default | Meaning |
+|---|---|---|
+| `run` | `false` | Run each changed lock's test in `fixlock check` (same as `--run-tests`) |
+| `satisfies` | `true` | A passing test the change didn't edit counts as approval |
+| `timeout` | `600` | Seconds per test file |
+| `commands` | `{}` | Command per file extension, or `"*"`; `{files}`, `{dir}`, `{class}` are filled in. Without one, fixlock picks pytest, vitest/jest/mocha/node --test, go test, Gradle/Maven, phpunit, rspec or cargo test |
+
+## `lifecycle`
+
+| Field | Default | Meaning |
+|---|---|---|
+| `reviewAfterDays` | `null` | `fixlock review` lists locks not reviewed for this many days |
+
+## `rules`
+
+[Rules for AI agents](rules.md): `[{ name, paths, ai, agents, approval, approvers, aiOnly, reason }]`.
+
+## `alerts`
+
+[Slack and Teams alerts](alerts.md): `enabled` (`false`; or `check --alert`), `on` (default `blocked`, `approved`, `test-failed`, `ai-broken`, `merged-blocked`). Webhook URLs come from `FIXLOCK_SLACK_WEBHOOK`, `FIXLOCK_TEAMS_WEBHOOK`, `FIXLOCK_ALERT_WEBHOOK`.
+
+## `judge`
+
+[AI review of changed locks](ai-judgment.md): `enabled` (`false`), `provider` (`anthropic` | `openai` | `command`), `model`, `url`, `command`, `timeout` (`60`), `maxLines` (`400`). Advice only: it never approves or blocks.
 
 ## `tracker`
 

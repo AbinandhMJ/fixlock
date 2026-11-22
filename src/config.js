@@ -34,12 +34,24 @@ const DEFAULT_CONFIG = {
   //            "text"       – compare lines of text (whitespace-insensitive), as before v0.6
   //   renames: what a consistent rename of variables inside a lock means: "allow" | "warn" | "ask" | "block"
   matching: { mode: 'structural', renames: 'warn' },
+  // Test-linked locks (see src/tests.js). run: run each changed lock's test in `fixlock check` (or pass
+  // --run-tests). satisfies: a passing, unchanged test counts as approval. commands: { ".py": "… {files}" }.
+  tests: { run: false, satisfies: true, timeout: 600, commands: {} },
+  // Lock lifecycle (`fixlock review`): flag locks not reviewed for this many days (null: never).
+  lifecycle: { reviewAfterDays: null },
+  // AI lock judgment (src/judge.js): advice on whether a changed fix still works. Never approves or blocks.
+  //   enabled, provider: "anthropic" | "openai" | "command", model, url, command (local, e.g. "ollama run llama3.1")
+  // Slack / Teams / webhook alerts (src/alerts.js). Webhook URLs come from env vars (secrets), not this file.
+  alerts: { enabled: false, on: ['blocked', 'approved', 'test-failed', 'ai-broken', 'merged-blocked'] },
+  judge: { enabled: false, provider: 'anthropic', model: '', url: '', command: '', timeout: 60, maxLines: 400 },
 };
 
 function mergeConfig(raw = {}) {
   return { ...DEFAULT_CONFIG, ...raw, policies: { ...DEFAULT_CONFIG.policies, ...(raw.policies || {}) },
     stableCode: { ...DEFAULT_CONFIG.stableCode, ...(raw.stableCode || {}) }, autoLock: { ...DEFAULT_CONFIG.autoLock, ...(raw.autoLock || {}) },
-    matching: { ...DEFAULT_CONFIG.matching, ...(raw.matching || {}) } };
+    matching: { ...DEFAULT_CONFIG.matching, ...(raw.matching || {}) },
+    tests: { ...DEFAULT_CONFIG.tests, ...(raw.tests || {}) }, lifecycle: { ...DEFAULT_CONFIG.lifecycle, ...(raw.lifecycle || {}) },
+    judge: { ...DEFAULT_CONFIG.judge, ...(raw.judge || {}) }, alerts: { ...DEFAULT_CONFIG.alerts, ...(raw.alerts || {}) } };
 }
 
 /** registry.json contents → { version: 2, locks } (handles the v0.1 "fixes" format). */

@@ -1,6 +1,7 @@
 package com.algotricz.fixlock
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -41,7 +42,7 @@ class FixlockEditorListener : EditorFactoryListener {
             alarm.cancelAllRequests()
             alarm.addRequest({
                 if (project.isDisposed || editor.isDisposed) return@addRequest
-                val text = ApplicationManager.getApplication().runReadAction(com.intellij.openapi.util.Computable { editor.document.text })
+                val text = ApplicationManager.getApplication().runReadAction(Computable { editor.document.text })
                 val locks = FixlockProjectService.getInstance(project).check(file, text) ?: return@addRequest
                 ApplicationManager.getApplication().invokeLater { if (!editor.isDisposed) paint(editor, locks) }
             }, DELAY_MS)

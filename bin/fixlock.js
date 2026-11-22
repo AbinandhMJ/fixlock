@@ -26,7 +26,7 @@ Setup (team lead, once):
                                        Everything in one go, no questions: team, AI assistants, hooks, locks for
                                        the past fixes fixlock is surest about, and the GitHub PR check
   fixlock init                         Interactive: team, roles, GitHub users, policies, tracker, hooks
-  fixlock team [list|add|remove]       Manage members: team add --name Abi --github abinandhmj --email a@x.com --role lead
+  fixlock team [list|add|remove]       Manage members: team add --name Abi --github abinandhmj [--gitlab abi] [--bitbucket abi] [--slack U04…] --email a@x.com --role lead
 
 AI assistants:
   fixlock setup [assistant…]           Connect claude-code, cursor, copilot, codex, gemini, windsurf (or "all")
@@ -49,14 +49,20 @@ Daily:
   fixlock languages [file]             Languages structural matching understands (and which one a file is)
   fixlock why <file>[:line]            What is locked here, who owns it, can I change it?
   fixlock list | remove <id>
+  fixlock link <id> <test file>        The test that proves a lock's fix (--remove to unlink)
+  fixlock test [id...]                 Run the linked tests: every fix proved, not just present
+  fixlock relock <id...> | --changed   After an approved change, lock the lines that hold the fix now [--lines a-b]
+  fixlock handover <from> <to>         Give someone's locks to a teammate [--remove: take them off the team]
+  fixlock review [<id> --keep|--remove] Locks that need a decision: expired, orphaned, moved, not reviewed lately
   fixlock status [file] [--stdin] [--json]
                                        Every lock and whether it's intact (--stdin: check unsaved editor text). For editor plugins
 
 CI / hooks:
-  fixlock check [--base origin/main] [--pr N] [--notify] [--markdown out.md] [--json]
+  fixlock check [--base origin/main] [--pr N] [--run-tests] [--judge] [--comment (GitLab MR / Bitbucket PR)] [--alert] [--notify] [--markdown out.md] [--json]
   fixlock check --staged               Friendly warning before commit (never blocks)
   fixlock install-hook                 git hooks on this machine: commit warning + auto-lock after fix/feat commits
   fixlock install-claude-hook          Claude Code: warn / ask / block before AI edits locked or working code
+  fixlock allow <id…> [--minutes 30]   Let Cursor / Windsurf change a locked fix for a while (only a person can run it); --clear
   fixlock codeowners                   Write lock owners into .github/CODEOWNERS
 `;
 

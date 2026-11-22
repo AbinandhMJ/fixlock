@@ -44,7 +44,11 @@ const TARGETS = {
   cursor: {
     label: 'Cursor',
     scope: 'project',
-    apply: (root, cmd) => [mergeJson(path.join(root, '.cursor', 'mcp.json'), 'mcpServers', { command: cmd.command, args: cmd.args })],
+    apply(root, cmd) {
+      const out = [mergeJson(path.join(root, '.cursor', 'mcp.json'), 'mcpServers', { command: cmd.command, args: cmd.args })];
+      out.push({ file: require('./init').installCursorHook(), status: 'updated', note: 'pre-edit hook: stops the agent before it changes a locked fix' });
+      return out;
+    },
   },
   copilot: {
     label: 'GitHub Copilot (VS Code agent mode)',
@@ -71,9 +75,13 @@ const TARGETS = {
     },
   },
   windsurf: {
-    label: 'Windsurf',
+    label: 'Windsurf / Devin Desktop',
     scope: 'user',
-    apply: (root, cmd) => [mergeJson(path.join(home(), '.codeium', 'windsurf', 'mcp_config.json'), 'mcpServers', { command: cmd.command, args: cmd.args })],
+    apply(root, cmd) {
+      const out = [mergeJson(path.join(home(), '.codeium', 'windsurf', 'mcp_config.json'), 'mcpServers', { command: cmd.command, args: cmd.args })];
+      for (const file of require('./init').installWindsurfHook()) out.push({ file, status: 'updated', note: 'pre-edit hook (Cascade)' });
+      return out;
+    },
   },
 };
 

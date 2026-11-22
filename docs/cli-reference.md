@@ -64,7 +64,8 @@ Lock lines.
 | `--type bug\|feature` | Default `bug` |
 | `--issue <ref>` | `linear:ENG-12`, `clickup:…`, `notion:…`, `bugasura:…` |
 | `--owner <github>` | Owner (default: you) |
-| `--test <spec>` | Test that guards the fix |
+| `--test <file>` | Test that proves the fix ([test-linked locks](tests-and-lifecycle.md)) |
+| `--expires YYYY-MM-DD` | After this date the lock only warns |
 | `--no-sync` | Don't update the tracker |
 
 ### `autolock`
@@ -112,13 +113,37 @@ Unlock. Only an approver of the lock can do this (`--force` overrides; CI will s
 | `--staged` | Check staged changes only (used by the pre-commit hook; never fails) |
 | `--strict` | With `--staged`: fail when a lock is changed |
 | `--pr <n>` | PR number for approvals |
+| `--run-tests` | Run the test linked to each changed lock: a passing, unchanged test satisfies it ([details](tests-and-lifecycle.md)) |
+| `--judge` | Ask an AI model whether each changed lock's fix still works; advice only ([details](ai-judgment.md)) |
+| `--comment` | In a GitLab or Bitbucket pipeline: post or update the fixlock comment ([GitLab](gitlab.md), [Bitbucket](bitbucket.md)) |
+| `--alert` | Post to Slack / Teams / a webhook when something changed ([alerts](alerts.md)) |
 | `--notify` | Reopen linked tracker issues |
 | `--markdown <file>` | Write a PR comment |
 | `--json` | JSON output |
 
 Exit codes: `0` ok, `1` locked change without approval, `2` usage or setup error.
 
-### `hook claude`
+### `test [id…]`
+Run the tests linked to locks (all, or the given ids). Exit `1` if any fails. `--json` for machine output.
+
+### `link <id> <test file>`
+Link the test that proves a lock's fix. `--remove` unlinks it.
+
+## Lifecycle
+
+### `relock <id…>` / `relock --changed`
+After an approved change, lock the lines that hold the fix now. `--lines a-b` (one lock) says exactly which; `-m "…"` records why. Old lines go to the lock's `history`.
+
+### `handover <from> <to>`
+Give one person's locks to a teammate. `--remove` also takes them off the team.
+
+### `review [<id>]`
+Without an id: locks that are expired, need re-locking, are orphaned or are overdue for review (`--json`, `--strict` to exit `1`). With an id: `--keep [--expires YYYY-MM-DD]` or `--remove`.
+
+### `allow <id…>`
+Let Cursor and Windsurf change a locked fix (or a file under an `ask` [rule](rules.md): `fixlock allow "rule:auth"`) for a while (`--minutes`, default 30, at most 480). Without ids: what's allowed now. `--clear` takes it back. Stored in `.git`, never committed. AI agents can't run it: their shell hooks refuse it.
+
+### `hook claude` / `hook cursor` / `hook windsurf`
 Used by Claude Code; reads the tool call from stdin. You don't run this yourself.
 
 ## Docs and releases

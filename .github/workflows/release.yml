@@ -2,7 +2,9 @@
 # "chore(release)" PR is merged; pushing a tag by hand works too (npm version minor && git push --follow-tags).
 # 1. npm (@abinandhmj/fixlock) with provenance
 # 2. PyPI (fixlock): wheels with a standalone binary for Linux, macOS and Windows, plus a fallback wheel
-# Both use trusted publishing (OIDC), so no token is stored anywhere:
+# 3. The GitHub release: notes, an SBOM, the standalone binaries and SHA256SUMS, each with a signed
+#    build attestation (gh attestation verify <file> -R AbinandhMJ/fixlock). See SECURITY.md.
+# npm and PyPI use trusted publishing (OIDC), so no token is stored anywhere:
 #   npmjs.com → package Settings → Trusted Publisher → GitHub Actions: AbinandhMJ / fixlock / release.yml,
 #     "npm publish" allowed. Needs npm >= 11.5.1 (Node 24 ships it).
 #   pypi.org → Publishing → trusted publisher: project fixlock, owner AbinandhMJ, repo fixlock,
@@ -14,13 +16,14 @@ on:
   workflow_dispatch:   # the release bot starts it on the new tag (gh workflow run release.yml --ref vX.Y.Z)
 permissions:
   contents: write   # create the GitHub release
-  id-token: write   # npm provenance / trusted publishing
+  id-token: write   # npm provenance / trusted publishing / signed attestations
+  attestations: write
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
@@ -33,26 +36,32 @@ jobs:
           test "v$(node -p "require('./package.json').version")" = "${GITHUB_REF_NAME}"
       - run: npm test
       - run: npm publish --provenance --access public   # OIDC: no NODE_AUTH_TOKEN
+      - name: SBOM (CycloneDX)
+        run: npm sbom --sbom-format cyclonedx --omit dev > fixlock.cdx.json
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: fixlock.cdx.json
       - name: GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           awk -v v="${GITHUB_REF_NAME#v}" '$0 ~ "^## \\[" v "\\]" {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md > notes.md
-          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md fixlock.cdx.json
 
   pypi:
     needs: publish            # only after the tests passed and npm has the same version
     runs-on: ubuntu-latest
     environment: pypi         # PyPI trusted publisher is bound to this environment
     permissions:
-      contents: read
-      id-token: write         # PyPI trusted publishing
+      contents: write         # add the binaries to the GitHub release
+      id-token: write         # PyPI trusted publishing, signed attestations
+      attestations: write
     steps:
-      - uses: actions/checkout@v7
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: 1.4.4
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.12'
       - name: Build standalone binaries
@@ -77,7 +86,19 @@ jobs:
           python -m venv /tmp/venv
           /tmp/venv/bin/pip install -q --no-index --find-links dist/wheels "fixlock==${GITHUB_REF_NAME#v}"
           test "$(/tmp/venv/bin/fixlock --version)" = "${GITHUB_REF_NAME#v}"
-      - uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Checksums
+        run: cd dist/bin && sha256sum fixlock-* > SHA256SUMS && cat SHA256SUMS
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            dist/bin/fixlock-*
+            dist/wheels/*.whl
+      - name: Add the binaries to the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" dist/bin/fixlock-* dist/bin/SHA256SUMS --clobber
+      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
         with:
           packages-dir: dist/wheels
+          attestations: true   # PEP 740: PyPI shows each file's signed provenance
 

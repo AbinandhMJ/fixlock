@@ -2,7 +2,8 @@
 
 ## 0.9.1
 
-- Ready for IntelliJ IDEA 2026.3 and later: no longer uses platform APIs that JetBrains has deprecated or scheduled for removal.
+- Ready for future IDE versions: no deprecated or scheduled-for-removal platform APIs (flagged by JetBrains Plugin Verifier for IntelliJ IDEA 2026.1 to 2026.3).
+- Finds `fixlock` on your login shell's PATH, also when the IDE was started from the Dock or Start menu.
 
 ## 0.9.0
 

@@ -17,19 +17,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write   # the GitHub release for a vscode-v tag
       id-token: write   # trusted publishing (OIDC) to the Marketplace and Open VSX; no stored tokens
+      attestations: write   # signed build attestation for the .vsix
     defaults:
       run:
         working-directory: extensions/vscode
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 20
       - run: npm test
       - run: npx --yes @vscode/vsce@3 package --no-dependencies
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: fixlock-vsix
           path: extensions/vscode/*.vsix
@@ -48,16 +49,31 @@ jobs:
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
-          if [ -z "$VSCE_PAT" ]; then unset VSCE_PAT; npx --yes @vscode/vsce@latest publish --oidc --no-dependencies --packagePath *.vsix
-          else npx --yes @vscode/vsce@latest publish --no-dependencies --packagePath *.vsix; fi
+          if [ -z "$VSCE_PAT" ]; then unset VSCE_PAT; npx --yes @vscode/vsce@4.1.1 publish --oidc --no-dependencies --skip-duplicate --packagePath *.vsix
+          else npx --yes @vscode/vsce@4.1.1 publish --no-dependencies --skip-duplicate --packagePath *.vsix; fi
       - name: Publish to Open VSX
         id: openvsx
         if: startsWith(github.ref, 'refs/tags/vscode-v') || inputs.publish == 'both stores' || inputs.publish == 'Open VSX'
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: |
-          if [ -z "$OVSX_PAT" ]; then unset OVSX_PAT; npx --yes ovsx@latest publish *.vsix --trusted-publishing
-          else npx --yes ovsx@latest publish *.vsix; fi
+          if [ -z "$OVSX_PAT" ]; then unset OVSX_PAT; npx --yes ovsx@1.4.0 publish *.vsix --trusted-publishing --skip-duplicate
+          else npx --yes ovsx@1.4.0 publish *.vsix --skip-duplicate; fi
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        if: startsWith(github.ref, 'refs/tags/vscode-v')
+        with:
+          subject-path: extensions/vscode/*.vsix
+      - name: GitHub release with the .vsix
+        if: always() && startsWith(github.ref, 'refs/tags/vscode-v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          v="${TAG#vscode-v}"
+          awk -v h="## $v" '$0==h{f=1;next} /^## /{f=0} f' CHANGELOG.md > notes.md
+          gh release view "$TAG" >/dev/null 2>&1 \
+            && gh release upload "$TAG" *.vsix --clobber \
+            || gh release create "$TAG" *.vsix --title "VS Code extension $v" --notes-file notes.md --latest=false
       - name: Fail if the Marketplace publish failed
         if: always() && steps.marketplace.outcome == 'failure'
         run: echo "::error::Publishing to the VS Code Marketplace failed (see that step). Open VSX ran anyway." && exit 1

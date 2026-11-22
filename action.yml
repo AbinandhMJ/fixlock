@@ -10,7 +10,7 @@
 #       steps:
 #         - uses: actions/checkout@v4
 #           with: { fetch-depth: 0 }
-#         - uses: AbinandhMJ/fixlock@v0.9.0
+#         - uses: AbinandhMJ/fixlock@v0.10.0
 name: fixlock by Algotricz
 description: Stop AI coding assistants and teammates from silently undoing bug fixes. Fails the PR until the fix owner approves.
 author: Algotricz
@@ -28,6 +28,18 @@ inputs:
     default: 'true'
   notify:
     description: Update linked issues in your tracker (Linear, ClickUp, Notion, webhook) when a fix is reverted.
+    required: false
+    default: 'false'
+  run-tests:
+    description: Run the test linked to each changed lock. A passing test that the PR didn't change satisfies the lock (no approval needed); a failing one says the fix is broken. Set up your language and install dependencies in earlier steps.
+    required: false
+    default: 'false'
+  alert:
+    description: Post to Slack / Teams / a webhook when a PR changes a locked fix, is approved, fails a lock's test, or is merged while blocked. Set FIXLOCK_SLACK_WEBHOOK, FIXLOCK_TEAMS_WEBHOOK or FIXLOCK_ALERT_WEBHOOK in the step's env (from secrets). Add "closed" to the workflow's pull_request types for merged-while-blocked alerts.
+    required: false
+    default: 'false'
+  judge:
+    description: Ask an AI model whether each changed lock's fix still works, and show its answer (advice only; it never approves or blocks). Needs ANTHROPIC_API_KEY (or judge settings in .fixlock/config.json) in the step's env.
     required: false
     default: 'false'
   args:
@@ -70,6 +82,9 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         NOTIFY: ${{ inputs.notify }}
+        RUN_TESTS: ${{ inputs.run-tests }}
+        JUDGE: ${{ inputs.judge }}
+        ALERT: ${{ inputs.alert }}
         EXTRA: ${{ inputs.args }}
         PR_NUMBER: ${{ github.event.pull_request.number }}
       run: |
@@ -78,6 +93,9 @@ runs:
         flags=(check --base "$FIXLOCK_BASE" --markdown "$out")
         [ -n "$PR_NUMBER" ] && flags+=(--pr "$PR_NUMBER")
         [ "$NOTIFY" = "true" ] && flags+=(--notify)
+        [ "$RUN_TESTS" = "true" ] && flags+=(--run-tests)
+        [ "$JUDGE" = "true" ] && flags+=(--judge)
+        [ "$ALERT" = "true" ] && flags+=(--alert)
         # shellcheck disable=SC2206
         [ -n "$EXTRA" ] && flags+=($EXTRA)
         status=0
@@ -86,8 +104,8 @@ runs:
         printf '\n<sub>[fixlock](https://abinandhmj.github.io/fixlock/) · fixed stays fixed · a product of Algotricz</sub>\n' >> "$out"
         exit $status
     - name: PR comment
-      if: always() && inputs.comment == 'true' && github.event.pull_request.number && steps.check.outputs.markdown != ''
-      uses: marocchino/sticky-pull-request-comment@v3
+      if: always() && inputs.comment == 'true' && github.event.pull_request.number && github.event.action != 'closed' && steps.check.outputs.markdown != ''
+      uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
       with:
         header: fixlock
         path: ${{ steps.check.outputs.markdown }}

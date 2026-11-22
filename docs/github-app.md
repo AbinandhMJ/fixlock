@@ -55,6 +55,8 @@ Pick one per repository. If the base branch has a workflow that uses the fixlock
 
 ## Run your own copy
 
+On your own server instead of Cloudflare (Docker, GitHub Enterprise Server)? See [Self-hosting](self-hosting.md).
+
 The app is a [Cloudflare Worker](https://workers.cloudflare.com/) in [`app/`](https://github.com/AbinandhMJ/fixlock/tree/main/app). The free plan is enough for most teams. Set-up takes about 15 minutes.
 
 **1. Deploy the Worker**
