@@ -6,6 +6,11 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 
 _No changes yet._
 
+## [0.11.1] - 2026-11-22
+
+### Fixed
+- **release:** SBOM step works without installed dev tools, and releases can be re-run
+
 ## [0.11.0] - 2026-11-22
 
 ### Added
