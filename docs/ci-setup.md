@@ -10,10 +10,23 @@ The PR check is what actually enforces locks. Everything else only warns.
 
 `npx fixlock check --base origin/main`:
 
-1. Compares the branch with `origin/main`.
+1. Compares the branch with `origin/main`, using the **locks and settings from `origin/main`**, not the branch's own.
 2. For every lock whose lines are gone, looks for an approval from the right person on the PR (see [Team lead guide](team-lead-guide.md#choosing-the-rules)).
-3. Flags rewrites of working code as warnings.
-4. Exits `1` if any lock is changed without approval, `0` otherwise.
+3. Checks changes to fixlock itself (below).
+4. Flags rewrites of working code as warnings.
+5. Exits `1` if any lock is changed without approval, `0` otherwise.
+
+### Changes to `.fixlock/` itself
+
+A pull request can't switch fixlock off, for itself or for the next pull request:
+
+| The PR | Needs |
+|---|---|
+| removes a lock from `.fixlock/registry.json`, or changes what it protects (its code, file, owner, test, expiry, policy) | that lock's owner, like a change to the locked code |
+| changes `.fixlock/config.json` (team and leads, policies, rules, AI review, tests, alerts) | a lead (from the base branch's team, so adding yourself as a lead doesn't count) |
+| adds new locks, or rewords a lock's title or reason | nobody |
+
+A PR is always checked with the settings it started from, so a new setting applies from the next pull request after it's merged. The pull request that first sets fixlock up is the exception: there's nothing on the base branch yet, so its own settings are used. AI agents' hooks also ask before editing `.fixlock/` files directly (rule `fixlock-files`; Cursor and Windsurf: `fixlock allow "rule:fixlock-files"`). Use the CLI (`fixlock mark`, `remove`, `handover`, `relock`) instead.
 
 | Flag | Use |
 |---|---|

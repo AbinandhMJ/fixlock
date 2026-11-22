@@ -15,6 +15,10 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 - **GitLab merge requests.** `fixlock check --comment` in a GitLab MR pipeline reads the MR's approvals and the author through the API (`FIXLOCK_GITLAB_TOKEN`), and posts one comment it keeps up to date; the base defaults to the MR's target branch. A ready-made job: `include: remote: …/ci/gitlab/fixlock.gitlab-ci.yml`, which `quickstart` adds on GitLab repositories. Team members get a `gitlab` username (`team add --gitlab`). Works with self-managed GitLab. See [GitLab](https://abinandhmj.github.io/fixlock/gitlab).
 - **AI review of changed locks** (`fixlock check --judge`, the Action's `judge: true`, or `"judge": { "enabled": true }`): asks a model whether each changed lock's fix still works and shows its answer in the check and PR comment. Advice only: it never approves or blocks. Anthropic (default `claude-haiku-5-5`), any OpenAI-compatible API, or a local command such as Ollama so nothing leaves the machine. See [AI review](https://abinandhmj.github.io/fixlock/ai-judgment).
 
+### Changed
+
+- **A pull request can't switch fixlock off.** `fixlock check` in CI (the Action, GitLab, Bitbucket, any CI) now uses the base branch's locks and settings, like the GitHub App. A PR that removes a lock or changes what it protects needs that lock's owner; a PR that changes `.fixlock/config.json` needs a lead from the base branch's team. Adding locks needs nobody. A settings change now applies from the next PR after it's merged. AI agents' hooks ask before editing `.fixlock/` directly. See [Changes to `.fixlock/` itself](https://abinandhmj.github.io/fixlock/ci-setup#changes-to-fixlock-itself).
+
 ## [0.10.0] - 2026-11-19
 
 ### Added

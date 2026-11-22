@@ -431,6 +431,8 @@ const gitlab = require('./gitlab');
 const bitbucket = require('./bitbucket');
 const rules = require('./rules');
 const alerts = require('./alerts');
+const policy = require('./policy');
+const { mergeConfig, normalizeRegistry } = require('./config');
 
 /** The GitHub Actions event payload, or null. */
 function ghEvent() {
@@ -499,10 +501,18 @@ async function cmdCheck(args) {
     return;
   }
   const base = args.base || process.env.FIXLOCK_BASE || (gl && process.env[hostMod.baseVar] ? `origin/${process.env[hostMod.baseVar]}` : 'origin/main');
-  const cfg = s.loadConfig();
-  const reg = s.loadRegistry();
+  // In CI the locks and settings come from the base branch, so a PR can't switch its own check off by
+  // editing .fixlock/; what it changes there is a finding of its own (policy.js). Locally (--staged), and in
+  // the PR that sets fixlock up (no settings on the base yet), the working tree's are used.
+  const baseCfg = staged ? null : parseJson(g.fileAtRef(base, policy.CONFIG));
+  const cfg = baseCfg ? mergeConfig(baseCfg) : s.loadConfig();
+  const reg = baseCfg ? normalizeRegistry(parseJson(g.fileAtRef(base, policy.REGISTRY))) : s.loadRegistry();
   const read = contentGetter(staged);
   const findings = [];
+  if (baseCfg) {
+    const head = { config: readIfExists(path.join(s.root(), policy.CONFIG)), registry: readIfExists(path.join(s.root(), policy.REGISTRY)) };
+    findings.push(...policy.policyFindings(cfg, reg, head, { expired: E.expired }));
+  }
 
   // Renames between base and HEAD: follow the file.
   const renames = {};
@@ -620,6 +630,7 @@ function report(cfg, reg, findings, { base, staged, appr, strict }) {
     const tag = { blocked: c.red('LOCKED'), approved: c.green('APPROVED'), warn: c.yellow('WARNING'), satisfied: c.green('TEST OK') }[f.status];
     console.log(`${tag}  ${f.lock.id} "${f.lock.title}" (${f.lock.type}, owner ${owner}) — ${f.deleted ? 'file deleted: ' : ''}${f.file}`);
     if (f.lock.reason && f.lock.reason !== f.lock.title) console.log(c.dim(`    why: ${f.lock.reason}`));
+    if (f.note) console.log(c.dim(`    ${f.note}: the locked code would be unprotected after the merge`));
     for (const l of f.missing) console.log(c.dim(`    - ${l.trim()}`));
     if (f.copies) console.log(c.dim(`    this code appeared ${f.copies.expected} times in the file; only ${f.copies.found} identical copies are left`));
     if (f.renamed && f.renamed.length) console.log(c.dim(`    renamed (logic kept): ${f.renamed.map(([a, b]) => `${a} → ${b}`).join(', ')}`));
@@ -627,7 +638,7 @@ function report(cfg, reg, findings, { base, staged, appr, strict }) {
     if (f.test && f.test.status === 'failed' && f.test.output) f.test.output.split('\n').slice(-8).forEach((l) => console.log(c.dim(`      ${l}`)));
     if (f.judge) console.log((f.judge.verdict === 'broken' ? c.red : f.judge.verdict === 'preserved' ? c.cyan : c.yellow)(`    ${E.judgeNote(f.judge).replace(/\*\*/g, '')}`));
     if (f.expired) console.log(c.dim(`    expired on ${f.lock.expires}: changing it only warns (fixlock review ${f.lock.id} --keep to extend)`));
-    if (f.status === 'blocked') console.log(`    → needs approval from ${f.approvers.map(team.handle).join(' or ') || 'nobody on the team (no owner or lead)'}${staged ? ' when you open the PR' : ' on the PR'}, or restore these lines.`);
+    if (f.status === 'blocked') console.log(`    → needs approval from ${f.approvers.map(team.handle).join(' or ') || 'nobody on the team (no owner or lead)'}${staged ? ' when you open the PR' : ' on the PR'}, or ${f.registry ? 'undo the change to the lock' : 'restore these lines'}.`);
     if (f.status === 'blocked' && !staged && f.unapprovable) console.log(c.yellow(`    ! ${f.unapprovable}`));
     if (f.tracker) console.log(c.dim(`    tracker: ${f.tracker}`));
   }
@@ -784,6 +795,9 @@ jobs:
 }
 
 /** Is this repository hosted on GitHub (origin points at github.com)? */
+/** Parsed JSON, or null for no text or text that isn't JSON. */
+function parseJson(text) { if (text == null) return null; try { return JSON.parse(text); } catch { return null; } }
+
 /** A file's text, or null when there's no such file (one read: no check-then-read race). */
 function readIfExists(file) {
   try { return fs.readFileSync(file, 'utf8'); } catch (e) { if (e.code === 'ENOENT') return null; throw e; }

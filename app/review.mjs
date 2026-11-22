@@ -3,6 +3,7 @@
 import config from '../src/config.js';
 import evaluate from '../src/evaluate.js';
 import rules from '../src/rules.js';
+import policy from '../src/policy.js';
 
 export const CHECK_NAME = 'fixlock';
 export const MARKER = '<!-- fixlock-app -->';
@@ -31,6 +32,7 @@ export async function reviewPullRequest(gh, pr) {
   // A PR that sets fixlock up for the first time is judged by its own config.
   let rawCfg = await gh.file(baseRepo, '.fixlock/config.json', baseSha);
   let rawReg = await gh.file(baseRepo, '.fixlock/registry.json', baseSha);
+  const fromBase = rawCfg !== null;
   if (rawCfg === null) {
     rawCfg = await gh.file(headRepo, '.fixlock/config.json', headSha);
     rawReg = await gh.file(headRepo, '.fixlock/registry.json', headSha);
@@ -57,6 +59,12 @@ export async function reviewPullRequest(gh, pr) {
     ...await evaluate.lockFindings(cfg, reg, { read: at(headRepo, headSha), good: at(baseRepo, baseSha), renames, only }),
     ...evaluate.pathFindings(cfg, changes),
   ];
+
+  // Changes to fixlock itself: locks removed or weakened, settings changed (src/policy.js).
+  if (fromBase && policy.touchesFixlock(changes.flatMap((ch) => [ch.file, ch.from]))) {
+    const head = at(headRepo, headSha);
+    findings.push(...policy.policyFindings(cfg, reg, { config: await head(policy.CONFIG), registry: await head(policy.REGISTRY) }, { expired: evaluate.expired }));
+  }
 
   // Rules (policy as code). For "aiOnly" rules, the PR counts as AI-written when any of its commits is
   // (author or Co-authored-by trailer); the App doesn't read files per commit.

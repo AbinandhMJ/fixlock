@@ -45,6 +45,12 @@ const repo = path.join(tmp, 'shop');
 fs.mkdirSync(repo);
 const env = { ...process.env, NO_COLOR: '1', FIXLOCK_GITHUB_LOGIN: 'abi', GITLAB_CI: '', BITBUCKET_PR_ID: '', GH_TOKEN: '' };
 const git = (...a) => execFileSync('git', a, { cwd: repo, env, encoding: 'utf8' }).trim();
+const onMain = (edit, cfgPath) => { // a team setting lands on main first: a PR is checked with its base's settings
+  const br = git('rev-parse', '--abbrev-ref', 'HEAD');
+  git('checkout', '-q', 'main');
+  const c = JSON.parse(fs.readFileSync(cfgPath, 'utf8')); edit(c); fs.writeFileSync(cfgPath, JSON.stringify(c, null, 2));
+  git('commit', '-qam', 'chore: settings'); git('checkout', '-q', br); git('merge', '-q', '--no-edit', 'main');
+};
 const run = (args, extra) => new Promise((resolve) => {
   const p = spawn(process.execPath, [BIN, ...args], { cwd: repo, env: { ...env, ...extra } });
   let stdout = ''; let stderr = '';
@@ -94,13 +100,13 @@ const run = (args, extra) => new Promise((resolve) => {
 
     // alerts.on filters event types
     const cf = path.join(repo, '.fixlock', 'config.json');
-    const c = JSON.parse(fs.readFileSync(cf, 'utf8')); c.alerts = { on: ['merged-blocked'] }; fs.writeFileSync(cf, JSON.stringify(c));
+    onMain((c) => { c.alerts = { on: ['merged-blocked'] }; }, cf);
     comments = [];
     r = await run(['check', '--base', 'main', '--alert'], ci(event('synchronize')));
     ok(got.slack.length === 3, 'alerts.on: only the events the team wants');
 
     // A webhook that fails doesn't fail the check
-    c.alerts = {}; fs.writeFileSync(cf, JSON.stringify(c));
+    onMain((c) => { c.alerts = {}; }, cf);
     r = await run(['check', '--base', 'main', '--alert'], { ...ci(event('synchronize')), FIXLOCK_SLACK_WEBHOOK: 'http://127.0.0.1:9/nope' });
     ok(r.status === 1 && /slack \(failed/.test(r.stdout), 'a failing webhook is reported, the result is unchanged', r.stdout);
   } finally {
