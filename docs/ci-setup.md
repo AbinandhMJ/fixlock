@@ -59,7 +59,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - uses: AbinandhMJ/fixlock@v0.11.0
+      - uses: AbinandhMJ/fixlock@v0.11.1
         # with:
         #   notify: true            # update linked tracker issues (set LINEAR_API_KEY etc. as env)
         #   run-tests: true         # run changed locks' tests: a passing one needs no approval
