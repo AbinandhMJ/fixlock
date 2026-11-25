@@ -132,13 +132,16 @@ Examples: [GitHub Actions](examples/ci/github-actions.yml) · [Jenkins](examples
 
 - **Measured accuracy.** On 764 real fixes locked in 11 open-source projects (JavaScript, TypeScript, Python, Go, Java, Kotlin, Rust, Ruby, PHP, C#, Swift), harmless edits (Prettier, Black, gofmt, comments, line wrapping) were flagged **0% of the time** (0 of 2,914), and **99.9%** of harmful edits (flipped conditions, changed values, deleted checks) were caught; the last one was still flagged as a rename. [See the benchmark](https://abinandhmj.github.io/fixlock/benchmark), and rerun it with `node bench/run.js`.
 - **Catches real undone fixes.** On the [Regression Bench](https://abinandhmj.github.io/fixlock/regression-bench), 33 real bug fixes from 11 projects were undone by reversing the fix's own diff: fixlock caught **32 of 33**, with **0 false alarms** on 33 harmless edits of the same lines. Git merged every one without a conflict, and an AI code reviewer (Cubic) flagged 21 of them.
+- **Attacked on every change.** An [adversarial suite](https://abinandhmj.github.io/fixlock/adversarial) runs 36 ways an AI agent could try to get past fixlock (edit tools, shell tricks, skipping hooks, self-approval, editing the lock file or CI) against the real hooks and CI check, and publishes what still gets through.
 - **Zero runtime dependencies.** The whole tool is readable in [`src/`](src/).
-- **No telemetry.** The network is used only for GitHub approvals and your tracker, when you configure them.
+- **No telemetry.** The network is used only for features you turn on: your code host's approvals and comment in CI, alerts, AI review and your tracker. [SECURITY.md](SECURITY.md#network) lists what each one sends.
 - **Read-only MCP server.** stdio only; it never edits files.
-- **Never blocks local work.** Hooks warn; only CI enforces.
-- **Tested on Linux, Windows and macOS** with Node 18, 20 and 22; releases are published with [npm provenance](https://docs.npmjs.com/generating-provenance-statements).
+- **Never blocks your own work.** Git hooks only warn; AI agents' edits that would undo a fix are stopped or need your yes; CI enforces.
+- **Tested on Linux, Windows and macOS** with Node 18 to 24; every release is [signed and verifiable](SECURITY.md#release-integrity).
 
 See [SECURITY.md](SECURITY.md) for exactly what fixlock reads and writes.
+
+**Using AI coding agents on a team?** We're looking for 10 teams to run fixlock with us for a month, free, and shape what it becomes: [become a design partner](https://abinandhmj.github.io/fixlock/design-partners).
 
 ## Also included
 

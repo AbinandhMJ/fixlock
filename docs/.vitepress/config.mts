@@ -68,6 +68,7 @@ export default defineConfig({
         { text: 'Slack and Teams alerts', link: '/alerts' },
         { text: 'Self-hosting', link: '/self-hosting' },
         { text: 'Adversarial testing', link: '/adversarial' },
+        { text: 'Design partners', link: '/design-partners' },
         { text: 'Team dashboard', link: '/dashboard' },
         { text: 'Issue trackers', link: '/trackers' },
         { text: 'Examples', link: '/examples' },
