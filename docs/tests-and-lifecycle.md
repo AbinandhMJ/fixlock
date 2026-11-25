@@ -39,7 +39,11 @@ With the GitHub Action, set `run-tests` and set up your language before it, as y
           run-tests: true
 ```
 
-Elsewhere: `fixlock check --run-tests`, or `"tests": { "run": true }` in `.fixlock/config.json`. Only the tests of locks the change touches run, each once.
+Elsewhere: `fixlock check --run-tests`, or `"tests": { "run": true }` in `.fixlock/config.json`. Only the tests of locks the change touches (their lines, or their file: see below) run, each once.
+
+### Changes around a lock
+
+A change can switch a fix off without touching its lines: an early `return` above the guard, or the guard wrapped in `if (false)`. So when a pull request changes a locked fix's file, its linked test runs too, even if the locked lines are untouched. If it fails, the PR needs the lock owner's approval, like a change to the lines. Turn this off with `"tests": { "indirect": false }`.
 
 ### How tests are run
 

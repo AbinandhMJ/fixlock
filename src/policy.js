@@ -85,7 +85,32 @@ function policyFindings(baseCfg, baseReg, head, { expired = () => false } = {}) 
   return out;
 }
 
+const CI_RULE = {
+  name: 'fixlock CI',
+  paths: ['.github/workflows/**'],
+  approval: 'lead',
+  reason: 'This CI file runs fixlock\'s check: a PR that changes it could change how it is checked, so a lead approves.',
+};
+
+/** CI configuration files fixlock's check can run from. */
+const isCiFile = (f) => /^\.github\/workflows\/[^/]+\.ya?ml$/.test(f) || ['.gitlab-ci.yml', 'bitbucket-pipelines.yml', '.circleci/config.yml', 'azure-pipelines.yml', 'Jenkinsfile'].includes(f);
+
+/**
+ * A PR that changes (or deletes) a CI file that runs fixlock on the base branch needs a lead.
+ * changes: [{ file, from, status }]; baseText(file) returns the file's text on the base branch (or null).
+ */
+async function ciFindings(changes, baseText) {
+  const files = [];
+  for (const ch of changes) {
+    const f = ch.from || ch.file;
+    if (!isCiFile(f) || ch.status === 'A' || ch.status === 'added') continue;
+    const text = await baseText(f);
+    if (text && /fixlock/i.test(text)) files.push(f);
+  }
+  return files.length ? [{ kind: 'rule', rule: CI_RULE, files, agents: [], file: files[0], msg: `${files.join(', ')} changed: it runs fixlock's check` }] : [];
+}
+
 /** Does a list of changed files touch fixlock's own files? */
 const touchesFixlock = (files) => files.some((f) => f === REGISTRY || f === CONFIG);
 
-module.exports = { REGISTRY, CONFIG, HARMLESS, SETTINGS_RULE, canon, changedFields, policyFindings, touchesFixlock };
+module.exports = { REGISTRY, CONFIG, HARMLESS, SETTINGS_RULE, CI_RULE, isCiFile, ciFindings, canon, changedFields, policyFindings, touchesFixlock };

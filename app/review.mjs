@@ -60,6 +60,11 @@ export async function reviewPullRequest(gh, pr) {
     ...evaluate.pathFindings(cfg, changes),
   ];
 
+  // A PR that changes the CI file running fixlock's check (src/policy.js).
+  if (fromBase && changes.some((ch) => policy.isCiFile(ch.from || ch.file))) {
+    findings.push(...await policy.ciFindings(changes, at(baseRepo, baseSha)));
+  }
+
   // Changes to fixlock itself: locks removed or weakened, settings changed (src/policy.js).
   if (fromBase && policy.touchesFixlock(changes.flatMap((ch) => [ch.file, ch.from]))) {
     const head = at(headRepo, headSha);

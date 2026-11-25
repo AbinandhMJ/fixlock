@@ -4,7 +4,16 @@ All notable changes to fixlock. Format: [Keep a Changelog](https://keepachangelo
 
 ## [Unreleased]
 
-_No changes yet._
+### Added
+
+- **Shell commands are checked too.** Claude Code's hook now judges the agent's shell commands as well as its edits, and Cursor's and Windsurf's shell hooks do more than before. A command that writes a locked file (`sed -i`, `>`, `tee`, `cp`/`mv`/`rm`, `git checkout <old> -- file`, `git revert` of the fix, a script one-liner) asks or is refused. Unlocking, `--no-verify`, `git commit -n`, `core.hooksPath`, deleting the git hooks, or writing the developer's OK file are refused. Existing Claude Code setups: run `fixlock setup claude` again to check shell commands.
+- **Indirect regressions.** When a pull request changes a locked fix's file, its linked test runs even if the locked lines are untouched (an early `return`, a guard wrapped in `if (false)`). A failing test needs the owner's approval. `"tests": { "indirect": false }` turns it off.
+- **Changes to the CI workflow that runs fixlock need a lead**, in the CLI check and the GitHub App.
+- **[Adversarial testing](https://abinandhmj.github.io/fixlock/adversarial)**: 36 ways an agent could try to get past fixlock, run against the real CLI and hooks on every change, with a published report that includes what still gets through.
+
+### Fixed
+
+- Cursor and Windsurf didn't check an agent's edits to files inside `.git` (the git hooks, the developer's `fixlock allow` file).
 
 ## [0.11.0] - 2026-11-22
 

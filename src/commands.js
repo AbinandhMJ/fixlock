@@ -512,6 +512,7 @@ async function cmdCheck(args) {
   if (baseCfg) {
     const head = { config: readIfExists(path.join(s.root(), policy.CONFIG)), registry: readIfExists(path.join(s.root(), policy.REGISTRY)) };
     findings.push(...policy.policyFindings(cfg, reg, head, { expired: E.expired }));
+    try { findings.push(...await policy.ciFindings(g.changedFiles(base), (f) => g.fileAtRef(base, f))); } catch { /* no base */ }
   }
 
   // Renames between base and HEAD: follow the file.
@@ -564,19 +565,35 @@ async function cmdCheck(args) {
 
   // Approvals: owner / lead approval on the PR clears a lock finding.
   let appr = { approvers: new Set(), source: 'none' };
-  if (!staged && E.needingApproval(cfg, findings).length) appr = gl && process.env.FIXLOCK_TEST_APPROVERS === undefined ? await hostMod.approvers(gl) : await prApprovers(args.pr);
+  const fetchApprovers = async () => (gl && process.env.FIXLOCK_TEST_APPROVERS === undefined ? hostMod.approvers(gl) : prApprovers(args.pr));
+  if (!staged && E.needingApproval(cfg, findings).length) appr = await fetchApprovers();
   const author = staged ? '' : ((gl && !process.env.CHANGE_AUTHOR ? await hostMod.author(gl) : prAuthor()) || '').toLowerCase(); // no PR exists yet at commit time
   let blocking = E.applyApprovals(cfg, findings, { approvers: appr.approvers, author });
 
   // Test-linked locks: run the tests of the locks this change touches. A passing, unchanged test satisfies
-  // the lock (the fix still works); a failing one says the fix is broken.
+  // the lock (the fix still works); a failing one says the fix is broken. Locks whose lines are intact but
+  // whose file changed get their test run too: an early return above a guard leaves the lines in place and
+  // still switches the fix off (an indirect regression).
   if (!staged && (args['run-tests'] || (cfg.tests || {}).run)) {
+    let changed = new Set();
+    try { changed = new Set(g.changedFiles(base).flatMap((ch) => [ch.file, ch.from].filter(Boolean))); } catch { /* no base */ }
     const linked = findings.filter((f) => f.kind === 'lock' && f.lock.test);
-    if (linked.length) {
-      let changed = new Set();
-      try { changed = new Set(g.changedFiles(base).flatMap((ch) => [ch.file, ch.from].filter(Boolean))); } catch { /* no base */ }
-      if (!args.json) console.log(c.dim(`Running the tests of ${linked.length} changed lock(s)...`));
-      const results = tests.run(s.root(), cfg, linked.map((f) => f.lock.test), { log: (cmd) => { if (!args.json) console.log(c.dim(`  $ ${cmd}`)); } });
+    const seen = new Set(findings.filter((f) => f.kind === 'lock').map((f) => f.lock.id));
+    const indirect = (cfg.tests || {}).indirect === false ? [] : reg.locks.filter((l) => l.test && !seen.has(l.id) && changed.has(l.file));
+    const files = [...new Set([...linked.map((f) => f.lock.test), ...indirect.map((l) => l.test)])];
+    if (files.length) {
+      if (!args.json) console.log(c.dim(`Running the tests of ${linked.length + indirect.length} lock(s) this change may affect...`));
+      const results = tests.run(s.root(), cfg, files, { log: (cmd) => { if (!args.json) console.log(c.dim(`  $ ${cmd}`)); } });
+      for (const l of indirect) {
+        const r = results[l.test];
+        if (!r || !['failed', 'timeout'].includes(r.status)) continue;
+        findings.push({ kind: 'lock', lock: l, file: l.file, missing: [], renamed: [], copies: null, deleted: false, expired: E.expired(l), indirect: true,
+          note: 'the locked lines are unchanged, but other changes in this file make its test fail' });
+      }
+      if (findings.some((f) => f.indirect)) {
+        if (appr.source === 'none') appr = await fetchApprovers();
+        E.applyApprovals(cfg, findings, { approvers: appr.approvers, author });
+      }
       blocking = E.applyTests(cfg, findings, results, changed);
       if (!args.json) console.log('');
     }
@@ -630,7 +647,7 @@ function report(cfg, reg, findings, { base, staged, appr, strict }) {
     const tag = { blocked: c.red('LOCKED'), approved: c.green('APPROVED'), warn: c.yellow('WARNING'), satisfied: c.green('TEST OK') }[f.status];
     console.log(`${tag}  ${f.lock.id} "${f.lock.title}" (${f.lock.type}, owner ${owner}) — ${f.deleted ? 'file deleted: ' : ''}${f.file}`);
     if (f.lock.reason && f.lock.reason !== f.lock.title) console.log(c.dim(`    why: ${f.lock.reason}`));
-    if (f.note) console.log(c.dim(`    ${f.note}: the locked code would be unprotected after the merge`));
+    if (f.note) console.log(c.dim(`    ${f.note}${f.registry ? ': the locked code would be unprotected after the merge' : ''}`));
     for (const l of f.missing) console.log(c.dim(`    - ${l.trim()}`));
     if (f.copies) console.log(c.dim(`    this code appeared ${f.copies.expected} times in the file; only ${f.copies.found} identical copies are left`));
     if (f.renamed && f.renamed.length) console.log(c.dim(`    renamed (logic kept): ${f.renamed.map(([a, b]) => `${a} → ${b}`).join(', ')}`));
