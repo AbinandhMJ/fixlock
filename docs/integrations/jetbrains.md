@@ -8,7 +8,16 @@ The fixlock plugin shows locks in the editor and warns you the moment an edit un
 
 ## Install
 
-In the IDE, open **Settings**, **Plugins**, **Marketplace**, search for **fixlock** (vendor: Algotricz) and click **Install**.
+::: warning Awaiting JetBrains Marketplace approval
+The plugin has been submitted to JetBrains Marketplace and is in JetBrains' review, so searching the Marketplace won't find it yet. Until it's approved, install it from GitHub:
+
+1. Download `fixlock-jetbrains-<version>.zip` from the [latest JetBrains plugin release](https://github.com/AbinandhMJ/fixlock/releases?q=jetbrains-v&expanded=true). Don't unzip it.
+2. In the IDE, open **Settings**, **Plugins**, click the ⚙ gear, choose **Install Plugin from Disk…**, select the zip and restart the IDE when asked.
+
+The zip is the same build that goes to the Marketplace, with a signed build attestation you can check: `gh attestation verify fixlock-jetbrains-<version>.zip -R AbinandhMJ/fixlock`.
+:::
+
+Once it's approved: in the IDE, open **Settings**, **Plugins**, **Marketplace**, search for **fixlock** (vendor: Algotricz) and click **Install**. A plugin installed from disk can be replaced by the Marketplace version the same way; your settings are kept.
 
 The plugin runs the fixlock command-line tool, so you need one of:
 
