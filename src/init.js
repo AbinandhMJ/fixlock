@@ -139,8 +139,10 @@ function installClaudeHook() {
   for (const h of pre) h.hooks = (h.hooks || []).filter((x) => !cli.isOurs(x.command) || x.command === cmd);
   settings.hooks.PreToolUse = pre.filter((h) => h.hooks.length);
   if (!settings.hooks.PreToolUse.some((h) => h.hooks.some((x) => x.command === cmd))) {
-    settings.hooks.PreToolUse.push({ matcher: 'Edit|MultiEdit|Write', hooks: [{ type: 'command', command: cmd }] });
+    settings.hooks.PreToolUse.push({ matcher: 'Edit|MultiEdit|Write|Bash', hooks: [{ type: 'command', command: cmd }] });
   }
+  // Installs from before 0.12 only checked edits: add shell commands (Bash) to fixlock's own entry.
+  for (const h of settings.hooks.PreToolUse) if (h.matcher === 'Edit|MultiEdit|Write' && h.hooks.some((x) => x.command === cmd)) h.matcher = 'Edit|MultiEdit|Write|Bash';
   settings.permissions = settings.permissions || {};
   const deny = new Set(settings.permissions.deny || []);
   ['Edit(.fixlock/**)', 'Write(.fixlock/**)', 'Edit(.claude/settings.json)', 'Write(.claude/settings.json)', 'Edit(.git/hooks/**)', 'Write(.git/hooks/**)', 'Bash(npx fixlock remove:*)', `Bash(npx ${cli.PKG} remove:*)`, `Bash(npx -y ${cli.PKG}@${cli.pin()} remove:*)`, 'Bash(git push --no-verify:*)', 'Bash(git commit --no-verify:*)'].forEach((r) => deny.add(r));

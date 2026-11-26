@@ -47,6 +47,9 @@ const ruleName = (r) => r.name || r.paths.join(', ');
 /** Built in: AI agents ask before editing fixlock's own files (locks and settings). PRs: see policy.js. */
 const FIXLOCK_FILES = { name: 'fixlock-files', paths: ['.fixlock/**'], ai: 'ask', reason: "fixlock's locks and settings: change them with the fixlock CLI, and a lock's owner or a lead approves the PR." };
 
+/** Built in: AI agents never edit the git hooks or the developer's temporary OKs (fixlock allow). */
+const GIT_INTERNALS = { name: 'fixlock-git', paths: ['.git/hooks/**', '.git/fixlock-allow.json'], ai: 'block', reason: "fixlock's git hooks and the developer's OKs (fixlock allow) are the developer's to change." };
+
 /** Rules whose paths cover this file. */
 function matching(cfg, file) { return rulesOf(cfg).filter((r) => covers(r, file)); }
 
@@ -56,7 +59,7 @@ function matching(cfg, file) { return rulesOf(cfg).filter((r) => covers(r, file)
  */
 function editRule(cfg, file, agent) {
   let best = null;
-  for (const r of [...matching(cfg, file), ...(covers(FIXLOCK_FILES, file) ? [FIXLOCK_FILES] : [])]) {
+  for (const r of [...matching(cfg, file), ...(covers(FIXLOCK_FILES, file) ? [FIXLOCK_FILES] : []), ...(covers(GIT_INTERNALS, file) ? [GIT_INTERNALS] : [])]) {
     if (!r.ai || !(r.ai in RANK) || r.ai === 'allow' || !forAgent(r, agent)) continue;
     if (!best || RANK[r.ai] > RANK[best.level]) best = { level: r.ai, rule: r };
   }
@@ -112,4 +115,4 @@ function ruleFindings(cfg, changes, { aiFiles = null } = {}) {
   return out;
 }
 
-module.exports = { RANK, AGENTS, FIXLOCK_FILES, globToRe, matching, editRule, agentOf, ruleFindings, ruleName };
+module.exports = { RANK, AGENTS, FIXLOCK_FILES, GIT_INTERNALS, globToRe, matching, editRule, agentOf, ruleFindings, ruleName };

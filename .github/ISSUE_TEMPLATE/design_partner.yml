@@ -1,0 +1,66 @@
+name: Design partner application
+description: Run fixlock with us for a month and help shape it (teams of 3+ using AI coding agents).
+title: "Design partner: "
+labels: ["design-partner"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your interest! See [what the program involves](https://abinandhmj.github.io/fixlock/design-partners). This issue is **public**: leave out anything confidential. If you'd rather talk privately, say so below and we'll arrange a call.
+  - type: input
+    id: team
+    attributes:
+      label: Team
+      description: Company or team name, and roughly how many developers.
+      placeholder: "Acme payments team, 6 developers"
+    validations:
+      required: true
+  - type: checkboxes
+    id: agents
+    attributes:
+      label: AI coding tools your team uses
+      options:
+        - label: Claude Code
+        - label: Cursor
+        - label: GitHub Copilot (chat, agent or coding agent)
+        - label: OpenAI Codex
+        - label: Windsurf / Devin
+        - label: Other (say below)
+  - type: dropdown
+    id: host
+    attributes:
+      label: Where your code lives
+      options:
+        - GitHub
+        - GitLab
+        - Bitbucket
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: stack
+    attributes:
+      label: Main languages
+      placeholder: "TypeScript, Python"
+  - type: textarea
+    id: problem
+    attributes:
+      label: Has a fixed bug come back? What happened?
+      description: Even one sentence helps. Or what you're worried about.
+  - type: textarea
+    id: want
+    attributes:
+      label: What would make fixlock worth paying for, for your team?
+      description: "Optional. For example: audit history, policies across repositories, a dashboard, SSO, self-hosting."
+  - type: checkboxes
+    id: commit
+    attributes:
+      label: The program
+      options:
+        - label: We can use fixlock on at least one active repository for 4 weeks, and join a 20-minute check-in every two weeks.
+          required: true
+  - type: input
+    id: contact
+    attributes:
+      label: How to reach you
+      description: "We'll reply on this issue. If you prefer email or a call, say so here (or ask us to contact you privately)."
