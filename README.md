@@ -54,7 +54,7 @@ It sets up the team, locks the past fixes it's surest about, connects your AI as
 
 **In VS Code or Cursor.** Install the [fixlock extension](https://marketplace.visualstudio.com/items?itemName=algotricz.fixlock), open your repository and click **Set up fixlock**.
 
-**In IntelliJ IDEA, PyCharm, WebStorm or another JetBrains IDE.** Install the [fixlock plugin](https://abinandhmj.github.io/fixlock/integrations/jetbrains), open your repository and click **Set up fixlock**.
+**In IntelliJ IDEA, PyCharm, WebStorm or another JetBrains IDE.** Install the [fixlock plugin](https://abinandhmj.github.io/fixlock/integrations/jetbrains) (awaiting JetBrains Marketplace approval; [install it from disk](https://abinandhmj.github.io/fixlock/integrations/jetbrains#install) meanwhile), open your repository and click **Set up fixlock**.
 
 **On a WordPress site.** The [fixlock WordPress plugin](https://abinandhmj.github.io/fixlock/integrations/wordpress) tells you when an update undoes a fix you patched into a plugin or theme.
 
