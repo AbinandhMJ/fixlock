@@ -13,6 +13,7 @@ fixlock runs in your hooks, your AI assistant and your CI, so it's built to be e
 - **Read-only MCP server.** stdio only, no network; it reads files and `git blame` and never edits anything.
 - **Never blocks your own work.** Git hooks only warn (unless you turn on the strict commit hook), and a hook that fails stays silent. CI enforces; AI agents' edits are checked before they happen.
 - **Can't be switched off from a pull request.** Every PR is checked with the base branch's locks and settings; removing or weakening a lock, or changing the settings, needs the lock's owner or a lead. See [Changes to `.fixlock/` itself](ci-setup.md#changes-to-fixlock-itself).
+- **Tested against attacks.** Every change runs [36 ways an agent could try to get past fixlock](adversarial.md), and the report says plainly what still gets through.
 - **The GitHub App stores nothing.** It reads `.fixlock/` and the changed files when a pull request event arrives and keeps no database. Prefer your own servers? [Self-host it](self-hosting.md).
 - **Signed, verifiable releases.** npm provenance, PyPI attestations, signed build attestations on every GitHub release file, an SBOM, and a cosign-signed Docker image. Verify any of them:
 

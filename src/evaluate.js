@@ -164,6 +164,7 @@ function toMarkdown(cfg, findings, base) {
     const label = { blocked: 'Needs approval', approved: 'Approved', warn: 'Changed', satisfied: 'Test passes' }[f.status];
     md += `- **${label}: ${f.lock.id}** ${f.lock.title} (${f.lock.type}) — \`${f.file}\`\n`;
     if (f.lock.reason && f.lock.reason !== f.lock.title) md += `  - Why it exists: ${f.lock.reason}\n`;
+    if (f.indirect) md += `  - The locked lines are unchanged, but other changes in \`${f.file}\` make its test fail: the fix looks switched off.\n`;
     if (f.registry) md += `  - ${f.registry === 'removed' ? 'This PR removes the lock itself' : `This PR changes the lock itself (${f.fields.map((x) => '`' + x + '`').join(', ')})`}, so the locked code would be unprotected after the merge.\n`;
     if (f.missing.length) md += `  - Removed/rewritten: ${f.missing.map((l) => '`' + l.trim().replace(/`/g, "'") + '`').join(', ')}\n`;
     if (f.renamed && f.renamed.length) md += `  - Renamed inside the lock (logic kept): ${f.renamed.map(([a, b]) => '`' + a + '` → `' + b + '`').join(', ')}\n`;

@@ -117,6 +117,15 @@ function evaluate(change, { agent = null } = {}) {
 function run() {
   try {
     const input = JSON.parse(readStdin() || '{}');
+    if (input.tool_name === 'Bash') {
+      // Shell commands: unlocking or turning the git hooks off is refused; writing a locked file asks.
+      if (input.cwd) process.chdir(input.cwd);
+      const j = require('./shellguard').judge((input.tool_input || {}).command, { agent: 'claude-code' });
+      if (!j) return;
+      process.stdout.write(JSON.stringify(j.level === 'warn' ? { systemMessage: j.reason }
+        : { hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: j.level === 'block' ? 'deny' : 'ask', permissionDecisionReason: j.reason } }));
+      return;
+    }
     if (!['Edit', 'MultiEdit', 'Write'].includes(input.tool_name)) return;
     if (input.cwd) process.chdir(input.cwd);
     const change = changeFrom(input);

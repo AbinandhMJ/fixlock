@@ -94,14 +94,21 @@ function clearAllowed(cwd) {
 
 /* ---------------- decisions ---------------- */
 
-/** Commands an agent must not run: unlocking is the developer's call. */
-const FORBIDDEN = [
-  { re: /\bfixlock(?:@[\w.^~-]+)?(?:\.js)?["']?\s+(allow|remove|rm)\b/i, why: 'Only the developer can unlock or remove a fixlock lock.' },
-  { re: /\bgit\s+(commit|push)\b[^|;&]*--no-verify\b/i, why: 'Skipping the git hooks (--no-verify) skips fixlock\'s checks.' },
-];
-function shellDecision(command) {
-  for (const f of FORBIDDEN) if (f.re.test(String(command || ''))) return { deny: true, reason: `fixlock: ${f.why} Ask the developer to run it themselves if it's needed.` };
-  return { deny: false };
+/**
+ * Decide a shell command (src/shellguard.js): unlocking or turning the git hooks off is refused; a command
+ * that writes a locked file (or one under an ask/block rule) is refused unless the developer allowed it.
+ */
+function shellDecision(command, agent = null) {
+  let j;
+  try { j = require('./shellguard').judge(command, { agent }); } catch { return { deny: false }; }
+  if (!j || j.level === 'warn') return { deny: false };
+  if (j.forbidden) return { deny: true, reason: j.reason };
+  const ok = allowed();
+  const locks = j.locks.filter((l) => l.level === 'block' || (l.level === 'ask' && !ok[l.id.toUpperCase()]));
+  const ruleHits = j.rules.filter((r) => r.level === 'block' || (r.level === 'ask' && !ok[`RULE:${r.name}`.toUpperCase()]));
+  if (!locks.length && !ruleHits.length) return { deny: false };
+  const ids = [...locks.filter((l) => l.level === 'ask').map((l) => l.id), ...ruleHits.filter((r) => r.level === 'ask').map((r) => `"rule:${r.name}"`)];
+  return { deny: true, reason: `${j.reason}${ids.length ? `\nIf the developer agrees, they run \`fixlock allow ${ids.join(' ')}\` and you try again. Don't run that command yourself.` : ''}` };
 }
 
 /**
@@ -154,6 +161,13 @@ const readStdin = () => { try { return fs.readFileSync(0, 'utf8'); } catch { ret
 const chdirTo = (dir) => { try { if (dir && fs.existsSync(dir)) process.chdir(dir); } catch { /* stay */ } };
 
 /** `fixlock hook cursor`: preToolUse (file tools) and beforeShellExecution. Always answers with JSON. */
+/** Folder to judge an edit from: the file's own, or the project's for files inside .git (git can't find the project from there). */
+function workDir(file) {
+  const parts = path.dirname(file).split(/[\\/]/);
+  const i = parts.indexOf('.git');
+  return i > 0 ? parts.slice(0, i).join(path.sep) || path.sep : path.dirname(file);
+}
+
 function runCursor() {
   let out = { permission: 'allow' };
   try {
@@ -161,12 +175,12 @@ function runCursor() {
     const ev = input.hook_event_name || '';
     const root = (input.workspace_roots && input.workspace_roots[0]) || input.cwd;
     if (ev === 'beforeShellExecution' || input.tool_name === 'Shell') {
-      const d = shellDecision(input.command || (input.tool_input || {}).command);
+      const d = shellDecision(input.command || (input.tool_input || {}).command, 'cursor');
       if (d.deny) out = { permission: 'deny', user_message: d.reason, agent_message: d.reason };
     } else {
       const change = changeFromInput(input.tool_name, input.tool_input || {}, input.cwd || root);
       if (change) {
-        chdirTo(path.dirname(change.file));
+        chdirTo(workDir(change.file));
         const d = editDecision(change, 'cursor');
         if (d.deny) out = { permission: 'deny', user_message: d.short || d.reason.split('\n')[0], agent_message: d.reason };
       }
@@ -182,10 +196,10 @@ function runWindsurf() {
     const input = JSON.parse(readStdin() || '{}');
     const ev = input.agent_action_name || '';
     const t = input.tool_info || {};
-    if (ev === 'pre_run_command') d = shellDecision(t.command_line || t.command);
+    if (ev === 'pre_run_command') d = shellDecision(t.command_line || t.command, 'windsurf');
     else if (ev === 'pre_write_code') {
       const change = changeFromInput('edit', t, t.cwd);
-      if (change) { chdirTo(path.dirname(change.file)); d = editDecision(change, 'windsurf'); }
+      if (change) { chdirTo(workDir(change.file)); d = editDecision(change, 'windsurf'); }
     }
   } catch { d = { deny: false }; }
   if (d.deny) { process.stderr.write(d.reason + '\n'); process.exitCode = 2; }
