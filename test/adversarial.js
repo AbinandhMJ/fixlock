@@ -218,6 +218,7 @@ Found a way past fixlock? Please [report it privately](https://github.com/Abinan
 `;
 
 if (process.argv.includes('--write-report')) { fs.writeFileSync(REPORT, md); console.log(`wrote ${path.relative(process.cwd(), REPORT)}`); }
-else if (!fs.existsSync(REPORT) || fs.readFileSync(REPORT, 'utf8') !== md) { bad++; console.error('FAIL docs/adversarial.md is out of date: run node test/adversarial.js --write-report'); }
+// Compare without line endings: Windows checkouts turn the committed report's \n into \r\n.
+else if (!fs.existsSync(REPORT) || fs.readFileSync(REPORT, 'utf8').replace(/\r\n/g, '\n') !== md) { bad++; console.error('FAIL docs/adversarial.md is out of date: run node test/adversarial.js --write-report'); }
 if (bad) { console.error('ADVERSARIAL FAIL'); process.exit(1); }
 console.log(`ADVERSARIAL PASS (${rows.length} attacks)`);
